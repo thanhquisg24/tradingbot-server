@@ -1,0 +1,27 @@
+sudo nano /etc/systemd/system/YOUR_SERVICE_NAME.service
+
+Description=GIVE_YOUR_SERVICE_A_DESCRIPTION
+
+Wants=network.target
+After=syslog.target network-online.target
+
+[Service]
+Type=simple
+ExecStart=YOUR_COMMAND_HERE
+Restart=on-failure
+RestartSec=10
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
+
+
+sudo systemctl daemon-reload
+
+
+sudo systemctl enable YOUR_SERVICE_NAME
+
+
+sudo systemctl start YOUR_SERVICE_NAME
+
+systemctl status YOUR_SERVICE_NAME
