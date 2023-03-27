@@ -1,10 +1,8 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { postTxClaim, prepareTxClaim } from 'src/abi';
 import { STATUS } from 'src/common/constants';
 import { UserClaimTokenException } from 'src/common/exceptions/ClaimUserToken.exception';
 import { Repository } from 'typeorm';
-import { CreateVesingHistoryDto } from '../vesing-history/dto/create-vesing-history.dto';
 import { UpdateVesingHistoryDto } from '../vesing-history/dto/update-vesing-history.dto';
 import { VesingHistoryService } from '../vesing-history/vesing-history.service';
 import { VestingAddressService } from '../vesting-address/vesting-address.service';
@@ -39,27 +37,10 @@ export class UserTokenService {
       throw new UserClaimTokenException('Not enough token to transfer!');
     }
     this.logger.log('claimToken() check balance OK');
-    const wallet = {
-      address: fromVestTrans.address,
-      privateKey: fromVestTrans.private_key,
-    };
 
-    const toAddr = claimDto.userAddress;
-    const r = await prepareTxClaim(wallet, toAddr, amtTotransfer);
-    this.logger.log('claimToken() prepareTxClaim ' + r.prepareTxHash);
-    const prepareVestingHistoryRow: CreateVesingHistoryDto = {
-      txId: r.prepareTxHash,
-      userId: currentUser.id,
-      amount: amtTotransfer,
-      fromAddress: fromVestTrans.address,
-      toAddress: toAddr,
-      status: STATUS.PENDING,
-    };
     this.logger.log('claimToken() save prepareHistoryRow');
     //1.save prepareVestingHistoryRow
-    const prepareHistoryRow = await this.vesingHistoryService.create(
-      prepareVestingHistoryRow,
-    );
+
     this.logger.log('claimToken()  update avaiable token of user');
     //2. update avaiable token and claimed of user and vestingAddress table
     await this.repo.update(currentUser.id, {
@@ -74,9 +55,7 @@ export class UserTokenService {
 
     this.logger.log('claimToken() send TX postTxClaim()');
     //2.send TX
-    const postTx = await postTxClaim(r.web3, r.signedTx);
-    const result = await this.storeSettledClaimToken(prepareHistoryRow, postTx);
-    return result;
+    return 'ok';
   }
   async storeSettledClaimToken(
     prepareHistoryRow: UpdateVesingHistoryDto,

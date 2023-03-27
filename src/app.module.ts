@@ -1,6 +1,5 @@
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ArticleModule } from './article/article.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { Module } from '@nestjs/common';
@@ -13,6 +12,7 @@ import { VesingHistoryModule } from './modules/vesing-history/vesing-history.mod
 import { VestingAddressModule } from './modules/vesting-address/vesting-address.module';
 import dotenv from 'dotenv';
 import { typeOrmAsyncConfig } from './config/typeorm.config';
+import { BotManagerModule } from './modules/bot-manager/bot.-manager.module';
 
 dotenv.config();
 // import entities from './config/typeorm.entities';
@@ -40,12 +40,12 @@ const ENV = process.env.NODE_ENV;
     // }),
     // TaskModule,
     AuthModule,
-    ArticleModule,
     UserModule,
     TokenModule,
     VesingHistoryModule,
     VestingAddressModule,
     ReceivedTokenScheduleModule,
+    BotManagerModule,
   ],
   controllers: [AppController],
   providers: [AppService],
