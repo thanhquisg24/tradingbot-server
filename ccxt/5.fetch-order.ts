@@ -7,7 +7,7 @@ function getDecidePositionQuantity(usdtAmt: number, positionPrice: number) {
   return usdtAmt / positionPrice;
 }
 
-const createOrder = async () => {
+const fetch = async () => {
   const binanceUSDM = new ccxt.binanceusdm({
     enableRateLimit: true,
     apiKey: '6daad7c6adaef564f0aefe6d444d03319d97f004a700e315df79442641dd9466',
@@ -15,19 +15,8 @@ const createOrder = async () => {
   });
   binanceUSDM.setSandboxMode(true);
   const symbol = 'BTC/USDT:USDT';
-  const price = 22500;
-  const amount = getDecidePositionQuantity(300, price);
-  const params = { positionSide: 'LONG' };
-  binanceUSDM.setLeverage(10, symbol, { marginMode: 'cross' });
-  const newOrder = await binanceUSDM.createLimitBuyOrder(
-    symbol,
-    amount,
-    price,
-    params,
-  );
-  console.log(
-    '🚀 ~ file: 2.create-order.ts:24 ~ createOrder ~ newOrder:',
-    newOrder,
-  );
+  const orderId = 3308550435;
+  const oeder = await binanceUSDM.fetchOrder(orderId, symbol);
+  console.log('🚀 ~ file: 5.fetch-order.ts:20 ~ fetch ~ oeder:', oeder);
 };
-createOrder().then();
+fetch().then();
