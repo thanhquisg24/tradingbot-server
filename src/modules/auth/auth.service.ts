@@ -1,7 +1,7 @@
 import { AuthPayload } from './interfaces/auth-payload.interface';
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UserEntity } from '../user/entities/user.entity';
+import { UserEntity } from '../entities/user.entity';
 import { UserService } from '../user/user.service';
 import { decryptWithAES } from 'src/common/utils/hash-util';
 import { omit } from 'lodash';

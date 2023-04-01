@@ -9,3 +9,14 @@ export enum ROLE {
   USER = 'USER',
   ADMIN = 'ADMIN',
 }
+
+export enum COMMON_STATUS {
+  ACTIVE = 'A',
+  DISABLED = 'D',
+}
+
+export enum USER_STATUS {
+  ACTIVE = 'A',
+  PENDING = 'P',
+  DISABLED = 'D',
+}

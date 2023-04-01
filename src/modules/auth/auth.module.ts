@@ -6,25 +6,15 @@ import { JwtRefreshTokenStrategy } from './strategies/refresh.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
-import { ReceivedTokenScheduleEntity } from '../received_token_schedule/entities/received_token_schedule.entity';
-import { ReceivedTokenScheduleService } from '../received_token_schedule/received_token_schedule.service';
+
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserEntity } from '../user/entities/user.entity';
 import { UserModule } from '../user/user.module';
 import { UserService } from '../user/user.service';
-import { VestingAddressService } from '../vesting-address/vesting-address.service';
-import { VesingHistoryService } from '../vesing-history/vesing-history.service';
-import { VesingHistoryEntity } from '../vesing-history/entities/vesing-history.entity';
-import { VestingAddressEntity } from '../vesting-address/entities/vesting-address.entity';
+import entities from 'src/config/typeorm.entities';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      UserEntity,
-      ReceivedTokenScheduleEntity,
-      VesingHistoryEntity,
-      VestingAddressEntity,
-    ]),
+    TypeOrmModule.forFeature(entities),
     UserModule,
     PassportModule,
     JwtModule.register({
@@ -35,9 +25,6 @@ import { VestingAddressEntity } from '../vesting-address/entities/vesting-addres
   providers: [
     AuthService,
     UserService,
-    ReceivedTokenScheduleService,
-    VestingAddressService,
-    VesingHistoryService,
     LocalStrategy,
     JsonWebTokenStrategy,
     JwtRefreshTokenStrategy,
