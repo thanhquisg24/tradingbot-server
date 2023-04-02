@@ -14,6 +14,7 @@ import { UserService } from '../user/user.service';
 import { AuthService } from './auth.service';
 import { RefreshTokenDto } from './dto/RefreshTokenDto';
 import { UserLoginDto } from './dto/UserLoginDto';
+import { RequestWithUser } from './type';
 
 @Controller('api/v1/auth')
 @ApiTags('Auth APIs')
@@ -51,14 +52,14 @@ export class AuthController {
   })
   @UseGuards(RefreshTokenGuard)
   @Post('/refresh-token')
-  async refreshToken(@Request() req) {
+  async refreshToken(@Request() req: RequestWithUser) {
     return await this.authService.login(req.user);
   }
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Post('/logout')
-  logout(@Request() req) {
+  logout(@Request() req: RequestWithUser) {
     this.authService.logout(req.user['id']);
     return 'ok';
   }

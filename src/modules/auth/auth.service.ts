@@ -5,6 +5,7 @@ import { UserEntity } from '../entities/user.entity';
 import { UserService } from '../user/user.service';
 import { decryptWithAES } from 'src/common/utils/hash-util';
 import { omit } from 'lodash';
+import { IUserLogged } from './type';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const bcrypt = require('bcrypt');
@@ -54,7 +55,7 @@ export class AuthService {
     return result;
   }
 
-  async login(user: UserEntity) {
+  async login(user: UserEntity): Promise<IUserLogged> {
     const payload: AuthPayload = {
       name: null,
       email: user.email,
