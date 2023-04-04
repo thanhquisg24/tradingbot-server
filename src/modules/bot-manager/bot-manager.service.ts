@@ -1,52 +1,37 @@
 import { Injectable } from '@nestjs/common';
-import { BotTrading } from './bot-trading';
-
-export interface IBotManagerService {
-  botInstances: Map<string, BotTrading>;
-}
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { BotTradingEntity } from '../entities/bot.entity';
+import { CreateBotPayload } from './dto/create-bot.payload';
 
 @Injectable()
-export class BotManagerService implements IBotManagerService {
-  botInstances: Map<string, BotTrading> = new Map();
+export class BotManagerService {
+  constructor(
+    @InjectRepository(BotTradingEntity)
+    private readonly repo: Repository<BotTradingEntity>,
+  ) {}
 
-  getBotById(id: string) {
-    return this.botInstances.get(id);
+  async create(entity: BotTradingEntity) {
+    return await this.repo.save(entity);
   }
 
-  addRunningBot(id: string) {
-    const bot = this.getBotById(id);
-    console.log(
-      '🚀 ~ file: bot-manager.service.ts:18 ~ BotManagerService ~ addRunningBot ~ bot:',
-      bot,
-    );
-    if (bot) {
-      return 'already running bot#' + id;
-    } else {
-      const newBot = new BotTrading(id);
-      newBot.executed();
-      this.botInstances.set(id, newBot);
-    }
-    return 'add bot running #' + id;
-  }
-  stopBot(id: string) {
-    const bot = this.getBotById(id);
-
-    if (bot) {
-      bot.stop();
-      this.botInstances.delete(id);
-      return 'stop bot #' + id;
-    }
-    return 'bot not found';
+  async createWithPayload(payload: CreateBotPayload) {
+    return 'a';
   }
 
-  findAll() {
-    const obj = Object.fromEntries(this.botInstances);
-    return obj;
+  async findAll() {
+    return await this.repo.find();
   }
 
-  findOne(id: string) {
-    const bot = this.getBotById(id);
-    if (bot) return bot;
-    return 'bot not found';
+  async findOne(id: number) {
+    return await this.repo.findOne({
+      where: {
+        id,
+      },
+    });
+  }
+
+  async remove(id: number) {
+    return await this.repo.delete(id);
   }
 }

@@ -1,4 +1,4 @@
-export enum STATUS {
+export enum MONEYSTATUS {
   PENDING = 'P',
   SETTLED = 'S',
   FAIL = 'F',

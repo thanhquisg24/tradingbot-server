@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { BotManagerController } from './bot-manager.controller';
-import { BotManagerService } from './bot-manager.service';
+import { BotManagerInstances } from './bot-manager.instances';
 
 @Module({
   imports: [],
   controllers: [BotManagerController],
-  providers: [BotManagerService],
+  providers: [BotManagerInstances],
 })
 export class BotManagerModule {}

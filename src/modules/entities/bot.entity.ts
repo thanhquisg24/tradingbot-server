@@ -56,7 +56,7 @@ export class BotTradingEntity {
   @Column({
     type: 'enum',
     enum: COMMON_STATUS,
-    default: COMMON_STATUS.ACTIVE,
+    default: COMMON_STATUS.DISABLED,
   })
   status: COMMON_STATUS;
 
