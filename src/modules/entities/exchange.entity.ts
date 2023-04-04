@@ -32,10 +32,10 @@ export class ExchangeEntity {
   @Column({ name: 'label', length: 255, nullable: false })
   label: string;
 
-  @Column({ name: 'apiKey', length: 255, nullable: false })
+  @Column({ name: 'api_key', length: 255, nullable: false })
   apiKey: string;
 
-  @Column({ name: 'apiSecret', length: 255, nullable: false })
+  @Column({ name: 'api_secret', length: 255, nullable: false })
   apiSecret: string;
 
   @Column({

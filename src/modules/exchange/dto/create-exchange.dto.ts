@@ -1,25 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotBlankString } from '@nestjsi/class-validator';
+import { CreateExchangePayload } from './create-exchange.payload';
+import { UserEntity } from '../../entities/user.entity';
 
-export class CreateTokenDto {
-  @IsNotBlankString()
-  @ApiProperty({
-    required: true,
-    description: 'tokenAddress',
-  })
-  tokenAddress: string;
-
-  @IsNotBlankString()
-  @ApiProperty({
-    required: true,
-    description: 'tokenSymbol',
-  })
-  tokenSymbol: string;
-
-  @IsNotBlankString()
-  @ApiProperty({
-    required: true,
-    description: 'tokenScanUrl',
-  })
-  tokenScanUrl: string;
+export class CreateExchangeDto extends CreateExchangePayload {
+  user: UserEntity;
 }

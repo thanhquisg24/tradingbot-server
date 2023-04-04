@@ -1,3 +1,5 @@
+import { classes } from '@automapper/classes';
+import { AutomapperModule } from '@automapper/nestjs';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -8,7 +10,7 @@ import { AppService } from './app.service';
 import { typeOrmAsyncConfig } from './config/typeorm.config';
 import { AuthModule } from './modules/auth/auth.module';
 import { BotManagerModule } from './modules/bot-manager/bot.-manager.module';
-import { TokenModule } from './modules/token/token.module';
+import { ExchangeModule } from './modules/exchange/exchange.module';
 import { UserModule } from './modules/user/user.module';
 
 dotenv.config();
@@ -23,6 +25,9 @@ const ENV = process.env.NODE_ENV;
     }),
     TypeOrmModule.forRootAsync(typeOrmAsyncConfig),
     ScheduleModule.forRoot(),
+    AutomapperModule.forRoot({
+      strategyInitializer: classes(),
+    }),
     // TypeOrmModule.forRoot({
     //   type: 'mysql',
     //   host: 'localhost',
@@ -38,7 +43,7 @@ const ENV = process.env.NODE_ENV;
     // TaskModule,
     AuthModule,
     UserModule,
-    TokenModule,
+    ExchangeModule,
     BotManagerModule,
   ],
   controllers: [AppController],

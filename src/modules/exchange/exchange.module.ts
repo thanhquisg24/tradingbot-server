@@ -2,11 +2,13 @@ import { Module } from '@nestjs/common';
 import { ExchangeService } from './exchange.service';
 import { ExchangeController } from './exchange.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { TokenEntity } from '../entities/token.entity';
+import { ExchangePayloadToDto } from './mapper/exchange-mapper';
+import { AutomapperModule } from '@automapper/nestjs';
+import { ExchangeEntity } from '../entities/exchange.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([TokenEntity])],
+  imports: [TypeOrmModule.forFeature([ExchangeEntity]), AutomapperModule],
   controllers: [ExchangeController],
-  providers: [ExchangeService],
+  providers: [ExchangeService, ExchangePayloadToDto],
 })
-export class TokenModule {}
+export class ExchangeModule {}

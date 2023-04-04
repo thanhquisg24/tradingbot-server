@@ -28,8 +28,8 @@ async function bootstrap() {
   // app.useGlobalFilters(new HttpErrorFilter());
   if (configService.get('NODE_ENV') !== 'production-demo') {
     const config = new DocumentBuilder()
-      .setTitle('FIG APIs')
-      .setDescription('API Documentation for FIG')
+      .setTitle('Bot APIs')
+      .setDescription('API Documentation for Bot trading system')
       .setVersion('1.0')
       .addBearerAuth()
       .build();

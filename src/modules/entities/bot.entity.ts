@@ -3,12 +3,15 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
 import { COMMON_STATUS } from 'src/common/constants';
 import { ExchangeEntity } from './exchange.entity';
+import { PairEntity } from './pair.entity';
 
 export enum BOT_TRADING_TYPE {
   DCA = 'DCA',
@@ -61,6 +64,10 @@ export class BotTradingEntity {
   @JoinColumn({ name: 'exchange_id', referencedColumnName: 'id' })
   exchange: ExchangeEntity;
 
+  @ManyToMany(() => PairEntity)
+  @JoinTable()
+  pairs: PairEntity[];
+
   // ASAP
   @Column({
     name: 'deal_start_condition',
@@ -70,25 +77,53 @@ export class BotTradingEntity {
   })
   dealStartCondition: string;
 
-  @Column({ type: 'decimal', precision: 5, scale: 2 })
+  @Column({
+    name: 'target_profit_percentage',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+  })
   targetProfitPercentage: number;
 
-  @Column({ type: 'decimal', precision: 5, scale: 2 })
+  @Column({
+    name: 'target_stoploss_percentage',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+  })
   targetStopLossPercentage: number;
 
-  @Column({ type: 'int' })
+  @Column({ name: 'max_active_deal', type: 'int' })
+  maxActiveDeal: number;
+
+  @Column({ name: 'max_safety_trades_count', type: 'int' })
   maxSafetyTradesCount: number;
 
-  @Column({ type: 'int' })
+  @Column({ name: 'max_active_safety_trades_count', type: 'int' })
   maxActiveSafetyTradesCount: number;
 
-  @Column({ type: 'decimal', precision: 5, scale: 2 })
+  @Column({
+    name: 'price_deviation_percentage',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+  })
   priceDeviationPercentage: number;
 
-  @Column({ type: 'decimal', precision: 5, scale: 2 })
+  @Column({
+    name: 'safety_order_volume_scale',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+  })
   safetyOrderVolumeScale: number;
 
-  @Column({ type: 'decimal', precision: 5, scale: 2 })
+  @Column({
+    name: 'safety_order_step_scale',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+  })
   safetyOrderStepScale: number;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })

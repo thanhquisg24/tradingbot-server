@@ -1,17 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateTokenDto } from './dto/create-exchange.dto';
-import { UpdateTokenDto } from './dto/update-exchange.dto';
-import { TokenEntity } from '../entities/token.entity';
+import { ExchangeEntity } from '../entities/exchange.entity';
+import { CreateExchangeDto } from './dto/create-exchange.dto';
+import { UpdateExchangeDto } from './dto/update-exchange.dto';
 
 @Injectable()
 export class ExchangeService {
   constructor(
-    @InjectRepository(TokenEntity)
-    private readonly repo: Repository<TokenEntity>,
+    @InjectRepository(ExchangeEntity)
+    private readonly repo: Repository<ExchangeEntity>,
   ) {}
-  async create(createTokenDto: CreateTokenDto) {
+  async create(createTokenDto: CreateExchangeDto) {
     return await this.repo.save(createTokenDto);
   }
 
@@ -27,7 +27,7 @@ export class ExchangeService {
     });
   }
 
-  async update(id: number, updateTokenDto: UpdateTokenDto) {
+  async update(id: number, updateTokenDto: UpdateExchangeDto) {
     return await this.repo.update(id, updateTokenDto);
   }
 
