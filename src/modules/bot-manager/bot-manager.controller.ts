@@ -12,50 +12,49 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { BotManagerInstances } from './bot-manager.instances';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RequestWithUser } from '../auth/type';
-import { CreateExchangePayload } from '../exchange/dto/create-exchange.payload';
+import { BotManagerService } from './bot-manager.service';
+import { CreateBotPayload } from './dto/create-bot.payload';
 
 @Controller('api/v1/bot-manager')
 @ApiTags('Bot Manager APIs')
 export class BotManagerController {
-  constructor(private readonly service: BotManagerInstances) {}
+  constructor(
+    private readonly instanses: BotManagerInstances,
+    private readonly service: BotManagerService,
+  ) {}
 
   private logger = new Logger(BotManagerController.name);
-  //handle login
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  @Post()
+  @Post('/create-new-bot')
   createBot(
     @Request() req: RequestWithUser,
-    @Body() createExchangePayload: CreateExchangePayload,
+    @Body() createBotPayload: CreateBotPayload,
   ) {
-    const createExchangedto = this.mapper.map(
-      createExchangePayload,
-      CreateExchangePayload,
-      CreateExchangeDto,
-    );
-    createExchangedto.user = req.user;
-    this.logger.debug(JSON.stringify(createExchangePayload));
-    this.logger.debug(JSON.stringify(createExchangedto));
-    return this.exchangeService.create(createExchangedto);
+    if (req.user.id !== createBotPayload.userId) {
+      throw new Error('User is not valid !');
+    }
+    this.logger.debug(JSON.stringify(createBotPayload));
+    return this.service.createWithPayload(createBotPayload);
   }
 
   @Get('/addRunningBot/:id')
   addRunningBot(@Param('id') id: string) {
-    return this.service.addRunningBot(id);
+    return this.instanses.addRunningBot(id);
   }
 
   @Get('/stopBot/:id')
   stopBot(@Param('id') id: string) {
-    return this.service.stopBot(id);
+    return this.instanses.stopBot(id);
   }
 
   @Get()
   findAll() {
-    return this.service.findAll();
+    return this.instanses.findAll();
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
+    return this.instanses.findOne(id);
   }
 }

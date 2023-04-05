@@ -12,6 +12,13 @@ import {
 } from 'src/modules/entities/bot.entity';
 
 export class CreateBotPayload {
+  @AutoMap()
+  @IsNotBlankString()
+  @ApiProperty({
+    required: true,
+    example: 'example name',
+    description: 'name',
+  })
   name: string;
 
   @AutoMap()

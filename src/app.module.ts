@@ -12,6 +12,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { BotManagerModule } from './modules/bot-manager/bot.-manager.module';
 import { ExchangeModule } from './modules/exchange/exchange.module';
 import { UserModule } from './modules/user/user.module';
+import { PairModule } from './modules/pair/pair.module';
 
 dotenv.config();
 // import entities from './config/typeorm.entities';
@@ -45,6 +46,7 @@ const ENV = process.env.NODE_ENV;
     UserModule,
     ExchangeModule,
     BotManagerModule,
+    PairModule,
   ],
   controllers: [AppController],
   providers: [AppService],

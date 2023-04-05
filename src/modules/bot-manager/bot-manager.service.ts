@@ -3,12 +3,17 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BotTradingEntity } from '../entities/bot.entity';
 import { CreateBotPayload } from './dto/create-bot.payload';
+import { ExchangeService } from '../exchange/exchange.service';
+import { PairService } from '../pair/pair.service';
+import { mappingNewBot } from './bot-utils';
 
 @Injectable()
 export class BotManagerService {
   constructor(
     @InjectRepository(BotTradingEntity)
     private readonly repo: Repository<BotTradingEntity>,
+    private readonly exchangeService: ExchangeService,
+    private readonly pairService: PairService,
   ) {}
 
   async create(entity: BotTradingEntity) {
@@ -16,7 +21,10 @@ export class BotManagerService {
   }
 
   async createWithPayload(payload: CreateBotPayload) {
-    return 'a';
+    const exchange = await this.exchangeService.findOne(payload.exchangeId);
+    const pairs = await this.pairService.findByIds(payload.listPair);
+    const newBot = mappingNewBot(payload, exchange, pairs);
+    return this.create(newBot);
   }
 
   async findAll() {
