@@ -3,6 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IntMinMax,
   IsNotBlankString,
+  IsPositiveInt,
   MinMaxPct,
 } from '@nestjsi/class-validator';
 import {
@@ -48,7 +49,7 @@ export class CreateBotPayload {
   strategyDirection: STRATEGY_DIRECTION;
 
   @AutoMap()
-  @IsNotBlankString()
+  @IsPositiveInt()
   @ApiProperty({
     type: 'int',
     required: true,
@@ -59,7 +60,7 @@ export class CreateBotPayload {
   userId: number;
 
   @AutoMap()
-  @IsNotBlankString()
+  @IsPositiveInt()
   @ApiProperty({
     type: 'int',
     required: true,
@@ -87,7 +88,7 @@ export class CreateBotPayload {
     isArray: false,
     default: DEAL_START_TYPE.ASAP,
     description: 'dealStartCondition',
-    enumName: 'STRATEGY_DIRECTION',
+    enumName: 'DEAL_START_TYPE',
   })
   dealStartCondition: string;
 

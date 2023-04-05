@@ -11,13 +11,13 @@ export function mappingNewBot(
 ) {
   const newBot = new BotTradingEntity();
   newBot.botType = payload.botType;
-  newBot.dealStartCondition = payload.botType;
+  newBot.dealStartCondition = payload.dealStartCondition;
   newBot.exchange = exchange;
   newBot.id = null;
   newBot.maxActiveDeal = payload.maxActiveDeal;
   newBot.maxActiveSafetyTradesCount = payload.maxActiveSafetyTradesCount;
   newBot.maxSafetyTradesCount = payload.maxSafetyTradesCount;
-  newBot.name = payload.botType;
+  newBot.name = payload.name;
   newBot.pairs = pairs;
   newBot.priceDeviationPercentage = payload.priceDeviationPercentage;
   newBot.safetyOrderStepScale = payload.safetyOrderStepScale;
