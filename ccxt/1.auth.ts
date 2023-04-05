@@ -10,12 +10,14 @@ const authAPIKey = async () => {
     secret: 'adb86ea2f7250a8fcd6059336544ee5a5efc047418a7966047da41713d91d705',
   });
   binanceUSDM.setSandboxMode(true);
-  const acc = await binanceUSDM.fetchAccounts();
-  console.log('🚀 ~ file: 1.auth.ts:14 ~ authAPIKey ~ acc:', acc);
-  const bal = await binanceUSDM.fetchBalance({ currency: 'usdt' });
-  console.log(
-    '🚀 ~ file: 1.auth.ts:16 ~ authAPIKey ~ bal:',
-    JSON.stringify(bal),
-  );
+  // const acc = await binanceUSDM.fetchAccounts();
+  // console.log('🚀 ~ file: 1.auth.ts:14 ~ authAPIKey ~ acc:', acc);
+  // const bal = await binanceUSDM.fetchBalance({ currency: 'usdt' });
+  // console.log(
+  //   '🚀 ~ file: 1.auth.ts:16 ~ authAPIKey ~ bal:',
+  //   JSON.stringify(bal),
+  // );
+  const time = await binanceUSDM.fetchTime();
+  console.log('🚀 ~ file: 1.auth.ts:21 ~ authAPIKey ~ time:', time);
 };
 authAPIKey().then();

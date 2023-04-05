@@ -39,6 +39,14 @@ export class ExchangeEntity {
   apiSecret: string;
 
   @Column({
+    name: 'is_testnet',
+    type: 'boolean',
+    default: false,
+    nullable: false,
+  })
+  isTestNet: boolean;
+
+  @Column({
     type: 'enum',
     enum: COMMON_STATUS,
     default: COMMON_STATUS.ACTIVE,

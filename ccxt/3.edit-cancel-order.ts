@@ -13,7 +13,7 @@ const editCancel = async () => {
     secret: 'adb86ea2f7250a8fcd6059336544ee5a5efc047418a7966047da41713d91d705',
   });
   binanceUSDM.setSandboxMode(true);
-  const order_id = 3307290769;
+  const order_id = '3307290769';
   const symbol = 'BTC/USDT:USDT';
   const cancelOrder = await binanceUSDM.cancelOrder(order_id, symbol, {});
   console.log(

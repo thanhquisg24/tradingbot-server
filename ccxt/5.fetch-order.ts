@@ -15,7 +15,7 @@ const fetch = async () => {
   });
   binanceUSDM.setSandboxMode(true);
   const symbol = 'BTC/USDT:USDT';
-  const orderId = 3308550435;
+  const orderId = '3308550435';
   const oeder = await binanceUSDM.fetchOrder(orderId, symbol);
   console.log('🚀 ~ file: 5.fetch-order.ts:20 ~ fetch ~ oeder:', oeder);
 };

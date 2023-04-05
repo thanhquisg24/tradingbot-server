@@ -46,8 +46,11 @@ export class ExchangeController {
       CreateExchangeDto,
     );
     createExchangedto.user = req.user;
-    this.logger.debug(JSON.stringify(createExchangePayload));
-    this.logger.debug(JSON.stringify(createExchangedto));
+    this.logger.log(
+      `User #${req.user.id} Creating exchange row : ${JSON.stringify(
+        createExchangePayload,
+      )}`,
+    );
     return this.exchangeService.create(createExchangedto);
   }
 

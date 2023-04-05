@@ -24,12 +24,8 @@ export class BinanceUSDMApi extends AbstractExchangeAPI {
   }
 
   async checkExchangeOnlineStatus(): Promise<boolean> {
-    const info = await this.exchange_remote.fetchStatus();
-    console.log(
-      '🚀 ~ file: exchange.remote.api.ts:28 ~ BinanceUSDMApi ~ checkExchangeOnlineStatus ~ info:',
-      info,
-    );
-    return false;
+    const exchangeServerTime = await this.exchange_remote.fetchTime();
+    return exchangeServerTime > 0;
   }
 }
 

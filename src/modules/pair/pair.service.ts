@@ -12,6 +12,10 @@ export class PairService {
     private readonly repo: Repository<PairEntity>,
   ) {}
 
+  saveBatch(list: PairEntity[]) {
+    return this.repo.save(list);
+  }
+
   create(createPairDto: CreatePairDto) {
     return 'This action adds a new pair';
   }

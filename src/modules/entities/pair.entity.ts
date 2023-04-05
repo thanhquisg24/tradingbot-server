@@ -36,4 +36,14 @@ export class PairEntity {
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
+
+  constructor(
+    _fromExchange: ExchangesEnum,
+    _commonPair: string,
+    _exchangePair: string,
+  ) {
+    this.fromExchange = _fromExchange;
+    this.commonPair = _commonPair;
+    this.exchangePair = _exchangePair;
+  }
 }

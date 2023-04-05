@@ -37,4 +37,12 @@ export class CreateExchangePayload {
     description: 'apiSecret',
   })
   apiSecret: string;
+
+  @AutoMap()
+  @ApiProperty({
+    required: true,
+    default: false,
+    description: 'isTestNet',
+  })
+  isTestNet: boolean;
 }

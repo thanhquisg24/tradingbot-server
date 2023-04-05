@@ -45,7 +45,7 @@
     "@nestjs/typeorm": "^9.0.1",
     "@nestjsi/class-validator": "^0.2.2",
     "bcrypt": "^5.1.0",
-    "ccxt": "^3.0.26",
+    "ccxt": "^3.0.54",
     "class-transformer": "^0.5.1",
     "crypto-js": "^4.1.1",
     "dotenv": "^16.0.3",

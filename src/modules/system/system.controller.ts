@@ -1,25 +1,27 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
   Logger,
-  UseGuards,
-  Request,
   NotFoundException,
+  Param,
+  Patch,
+  Post,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
-import { SystemService } from './system.service';
-import { CreateSystemDto } from './dto/create-system.dto';
-import { UpdateSystemDto } from './dto/update-system.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
-import { ExchangeService } from '../exchange/exchange.service';
 import { RequestWithUser } from '../auth/type';
 import { ExchangesEnum } from '../entities/exchange.entity';
+import { PairEntity } from '../entities/pair.entity';
+import { ExchangeService } from '../exchange/exchange.service';
 import { ExchangeFactory } from '../exchange/remote-api/exchange.remote.api';
+import { PairService } from '../pair/pair.service';
+import { CreateSystemDto } from './dto/create-system.dto';
+import { UpdateSystemDto } from './dto/update-system.dto';
+import { SystemService } from './system.service';
 
 @Controller('api/v1/system')
 @ApiTags('System APIs')
@@ -27,6 +29,7 @@ export class SystemController {
   constructor(
     private readonly systemService: SystemService,
     private readonly exChangeService: ExchangeService,
+    private readonly pairService: PairService,
   ) {}
 
   private logger = new Logger(SystemController.name);
@@ -45,15 +48,31 @@ export class SystemController {
         exchangeRow.name,
         exchangeRow.apiKey,
         exchangeRow.apiSecret,
-        exchangeRow.name === ExchangesEnum.PAPER,
+        exchangeRow.isTestNet,
       );
       const exInfo = await _exchange.checkExchangeOnlineStatus();
-      console.log(
-        '🚀 ~ file: system.controller.ts:51 ~ SystemController ~ initBinancePairs ~ exInfo:',
-        exInfo,
-      );
-      this.logger.log('init-binance-usdm-pair OK!');
-      return 'init-binance-usdm-pair OK!';
+      if (exInfo) {
+        const ccxtExchange = _exchange.getCcxtExchange();
+        await ccxtExchange.loadMarkets();
+        const symbolsUsdt = ccxtExchange.symbols.filter((e) => {
+          return e.endsWith(':USDT');
+        });
+        console.log(
+          '🚀 ~ file: system.controller.ts:61 ~ SystemController ~ symbolsUsdt ~ symbolsUsdt:',
+          symbolsUsdt,
+        );
+        const pairs: PairEntity[] = symbolsUsdt.reduce(
+          (store: PairEntity[], cur: string) => {
+            const commonPair = cur.split(':USDT')[0];
+            const p = new PairEntity(exchangeRow.name, commonPair, cur);
+            return [...store, p];
+          },
+          [],
+        );
+        await this.pairService.saveBatch(pairs);
+        this.logger.log('init-binance-usdm-pair OK!');
+        return 'init-binance-usdm-pair OK!';
+      }
     }
     throw new NotFoundException(
       "Can't not found " + ExchangesEnum.BINANCEUSDM + ' row of current user!',
