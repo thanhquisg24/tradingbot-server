@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ExchangeEntity } from '../entities/exchange.entity';
+import { ExchangeEntity, ExchangesEnum } from '../entities/exchange.entity';
 import { CreateExchangeDto } from './dto/create-exchange.dto';
 import { UpdateExchangeDto } from './dto/update-exchange.dto';
 
@@ -23,6 +23,18 @@ export class ExchangeService {
     return await this.repo.findOne({
       where: {
         id,
+      },
+    });
+  }
+
+  async findByUserAndExchangeName(userId: number, exchangeName: ExchangesEnum) {
+    return await this.repo.findOne({
+      relations: {
+        user: true,
+      },
+      where: {
+        user: { id: userId },
+        name: exchangeName,
       },
     });
   }
