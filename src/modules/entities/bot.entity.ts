@@ -75,7 +75,7 @@ export class BotTradingEntity {
     enum: DEAL_START_TYPE,
     default: DEAL_START_TYPE.ASAP,
   })
-  dealStartCondition: string;
+  dealStartCondition: DEAL_START_TYPE;
 
   @Column({
     name: 'target_profit_percentage',
