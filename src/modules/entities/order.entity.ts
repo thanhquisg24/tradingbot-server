@@ -20,6 +20,14 @@ export interface BuyOrder {
   exitPrice: number;
 }
 
+export enum CLIENT_ORDER_TYPE {
+  BASE = 'BASE',
+  SAFETY = 'SAFETY',
+  REDUCE = 'REDUCE',
+  TAKE_PROFIT = 'TAKE_PROFIT',
+  STOP_LOSS = 'STOP_LOSS',
+}
+
 @Entity()
 export class OrderEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -34,6 +42,13 @@ export class OrderEntity {
   @Column({ name: 'exchange_id', type: 'int', nullable: true })
   exchangeId: number;
 
+  @Column({
+    name: 'client_order_type',
+    type: 'enum',
+    enum: CLIENT_ORDER_TYPE,
+    default: CLIENT_ORDER_TYPE.BASE,
+  })
+  clientOrderType: CLIENT_ORDER_TYPE;
   // for buy order: 0 to max_no_of_safety_order
   // for sell order: 1000 + the correspondent buy order
   @Column({ type: 'int' })

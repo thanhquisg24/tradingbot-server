@@ -15,6 +15,10 @@ export enum DEAL_STATUS {
   'CLOSED' = 'CLOSED',
   'CANCELED' = 'CANCELED',
 }
+export enum CLIENT_DEAL_TYPE {
+  'DCA' = 'DCA',
+  'REDUCE' = 'REDUCE',
+}
 
 @Entity()
 export class DealEntity {
@@ -29,6 +33,14 @@ export class DealEntity {
 
   @Column({ name: 'exchange_id', type: 'int', nullable: true })
   exchangeId: number;
+
+  @Column({
+    name: 'client_deal_type',
+    type: 'enum',
+    enum: CLIENT_DEAL_TYPE,
+    default: CLIENT_DEAL_TYPE.DCA,
+  })
+  clientDealType: CLIENT_DEAL_TYPE;
 
   @OneToMany(() => OrderEntity, (order) => order.deal, { eager: true })
   orders: OrderEntity[];
