@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { omit } from 'lodash';
 import { ROLE } from 'src/common/constants';
@@ -6,6 +14,9 @@ import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserEntity } from '../entities/user.entity';
 import { UserService } from './user.service';
+import { RequestWithUser } from '../auth/type';
+import { encryptWithAES } from 'src/common/utils/hash-util';
+import { HasRoles } from 'src/common/decorators/has-roles.decorator';
 
 @Controller('api/v1/user')
 @ApiTags('User APIs')
@@ -13,7 +24,7 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @ApiBearerAuth()
-  // @HasRoles(ROLE.ADMIN)
+  @HasRoles(ROLE.ADMIN)
   // @UseGuards(JwtAuthGuard, RolesGuard)
   @Post()
   async create(@Body() createUserDto: CreateUserDto) {
@@ -35,6 +46,14 @@ export class UserController {
       createUserDto,
     );
     return { id: user.id };
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Get('/get-email-token')
+  async getEmailToken(@Request() req: RequestWithUser) {
+    const emailToken = encryptWithAES(req.user.email);
+    return emailToken;
   }
 
   // @ApiBearerAuth()

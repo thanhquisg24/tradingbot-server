@@ -90,7 +90,7 @@ export class CreateBotPayload {
     description: 'dealStartCondition',
     enumName: 'DEAL_START_TYPE',
   })
-  dealStartCondition: string;
+  dealStartCondition: DEAL_START_TYPE;
 
   @ApiProperty({
     type: 'int',

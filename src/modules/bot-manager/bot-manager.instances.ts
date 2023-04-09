@@ -15,10 +15,6 @@ export class BotManagerInstances implements IBotManagerInstances {
 
   addRunningBot(id: string) {
     const bot = this.getBotById(id);
-    console.log(
-      '🚀 ~ file: bot-manager.service.ts:18 ~ BotManagerService ~ addRunningBot ~ bot:',
-      bot,
-    );
     if (bot) {
       return 'already running bot#' + id;
     } else {
@@ -28,6 +24,7 @@ export class BotManagerInstances implements IBotManagerInstances {
     }
     return 'add bot running #' + id;
   }
+
   stopBot(id: string) {
     const bot = this.getBotById(id);
 

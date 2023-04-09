@@ -1,0 +1,30 @@
+Note implements
+***Web hooks
+-start tw deal by symbol API
+-close deal at market price API
+
+***User account
+-create account API
+
+
+***Exchange 
+-create/update/delete exchange API
+
+
+***Bot manager 
+-create new bot API
+-start/stop/delete bot API
+-update Bot API
+
+
+***system 
+-initial pair by exchange 
+-restart all bot
+-stop all bot
+
+***botInstances process
+-place new deal
+-lookup a deal
+-close/cancel deal
+-start deal strategy
+
