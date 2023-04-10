@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BotTradingEntity } from '../entities/bot.entity';
-import { CreateBotPayload } from './dto/create-bot.payload';
 import { ExchangeService } from '../exchange/exchange.service';
 import { PairService } from '../pair/pair.service';
 import { mappingNewBot } from './bot-utils';
+import { CreateBotPayload } from './dto/create-bot.payload';
 
 @Injectable()
 export class BotManagerService {

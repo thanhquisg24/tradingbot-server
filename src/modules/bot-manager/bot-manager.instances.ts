@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { BotTrading } from './bot-trading';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 export interface IBotManagerInstances {
   botInstances: Map<string, BotTrading>;
@@ -9,6 +10,7 @@ export interface IBotManagerInstances {
 export class BotManagerInstances implements IBotManagerInstances {
   botInstances: Map<string, BotTrading> = new Map();
 
+  private readonly logger = new Logger(BotManagerInstances.name);
   getBotById(id: string) {
     return this.botInstances.get(id);
   }
@@ -19,7 +21,7 @@ export class BotManagerInstances implements IBotManagerInstances {
       return 'already running bot#' + id;
     } else {
       const newBot = new BotTrading(id);
-      newBot.executed();
+      newBot.start();
       this.botInstances.set(id, newBot);
     }
     return 'add bot running #' + id;
@@ -45,5 +47,13 @@ export class BotManagerInstances implements IBotManagerInstances {
     const bot = this.getBotById(id);
     if (bot) return bot;
     return 'bot not found';
+  }
+
+  @Cron(CronExpression.EVERY_10_SECONDS)
+  async handleCron() {
+    this.logger.debug('Called every 10 seconds');
+    this.botInstances.forEach((bot, key) => {
+      bot.watchPosition();
+    });
   }
 }
