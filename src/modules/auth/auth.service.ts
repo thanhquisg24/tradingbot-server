@@ -68,6 +68,7 @@ export class AuthService {
       email: user.email,
       userId: user.id,
       roles: user.roles,
+      telegramChatId: user.telegramChatId,
     };
   }
   async logout(userId: number) {

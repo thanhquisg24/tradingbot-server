@@ -11,11 +11,14 @@ import { BotTradingEntity } from '../entities/bot.entity';
 import { AutomapperModule } from '@automapper/nestjs';
 import { ExchangeEntity } from '../entities/exchange.entity';
 import { PairEntity } from '../entities/pair.entity';
+import { TelegramModule } from '../telegram/telegram.module';
+import { TelegramService } from '../telegram/telegram.service';
 
 @Module({
   imports: [
     ExchangeModule,
     PairModule,
+    TelegramModule,
     TypeOrmModule.forFeature([BotTradingEntity, ExchangeEntity, PairEntity]),
     AutomapperModule,
   ],
@@ -25,6 +28,7 @@ import { PairEntity } from '../entities/pair.entity';
     BotManagerService,
     ExchangeService,
     PairService,
+    TelegramService,
   ],
 })
 export class BotManagerModule {}

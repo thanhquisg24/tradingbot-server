@@ -1,4 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
 import dotenv from 'dotenv';
 dotenv.config();
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -20,4 +21,8 @@ export const decryptWithAES = (ciphertext) => {
   const bytes = CryptoJS.AES.decrypt(ciphertext, PASSPHRASE);
   const originalText = bytes.toString(CryptoJS.enc.Utf8);
   return originalText;
+};
+
+export const getNewUUid = () => {
+  return uuidv4();
 };

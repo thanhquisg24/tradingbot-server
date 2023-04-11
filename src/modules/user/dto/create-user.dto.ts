@@ -19,6 +19,12 @@ export class CreateUserDto {
   password: string;
 
   @ApiProperty({
+    required: true,
+  })
+  @IsNotBlankString()
+  telegramChatId: string;
+
+  @ApiProperty({
     required: false,
   })
   refreshtoken: string | null;

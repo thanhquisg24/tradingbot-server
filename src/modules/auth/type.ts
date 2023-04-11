@@ -6,6 +6,7 @@ export interface IUserLogged {
   refresh_token: string;
   email: string;
   userId: number;
+  telegramChatId: string;
   roles: ROLE[];
 }
 export type RequestWithUser = Request & { user: UserEntity };

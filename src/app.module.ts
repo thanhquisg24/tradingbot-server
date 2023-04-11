@@ -14,6 +14,7 @@ import { ExchangeModule } from './modules/exchange/exchange.module';
 import { UserModule } from './modules/user/user.module';
 import { PairModule } from './modules/pair/pair.module';
 import { SystemModule } from './modules/system/system.module';
+import { TelegramModule } from './modules/telegram/telegram.module';
 
 dotenv.config();
 // import entities from './config/typeorm.entities';
@@ -49,6 +50,7 @@ const ENV = process.env.NODE_ENV;
     BotManagerModule,
     PairModule,
     SystemModule,
+    TelegramModule,
   ],
   controllers: [AppController],
   providers: [AppService],

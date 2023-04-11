@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BotTrading } from './bot-trading';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { TEST_USER_ID, TelegramService } from '../telegram/telegram.service';
 
 export interface IBotManagerInstances {
   botInstances: Map<string, BotTrading>;
@@ -10,6 +11,7 @@ export interface IBotManagerInstances {
 export class BotManagerInstances implements IBotManagerInstances {
   botInstances: Map<string, BotTrading> = new Map();
 
+  constructor(private readonly telegramService: TelegramService) {}
   private readonly logger = new Logger(BotManagerInstances.name);
   getBotById(id: string) {
     return this.botInstances.get(id);
@@ -23,6 +25,10 @@ export class BotManagerInstances implements IBotManagerInstances {
       const newBot = new BotTrading(id);
       newBot.start();
       this.botInstances.set(id, newBot);
+      this.telegramService.sendMessageToUser(
+        TEST_USER_ID,
+        'add bot running #' + id,
+      );
     }
     return 'add bot running #' + id;
   }

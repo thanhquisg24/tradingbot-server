@@ -20,6 +20,9 @@ export class UserEntity {
   @Column({ length: 255, nullable: false })
   password: string;
 
+  @Column({ name: 'telegram_chat_id', length: 255, nullable: true })
+  telegramChatId: string;
+
   @Column({ name: 'refreshtoken', length: 255, nullable: true })
   refreshtoken: string;
 

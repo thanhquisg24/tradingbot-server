@@ -44,6 +44,7 @@
     "@nestjs/swagger": "^6.1.4",
     "@nestjs/typeorm": "^9.0.1",
     "@nestjsi/class-validator": "^0.2.2",
+    "@types/node-telegram-bot-api": "^0.61.6",
     "bcrypt": "^5.1.0",
     "binance-api-node": "^0.12.4",
     "ccxt": "^3.0.54",
@@ -54,6 +55,7 @@
     "fast-csv": "^4.3.6",
     "lodash": "^4.17.21",
     "moment": "^2.29.4",
+    "node-telegram-bot-api": "^0.61.0",
     "passport": "^0.6.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
@@ -63,7 +65,8 @@
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.0",
     "typeorm": "^0.3.12",
-    "typeorm-transactional": "^0.4.1"
+    "typeorm-transactional": "^0.4.1",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@automapper/types": "^6.3.1",
@@ -78,6 +81,7 @@
     "@types/passport-jwt": "^3.0.8",
     "@types/passport-local": "^1.0.35",
     "@types/supertest": "^2.0.11",
+    "@types/uuid": "^9.0.1",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
     "@typescript-eslint/parser": "^5.0.0",
     "eslint": "^8.0.1",
