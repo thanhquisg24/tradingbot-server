@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { BotTrading } from './bot-trading';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import { TEST_USER_ID, TelegramService } from '../telegram/telegram.service';
+import { BotTrading } from './bot-trading';
 
 export interface IBotManagerInstances {
   botInstances: Map<string, BotTrading>;
@@ -11,8 +10,8 @@ export interface IBotManagerInstances {
 export class BotManagerInstances implements IBotManagerInstances {
   botInstances: Map<string, BotTrading> = new Map();
 
-  constructor(private telegramService: TelegramService) {}
   private readonly logger = new Logger(BotManagerInstances.name);
+  constructor(private readonly telegramService: TelegramService) {}
   getBotById(id: string) {
     return this.botInstances.get(id);
   }
@@ -55,11 +54,11 @@ export class BotManagerInstances implements IBotManagerInstances {
     return 'bot not found';
   }
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
-  async handleCron() {
-    this.logger.debug('Called every 10 seconds');
-    this.botInstances.forEach((bot, key) => {
-      bot.watchPosition();
-    });
-  }
+  // @Cron(CronExpression.EVERY_10_SECONDS)
+  // async handleCron() {
+  //   this.logger.debug('Called every 10 seconds');
+  //   this.botInstances.forEach((bot, key) => {
+  //     bot.watchPosition();
+  //   });
+  // }
 }

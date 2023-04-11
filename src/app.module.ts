@@ -14,6 +14,7 @@ import { ExchangeModule } from './modules/exchange/exchange.module';
 import { UserModule } from './modules/user/user.module';
 import { PairModule } from './modules/pair/pair.module';
 import { SystemModule } from './modules/system/system.module';
+import { TelegrafModule } from 'nestjs-telegraf';
 import { TelegramModule } from './modules/telegram/telegram.module';
 
 dotenv.config();
@@ -30,6 +31,10 @@ const ENV = process.env.NODE_ENV;
     ScheduleModule.forRoot(),
     AutomapperModule.forRoot({
       strategyInitializer: classes(),
+    }),
+    TelegrafModule.forRoot({
+      token: '6201623216:AAHGqVwvqhdYMkwpL1spgORqWz4g8e8fg1s',
+      include: [TelegramModule],
     }),
     // TypeOrmModule.forRoot({
     //   type: 'mysql',
@@ -50,7 +55,6 @@ const ENV = process.env.NODE_ENV;
     BotManagerModule,
     PairModule,
     SystemModule,
-    TelegramModule,
   ],
   controllers: [AppController],
   providers: [AppService],
