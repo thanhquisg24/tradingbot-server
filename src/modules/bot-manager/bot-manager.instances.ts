@@ -11,7 +11,7 @@ export interface IBotManagerInstances {
 export class BotManagerInstances implements IBotManagerInstances {
   botInstances: Map<string, BotTrading> = new Map();
 
-  constructor(private readonly telegramService: TelegramService) {}
+  constructor(private telegramService: TelegramService) {}
   private readonly logger = new Logger(BotManagerInstances.name);
   getBotById(id: string) {
     return this.botInstances.get(id);

@@ -41,6 +41,7 @@ export class UserController {
       password: 'admin@!@3',
       refreshtoken: '',
       roles: [ROLE.ADMIN],
+      telegramChatId: '812358696',
     };
     const user: UserEntity & CreateUserDto = await this.userService.create(
       createUserDto,

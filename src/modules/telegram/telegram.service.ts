@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Scope } from '@nestjs/common';
 import TelegramBot from 'node-telegram-bot-api'; // works after installing types
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
