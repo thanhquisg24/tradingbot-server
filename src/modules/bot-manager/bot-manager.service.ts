@@ -6,6 +6,7 @@ import { ExchangeService } from '../exchange/exchange.service';
 import { PairService } from '../pair/pair.service';
 import { mappingNewBot } from './bot-utils';
 import { CreateBotPayload } from './dto/create-bot.payload';
+import { BotPairsPayload } from './dto/update-bot.dto';
 
 @Injectable()
 export class BotManagerService {
@@ -25,6 +26,20 @@ export class BotManagerService {
     const pairs = await this.pairService.findByIds(payload.listPair);
     const newBot = mappingNewBot(payload, exchange, pairs);
     return this.create(newBot);
+  }
+
+  async updateBotPairs(userId: number, pairPayload: BotPairsPayload) {
+    const entity: BotTradingEntity = await this.repo.findOne({
+      where: {
+        id: pairPayload.id,
+        userId,
+      },
+    });
+    if (entity) {
+      const listPair = await this.pairService.findByIds(pairPayload.pairs);
+      return this.repo.update(entity.id, { pairs: listPair });
+    }
+    throw new Error('Not Found Bot #' + pairPayload.id);
   }
 
   async findAll() {

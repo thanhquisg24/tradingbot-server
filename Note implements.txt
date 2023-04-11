@@ -27,4 +27,5 @@ Note implements
 -lookup a deal
 -close/cancel deal
 -start deal strategy
+-calculateBuyOrders 
 

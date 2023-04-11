@@ -14,6 +14,7 @@ import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RequestWithUser } from '../auth/type';
 import { BotManagerService } from './bot-manager.service';
 import { CreateBotPayload } from './dto/create-bot.payload';
+import { BotPairsPayload } from './dto/update-bot.dto';
 
 @Controller('api/v1/bot-manager')
 @ApiTags('Bot Manager APIs')
@@ -24,6 +25,9 @@ export class BotManagerController {
   ) {}
 
   private logger = new Logger(BotManagerController.name);
+
+  // checkUser(req: RequestWithUser,userId:)
+
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Post('/create-new-bot')
@@ -36,6 +40,16 @@ export class BotManagerController {
     }
     this.logger.debug(JSON.stringify(createBotPayload));
     return this.service.createWithPayload(createBotPayload);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Post('/update-bot-pair')
+  updateBotPairs(
+    @Request() req: RequestWithUser,
+    @Body() pairPayload: BotPairsPayload,
+  ) {
+    return this.service.updateBotPairs(req.user.id, pairPayload);
   }
 
   @Get('/addRunningBot/:id')

@@ -10,3 +10,20 @@ export class UpdateBotDto extends PartialType(CreateBotDto) {
   @IsNotNull()
   id: number;
 }
+
+export class BotPairsPayload {
+  @ApiProperty({
+    required: true,
+    description: 'id',
+  })
+  @IsNotNull()
+  id: number;
+
+  @ApiProperty({
+    required: true,
+    description: 'pairs',
+    isArray: true,
+    example: [1, 2, 3],
+  })
+  pairs: number[];
+}
