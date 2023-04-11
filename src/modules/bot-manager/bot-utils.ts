@@ -14,6 +14,8 @@ export function mappingNewBot(
   newBot.dealStartCondition = payload.dealStartCondition;
   newBot.exchange = exchange;
   newBot.id = null;
+  newBot.baseOrderSize = payload.baseOrderSize;
+  newBot.safetyOrderSize = payload.safetyOrderSize;
   newBot.maxActiveDeal = payload.maxActiveDeal;
   newBot.maxActiveSafetyTradesCount = payload.maxActiveSafetyTradesCount;
   newBot.maxSafetyTradesCount = payload.maxSafetyTradesCount;

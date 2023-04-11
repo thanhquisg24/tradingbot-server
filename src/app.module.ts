@@ -20,7 +20,7 @@ import { TelegramModule } from './modules/telegram/telegram.module';
 dotenv.config();
 // import entities from './config/typeorm.entities';
 const ENV = process.env.NODE_ENV;
-
+const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -33,7 +33,7 @@ const ENV = process.env.NODE_ENV;
       strategyInitializer: classes(),
     }),
     TelegrafModule.forRoot({
-      token: '6201623216:AAHGqVwvqhdYMkwpL1spgORqWz4g8e8fg1s',
+      token: TELEGRAM_TOKEN,
       include: [TelegramModule],
     }),
     // TypeOrmModule.forRoot({

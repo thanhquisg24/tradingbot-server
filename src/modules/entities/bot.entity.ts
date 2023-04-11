@@ -78,6 +78,24 @@ export class BotTradingEntity {
   dealStartCondition: DEAL_START_TYPE;
 
   @Column({
+    name: 'base_order_size',
+    type: 'decimal',
+    precision: 20,
+    scale: 10,
+    nullable: true,
+  })
+  baseOrderSize: number;
+
+  @Column({
+    name: 'safety_order_size',
+    type: 'decimal',
+    precision: 20,
+    scale: 10,
+    nullable: true,
+  })
+  safetyOrderSize: number;
+
+  @Column({
     name: 'target_profit_percentage',
     type: 'decimal',
     precision: 5,

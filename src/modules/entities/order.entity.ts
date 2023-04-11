@@ -9,6 +9,7 @@ import {
 import { DealEntity } from './deal.entity';
 
 export interface BuyOrder {
+  pair: string;
   sequence: number;
   deviation: number;
   volume: number;
@@ -32,6 +33,9 @@ export enum CLIENT_ORDER_TYPE {
 export class OrderEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column({ length: 16 })
+  pair: string;
 
   @Column({ name: 'user_id', type: 'int', nullable: true })
   userId: number;

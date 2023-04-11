@@ -93,6 +93,32 @@ export class CreateBotPayload {
   dealStartCondition: DEAL_START_TYPE;
 
   @ApiProperty({
+    type: 'number',
+    required: true,
+    example: 1,
+    default: 1,
+    description: 'baseOrderSize',
+  })
+  @MinMaxPct(
+    0, // number
+    1000000, // number
+  )
+  baseOrderSize: number;
+
+  @ApiProperty({
+    type: 'number',
+    required: true,
+    example: 1,
+    default: 1,
+    description: 'baseOrderSize',
+  })
+  @MinMaxPct(
+    0, // number
+    1000000, // number
+  )
+  safetyOrderSize: number;
+
+  @ApiProperty({
     type: 'int',
     required: true,
     example: 1,
