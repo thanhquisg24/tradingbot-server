@@ -32,7 +32,7 @@ export function calcPriceByDevation(
   return currentPrice.multipliedBy(new BigNumber(1).plus(deviation));
 }
 
-export const calculateBuyOrders = (
+export const calculateBuyDCAOrders = (
   symbol: string,
   currentPrice: BigNumber,
   config: BotTradingEntity,

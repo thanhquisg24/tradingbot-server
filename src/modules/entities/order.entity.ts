@@ -1,4 +1,4 @@
-import { OrderSide, OrderStatus } from 'binance-api-node';
+import { OrderSide, OrderStatus, OrderStatus_LT } from 'binance-api-node';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -132,7 +132,7 @@ export class OrderEntity {
   totalQuantity: string;
 
   @Column({ length: 16 })
-  status: 'CREATED' | OrderStatus;
+  status: 'CREATED' | OrderStatus_LT;
 
   @ManyToOne(() => DealEntity)
   @JoinColumn({ name: 'deal_id', referencedColumnName: 'id' })
