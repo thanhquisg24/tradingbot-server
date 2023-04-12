@@ -24,6 +24,8 @@ export class DCABot extends BaseBotTrading {
         order.status === OrderStatus.NEW ||
         order.status === OrderStatus.PARTIALLY_FILLED
       ) {
+        this.logger.debug(JSON.stringify(order));
+        this.logger.debug(JSON.stringify(binanceUSDM));
         const exchangeOrder = await binanceUSDM.fetchOrder(
           order.binanceOrderId,
           order.pair,

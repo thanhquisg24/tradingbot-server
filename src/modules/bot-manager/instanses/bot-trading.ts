@@ -45,15 +45,15 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
 
   _exchangeRemote: AbstractExchangeAPI;
 
-  private isRunning: boolean;
+  protected isRunning: boolean;
 
-  private readonly dealRepo: Repository<DealEntity>;
+  protected readonly dealRepo: Repository<DealEntity>;
 
-  private readonly orderRepo: Repository<OrderEntity>;
+  protected readonly orderRepo: Repository<OrderEntity>;
 
-  private readonly telegramService: TelegramService;
+  protected readonly telegramService: TelegramService;
 
-  private logger: Logger;
+  protected logger: Logger;
 
   constructor(
     config: BotTradingEntity,
