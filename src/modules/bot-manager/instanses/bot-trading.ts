@@ -131,7 +131,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         );
 
       this.logger.log(
-        `${order.id}/${order.binanceOrderId}: New ${order.side} order has been placed`,
+        `${order.id}/${newOrder.id}: New ${order.side} order has been placed`,
       );
       return newOrder.info;
     } catch (err) {

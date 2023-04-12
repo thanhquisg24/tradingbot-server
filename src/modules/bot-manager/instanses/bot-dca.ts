@@ -24,8 +24,8 @@ export class DCABot extends BaseBotTrading {
         order.status === OrderStatus.NEW ||
         order.status === OrderStatus.PARTIALLY_FILLED
       ) {
-        this.logger.debug(JSON.stringify(order));
-        this.logger.debug(JSON.stringify(binanceUSDM));
+        // this.logger.debug(JSON.stringify(order));
+        // this.logger.debug(JSON.stringify(binanceUSDM));
         const exchangeOrder = await binanceUSDM.fetchOrder(
           order.binanceOrderId,
           order.pair,
@@ -38,9 +38,13 @@ export class DCABot extends BaseBotTrading {
   }
 
   async processActivePosition(activeDeals: DealEntity[]) {
-    for (let index = 0; index < activeDeals.length; index++) {
-      const deal = activeDeals[index];
-      await this.processExchangeDeal(deal);
+    try {
+      for (let index = 0; index < activeDeals.length; index++) {
+        const deal = activeDeals[index];
+        await this.processExchangeDeal(deal);
+      }
+    } catch (ex) {
+      return;
     }
   }
 }
