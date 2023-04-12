@@ -14,6 +14,10 @@ export class TelegramService {
   }
 
   sendMessageToUser = (userId: string, message: string) => {
-    this.bot.telegram.sendMessage(userId, message);
+    try {
+      this.bot.telegram.sendMessage(userId, message);
+    } catch (ex) {
+      console.log("Can't not send Msg Via telegram Bot");
+    }
   };
 }

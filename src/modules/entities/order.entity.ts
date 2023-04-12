@@ -20,6 +20,28 @@ export interface BuyOrder {
   totalVolume: number;
   exitPrice: number;
 }
+export function createOrderEntity(buyOrder: BuyOrder, deal: DealEntity) {
+  const order = new OrderEntity();
+  order.pair = buyOrder.pair;
+  order.clientOrderType =
+    buyOrder.sequence > 0 ? CLIENT_ORDER_TYPE.SAFETY : CLIENT_ORDER_TYPE.BASE;
+  order.sequence = buyOrder.sequence;
+  order.volume = buyOrder.volume;
+  order.deviation = buyOrder.deviation;
+  order.side = OrderSide.BUY;
+  order.price = buyOrder.price;
+  order.quantity = buyOrder.quantity;
+  order.totalQuantity = buyOrder.totalQuantity;
+  order.averagePrice = buyOrder.averagePrice;
+  order.exitPrice = buyOrder.exitPrice;
+  order.status = 'CREATED';
+  order.deal = deal;
+
+  order.botId = deal.botId;
+  order.exchangeId = deal.exchangeId;
+  order.userId = deal.userId;
+  return order;
+}
 
 export enum CLIENT_ORDER_TYPE {
   BASE = 'BASE',
@@ -65,14 +87,14 @@ export class OrderEntity {
     scale: 2,
     nullable: true,
   })
-  deviation: string;
+  deviation: number;
 
   // BUY or SELL
   @Column({ length: 4 })
   side: OrderSide;
 
   @Column({ length: 32 })
-  price: string;
+  price: number;
 
   @Column({
     name: 'filled_price',
@@ -81,7 +103,7 @@ export class OrderEntity {
     scale: 10,
     nullable: true,
   })
-  filledPrice: string;
+  filledPrice: number;
 
   @Column({
     name: 'average_price',
@@ -90,7 +112,7 @@ export class OrderEntity {
     scale: 10,
     nullable: true,
   })
-  averagePrice: string;
+  averagePrice: number;
 
   @Column({
     name: 'exit_price',
@@ -99,7 +121,7 @@ export class OrderEntity {
     scale: 10,
     nullable: true,
   })
-  exitPrice: string;
+  exitPrice: number;
 
   @Column({ length: 255, nullable: true })
   binanceOrderId: string;
@@ -111,7 +133,7 @@ export class OrderEntity {
     scale: 10,
     nullable: true,
   })
-  quantity: string;
+  quantity: number;
 
   @Column({
     name: 'volume',
@@ -120,7 +142,7 @@ export class OrderEntity {
     scale: 10,
     nullable: true,
   })
-  volume: string;
+  volume: number;
 
   @Column({
     name: 'total_quantity',
@@ -129,7 +151,7 @@ export class OrderEntity {
     scale: 10,
     nullable: true,
   })
-  totalQuantity: string;
+  totalQuantity: number;
 
   @Column({ length: 16 })
   status: 'CREATED' | OrderStatus_LT;

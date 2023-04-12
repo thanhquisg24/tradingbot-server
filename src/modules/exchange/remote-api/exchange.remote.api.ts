@@ -19,7 +19,6 @@ export class BinanceUSDMApi extends AbstractExchangeAPI {
       apiKey,
       secret: apiSerect,
     });
-
     this.exchange_remote.setSandboxMode(isDemo);
   }
 

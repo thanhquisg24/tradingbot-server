@@ -10,8 +10,9 @@ export enum TVActionType {
 export interface ITVPayload {
   botId: number;
   pair: string;
-  emailToken: string;
+  userId: number;
   action: TVActionType;
+  price: number;
 }
 
 export class TVPayload implements ITVPayload {
@@ -48,16 +49,14 @@ export class TVPayload implements ITVPayload {
   pair: string;
 
   @AutoMap()
-  @IsNotBlankString()
+  @IsPositiveInt()
   @ApiProperty({
     required: true,
-    example: '23232fcffdssdds345345',
-    description: 'emailToken',
+    example: 1,
+    description: 'userId',
   })
-  emailToken: string;
-}
+  userId: number;
 
-export class StartDealTVPayload extends TVPayload {
   @AutoMap()
   @ApiProperty({
     required: true,

@@ -11,10 +11,16 @@ import {
   BotTradingEntity,
   DEAL_START_TYPE,
 } from 'src/modules/entities/bot.entity';
-import { DEAL_STATUS, DealEntity } from 'src/modules/entities/deal.entity';
 import {
+  CLIENT_DEAL_TYPE,
+  DEAL_STATUS,
+  DealEntity,
+} from 'src/modules/entities/deal.entity';
+import {
+  BuyOrder,
   CLIENT_ORDER_TYPE,
   OrderEntity,
+  createOrderEntity,
 } from 'src/modules/entities/order.entity';
 import {
   AbstractExchangeAPI,
@@ -22,6 +28,8 @@ import {
 } from 'src/modules/exchange/remote-api/exchange.remote.api';
 import { TelegramService } from 'src/modules/telegram/telegram.service';
 import { Repository } from 'typeorm';
+import { calculateBuyDCAOrders } from './bot-utils-calc';
+import { ITVPayload, TVActionType } from '../dto/deal-tv.payload';
 
 interface IBaseBotTrading {
   botConfig: BotTradingEntity;
@@ -64,6 +72,13 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       );
     }
   }
+  private async checkMaxActiveDeal() {
+    const countActiveDeal = await this.dealRepo.countBy({
+      status: DEAL_STATUS.ACTIVE,
+      botId: this.botConfig.id,
+    });
+    return countActiveDeal < this.botConfig.maxActiveDeal;
+  }
   private async placeBinanceOrder(
     order: OrderEntity,
   ): Promise<BinanceOrder | undefined> {
@@ -97,6 +112,9 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       const side = order.side;
       const quantity = order.quantity;
       const price = order.price;
+      this._exchangeRemote
+        .getCcxtExchange()
+        .setLeverage(10, symbol, { marginMode: 'cross' });
       const newOrder = await this._exchangeRemote
         .getCcxtExchange()
         .createOrder(
@@ -173,6 +191,103 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     });
   }
 
+  private async createDeal(buyOrders: BuyOrder[]): Promise<DealEntity> {
+    const deal = new DealEntity();
+    deal.userId = this.botConfig.userId;
+    deal.botId = this.botConfig.id;
+    deal.exchangeId = this.botConfig.exchange.id;
+    deal.clientDealType = CLIENT_DEAL_TYPE.DCA;
+    deal.pair = buyOrders[0].pair;
+    deal.baseOrderSize = this.botConfig.baseOrderSize;
+    deal.safetyOrderSize = this.botConfig.safetyOrderSize;
+    deal.strategyDirection = this.botConfig.strategyDirection;
+    deal.startOrderType = OrderType.LIMIT;
+    deal.dealStartCondition = this.botConfig.dealStartCondition;
+    deal.targetProfitPercentage = this.botConfig.targetProfitPercentage;
+    deal.targetStopLossPercentage = this.botConfig.targetStopLossPercentage;
+    deal.maxSafetyTradesCount = this.botConfig.maxSafetyTradesCount;
+    deal.maxActiveSafetyTradesCount = this.botConfig.maxActiveSafetyTradesCount;
+    deal.priceDeviationPercentage = this.botConfig.priceDeviationPercentage;
+    deal.safetyOrderVolumeScale = this.botConfig.safetyOrderVolumeScale;
+    deal.safetyOrderStepScale = this.botConfig.safetyOrderStepScale;
+    deal.status = DEAL_STATUS.CREATED;
+    deal.startAt = new Date();
+    await this.dealRepo.save(deal);
+    for (const buyOrder of buyOrders) {
+      const order = createOrderEntity(buyOrder, deal);
+      await this.orderRepo.save(order);
+    }
+    return deal;
+  }
+  private createBuyOrder(symbol: string, currentPrice: BigNumber) {
+    return calculateBuyDCAOrders(
+      symbol,
+      currentPrice,
+      this.botConfig,
+      this._exchangeRemote.getCcxtExchange(),
+    );
+  }
+  private async createAndPlaceBaseOrder(
+    symbol: string,
+    currentPrice: BigNumber,
+  ) {
+    try {
+      const buyOrders = this.createBuyOrder(symbol, currentPrice);
+      const newDealEntity = await this.createDeal(buyOrders);
+      const baseOrderEntity = newDealEntity.orders.find(
+        (o) =>
+          o.side === 'BUY' &&
+          o.status === 'CREATED' &&
+          o.clientOrderType === CLIENT_ORDER_TYPE.BASE,
+      );
+      if (baseOrderEntity) {
+        const binanceSafety = await this.placeBinanceOrder(baseOrderEntity);
+        baseOrderEntity.status = OrderStatus.NEW;
+        baseOrderEntity.binanceOrderId = `${binanceSafety.orderId}`;
+        await this.orderRepo.save(baseOrderEntity);
+        this.sendMsgTelegram(
+          `${baseOrderEntity.pair}/${baseOrderEntity.binanceOrderId}: Started a new Base Order. Price: ${baseOrderEntity.price}, Amount: ${baseOrderEntity.quantity}`,
+        );
+        await this.dealRepo.update(newDealEntity.id, {
+          status: DEAL_STATUS.ACTIVE,
+        });
+      }
+    } catch (ex) {
+      this.logger.error(`${symbol}: Placing base Order error! ${ex.message}`);
+      this.sendMsgTelegram(`${symbol}: Placing base Order error!`);
+    }
+  }
+
+  async processTvAction(tv: ITVPayload): Promise<void> {
+    if (tv.userId !== this.botConfig.userId) {
+      this.sendMsgTelegram('User is not valid :' + JSON.stringify(tv));
+      return;
+    }
+    if (tv.botId !== this.botConfig.id) {
+      this.sendMsgTelegram('Bot is not valid :' + JSON.stringify(tv));
+      return;
+    }
+    const existingPair = this.botConfig.pairs.find(
+      (o) => o.exchangePair === tv.pair,
+    );
+    if (!existingPair) {
+      this.sendMsgTelegram('Pair is not valid :' + JSON.stringify(tv));
+      return;
+    }
+    const isValidMaxDeal = await this.checkMaxActiveDeal();
+    if (isValidMaxDeal === false) {
+      return;
+    }
+    switch (tv.action) {
+      case TVActionType.OPEN_DEAL:
+        await this.createAndPlaceBaseOrder(tv.pair, new BigNumber(tv.price));
+        break;
+      default:
+        break;
+    }
+    return;
+  }
+
   async refreshDealOnOrderUpdate(
     deal: DealEntity,
     executionReportEvt: BinanceOrder,
@@ -206,7 +321,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             currentOrder.status = OrderStatus.NEW;
             await this.orderRepo.save(currentOrder);
             this.logger.log(
-              `${clientOrderId}/${currentOrder.binanceOrderId}: NEW buy order. Price: ${price}, Amount: ${currentOrder.quantity}`,
+              `${currentOrder.pair}/${currentOrder.binanceOrderId}: NEW buy order. Price: ${price}, Amount: ${currentOrder.quantity}`,
             );
           }
           break;
@@ -226,10 +341,10 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
 
             currentOrder.binanceOrderId = `${orderId}`;
             currentOrder.status = OrderStatus.FILLED;
-            currentOrder.filledPrice = price;
+            currentOrder.filledPrice = Number(price);
             await this.orderRepo.save(currentOrder);
             this.logger.log(
-              `${clientOrderId}/${currentOrder.binanceOrderId}: Buy order ${currentOrder.side} has been FILLED. Price: ${price}, Amount: ${currentOrder.quantity}`,
+              `${currentOrder.pair}/${currentOrder.binanceOrderId}: Buy order ${currentOrder.side} has been FILLED. Price: ${price}, Amount: ${currentOrder.quantity}`,
             );
             // Cancel existing sell order (if any)
             // and create a new take-profit order
@@ -243,7 +358,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             newSellOrder.quantity = currentOrder.totalQuantity;
             newSellOrder.volume = new BigNumber(currentOrder.exitPrice)
               .multipliedBy(currentOrder.totalQuantity)
-              .toFixed();
+              .toNumber();
             newSellOrder.sequence = 1000 + currentOrder.sequence;
             newSellOrder.botId = this.botConfig.id;
             newSellOrder.exchangeId = this.botConfig.exchange.id;
@@ -258,7 +373,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
               newSellOrder.binanceOrderId = `${bSellOrder.orderId}`;
               newSellOrder = await this.orderRepo.save(newSellOrder);
               this.logger.log(
-                `${newSellOrder.id}/${newSellOrder.binanceOrderId}: Place new Take Profit Order. Price: ${newSellOrder.price}, Amount: ${newSellOrder.quantity}`,
+                `${newSellOrder.pair}/${newSellOrder.binanceOrderId}: Place new Take Profit Order. Price: ${newSellOrder.price}, Amount: ${newSellOrder.quantity}`,
               );
             }
             const nextsafety = deal.orders.find(
@@ -273,7 +388,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
               nextsafety.binanceOrderId = `${binanceSafety.orderId}`;
               await this.orderRepo.save(nextsafety);
               this.logger.log(
-                `${nextsafety.id}/${nextsafety.binanceOrderId}: Place new Safety Order. Price: ${nextsafety.price}, Amount: ${nextsafety.quantity}`,
+                `${nextsafety.pair}/${nextsafety.binanceOrderId}: Place new Safety Order. Price: ${nextsafety.price}, Amount: ${nextsafety.quantity}`,
               );
             }
           }
@@ -286,7 +401,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
           currentOrder.status = orderStatus;
           await this.orderRepo.save(currentOrder);
           this.logger.log(
-            `${clientOrderId}/${currentOrder.binanceOrderId}: Buy order is ${orderStatus}. Price: ${price}, Amount: ${currentOrder.quantity}`,
+            `${currentOrder.pair}/${currentOrder.binanceOrderId}: Buy order is ${orderStatus}. Price: ${price}, Amount: ${currentOrder.quantity}`,
           );
           break;
 
@@ -298,7 +413,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       currentOrder.binanceOrderId = `${orderId}`;
       await this.orderRepo.save(currentOrder);
       this.logger.log(
-        `${clientOrderId}/${currentOrder.binanceOrderId}: Sell order is ${orderStatus}. Price: ${price}, Amount: ${currentOrder.quantity}`,
+        `${currentOrder.pair}/${currentOrder.binanceOrderId}: Sell order is ${orderStatus}. Price: ${price}, Amount: ${currentOrder.quantity}`,
       );
 
       if (orderStatus === 'FILLED') {
@@ -371,14 +486,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
 
   startDealASAP(existDeals: DealEntity[]) {
     const pairStartTrade = [];
-    for (let index = 0; index < this.botConfig.pairs.length; index++) {
-      const element = array[index];
-    }
-    const prev = this.botConfig.pairs;
-    const next = [{ id: 1 }, { id: 2 }, { id: 4 }];
-
-    const diff = _.differenceBy(prev, next, 'id');
-    console.log(diff);
   }
+
   abstract processActivePosition(activeDeals: DealEntity[]);
 }

@@ -78,7 +78,7 @@ export class DealEntity {
     scale: 10,
     nullable: true,
   })
-  baseOrderSize: string;
+  baseOrderSize: number;
 
   @Column({
     name: 'safety_order_size',
@@ -87,7 +87,7 @@ export class DealEntity {
     scale: 10,
     nullable: true,
   })
-  safetyOrderSize: string;
+  safetyOrderSize: number;
 
   @Column({
     name: 'direction',
