@@ -1,9 +1,7 @@
 import { AutomapperModule } from '@automapper/nestjs';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { BotTradingEntity } from '../entities/bot.entity';
-import { ExchangeEntity } from '../entities/exchange.entity';
-import { PairEntity } from '../entities/pair.entity';
+import entities from 'src/config/typeorm.entities';
 import { ExchangeModule } from '../exchange/exchange.module';
 import { ExchangeService } from '../exchange/exchange.service';
 import { PairModule } from '../pair/pair.module';
@@ -17,7 +15,7 @@ import { BotManagerService } from './bot-manager.service';
   imports: [
     ExchangeModule,
     PairModule,
-    TypeOrmModule.forFeature([BotTradingEntity, ExchangeEntity, PairEntity]),
+    TypeOrmModule.forFeature(entities),
     AutomapperModule,
   ],
   controllers: [BotManagerController],

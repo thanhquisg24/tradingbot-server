@@ -7,6 +7,7 @@ import { PairService } from '../pair/pair.service';
 import { mappingNewBot } from './bot-utils';
 import { CreateBotPayload } from './dto/create-bot.payload';
 import { BotPairsPayload } from './dto/update-bot.dto';
+import { COMMON_STATUS } from 'src/common/constants';
 
 @Injectable()
 export class BotManagerService {
@@ -40,6 +41,10 @@ export class BotManagerService {
       return this.repo.update(entity.id, { pairs: listPair });
     }
     throw new Error('Not Found Bot #' + pairPayload.id);
+  }
+
+  async updateStatus(id: number, status: COMMON_STATUS) {
+    return await this.repo.update(id, { status });
   }
 
   async findAll() {

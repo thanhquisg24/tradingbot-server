@@ -34,6 +34,10 @@ import { ITVPayload, TVActionType } from '../dto/deal-tv.payload';
 interface IBaseBotTrading {
   botConfig: BotTradingEntity;
   _exchangeRemote: AbstractExchangeAPI;
+  watchPosition(): Promise<void>;
+  updateConfig(partConfig: Partial<BotTradingEntity>): void;
+  start(): Promise<boolean>;
+  stop(): void;
 }
 
 export abstract class BaseBotTrading implements IBaseBotTrading {

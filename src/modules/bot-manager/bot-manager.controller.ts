@@ -53,22 +53,22 @@ export class BotManagerController {
   }
 
   @Get('/addRunningBot/:id')
-  addRunningBot(@Param('id') id: string) {
+  addRunningBot(@Param('id') id: number) {
     return this.instanses.addRunningBot(id);
   }
 
   @Get('/stopBot/:id')
-  stopBot(@Param('id') id: string) {
-    return this.instanses.stopBot(id);
+  stopBot(@Param('id') id: number) {
+    return this.instanses.stopBotIns(id);
   }
 
   @Get()
   findAll() {
-    return this.instanses.findAll();
+    return this.instanses.getAllRunning();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.instanses.findOne(id);
+  findOne(@Param('id') id: number) {
+    return this.instanses.getRunningBotById(id);
   }
 }

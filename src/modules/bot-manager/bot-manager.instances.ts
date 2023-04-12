@@ -1,64 +1,81 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { TEST_USER_ID, TelegramService } from '../telegram/telegram.service';
-import { BotTrading } from './bot-trading';
+import { TelegramService } from '../telegram/telegram.service';
+import { BotManagerService } from './bot-manager.service';
+import { DealEntity } from '../entities/deal.entity';
+import { Repository } from 'typeorm';
+import { OrderEntity } from '../entities/order.entity';
+import { BotFactory } from './instanses/bot-factory';
+import { BaseBotTrading } from './instanses/bot-trading';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { COMMON_STATUS } from 'src/common/constants';
 
 export interface IBotManagerInstances {
-  botInstances: Map<string, BotTrading>;
+  botInstances: Map<number, BaseBotTrading>;
 }
 
 @Injectable()
 export class BotManagerInstances implements IBotManagerInstances {
-  botInstances: Map<string, BotTrading> = new Map();
+  botInstances: Map<number, BaseBotTrading> = new Map();
 
   private readonly logger = new Logger(BotManagerInstances.name);
-  constructor(private readonly telegramService: TelegramService) {}
-  getBotById(id: string) {
+  constructor(
+    private readonly botManagerService: BotManagerService,
+    private readonly dealRepo: Repository<DealEntity>,
+    private readonly orderRepo: Repository<OrderEntity>,
+    private readonly telegramService: TelegramService,
+  ) {}
+  getBotById(id: number) {
     return this.botInstances.get(id);
   }
 
-  addRunningBot(id: string) {
+  async addRunningBot(id: number) {
     const bot = this.getBotById(id);
     if (bot) {
       return 'already running bot#' + id;
-    } else {
-      const newBot = new BotTrading(id);
+    }
+    const botConfig = await this.botManagerService.findOne(id);
+    if (botConfig) {
+      const newBot = BotFactory.createBot(
+        botConfig,
+        this.dealRepo,
+        this.orderRepo,
+        this.telegramService,
+      );
       newBot.start();
       this.botInstances.set(id, newBot);
-      this.telegramService.sendMessageToUser(
-        TEST_USER_ID,
-        'add bot running #' + id,
-      );
+      await this.botManagerService.updateStatus(id, COMMON_STATUS.ACTIVE);
     }
     return 'add bot running #' + id;
   }
 
-  stopBot(id: string) {
+  async stopBotIns(id: number) {
     const bot = this.getBotById(id);
 
     if (bot) {
       bot.stop();
       this.botInstances.delete(id);
+      await this.botManagerService.updateStatus(id, COMMON_STATUS.DISABLED);
       return 'stop bot #' + id;
     }
     return 'bot not found';
   }
 
-  findAll() {
+  getAllRunning() {
     const obj = Object.fromEntries(this.botInstances);
     return obj;
   }
 
-  findOne(id: string) {
+  getRunningBotById(id: number) {
     const bot = this.getBotById(id);
     if (bot) return bot;
     return 'bot not found';
   }
 
-  // @Cron(CronExpression.EVERY_10_SECONDS)
-  // async handleCron() {
-  //   this.logger.debug('Called every 10 seconds');
-  //   this.botInstances.forEach((bot, key) => {
-  //     bot.watchPosition();
-  //   });
-  // }
+  @Cron(CronExpression.EVERY_10_SECONDS)
+  async handleCron() {
+    this.logger.debug('Called every 10 seconds');
+    this.botInstances.forEach((bot, key) => {
+      bot.watchPosition();
+    });
+  }
 }
