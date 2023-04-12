@@ -477,15 +477,33 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
   async watchPosition() {
     const deals = await this.getActiveDeals();
     if (this.isRunning) {
-      this.processActivePosition(deals);
+      await this.processActivePosition(deals);
     }
     if (this.botConfig.dealStartCondition === DEAL_START_TYPE.ASAP) {
-      this.startDealASAP(deals);
+      await this.startDealASAP(deals);
     }
   }
 
-  startDealASAP(existDeals: DealEntity[]) {
-    const pairStartTrade = [];
+  private async startDealASAP(existDeals: DealEntity[]): Promise<void> {
+    let pairNeedStart: string[] = [];
+    const existExchangePair: any = existDeals.reduce((store, cur) => {
+      return (store = { ...store, [cur.pair]: cur.pair });
+    }, {});
+    for (let index = 0; index < this.botConfig.pairs.length; index++) {
+      const botPair = this.botConfig.pairs[index];
+      if (!existExchangePair[botPair.exchangePair]) {
+        pairNeedStart.push(botPair.exchangePair);
+      }
+    }
+    for (let i = 0; i < pairNeedStart.length; i++) {
+      const pairItem = pairNeedStart[i];
+      const binanceUSDM = this._exchangeRemote.getCcxtExchange();
+      const ticker = await binanceUSDM.fetchTicker(pairItem);
+      const lastPrice = ticker.last;
+      if (lastPrice) {
+        await this.createAndPlaceBaseOrder(pairItem, new BigNumber(lastPrice));
+      }
+    }
   }
 
   abstract processActivePosition(activeDeals: DealEntity[]);
