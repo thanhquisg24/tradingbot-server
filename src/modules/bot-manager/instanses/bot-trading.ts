@@ -369,6 +369,16 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     }
   }
 
-  startDealASAP(existDeals: DealEntity[]) {}
+  startDealASAP(existDeals: DealEntity[]) {
+    const pairStartTrade = [];
+    for (let index = 0; index < this.botConfig.pairs.length; index++) {
+      const element = array[index];
+    }
+    const prev = this.botConfig.pairs;
+    const next = [{ id: 1 }, { id: 2 }, { id: 4 }];
+
+    const diff = _.differenceBy(prev, next, 'id');
+    console.log(diff);
+  }
   abstract processActivePosition(activeDeals: DealEntity[]);
 }
