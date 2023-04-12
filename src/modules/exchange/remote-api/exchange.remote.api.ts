@@ -2,7 +2,7 @@ import ccxt, { Exchange } from 'ccxt';
 import { ExchangesEnum } from 'src/modules/entities/exchange.entity';
 
 export abstract class AbstractExchangeAPI {
-  abstract exchange_remote: Exchange;
+  exchange_remote: Exchange;
   getCcxtExchange() {
     return this.exchange_remote;
   }
@@ -10,8 +10,6 @@ export abstract class AbstractExchangeAPI {
 }
 
 export class BinanceUSDMApi extends AbstractExchangeAPI {
-  exchange_remote: Exchange;
-
   constructor(apiKey: string, apiSerect: string, isDemo: boolean) {
     super();
     this.exchange_remote = new ccxt.binanceusdm({

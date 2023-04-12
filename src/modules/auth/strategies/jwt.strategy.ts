@@ -19,6 +19,7 @@ export class JsonWebTokenStrategy extends PassportStrategy(Strategy, 'jwt') {
       email: payload.email,
       id: payload.id,
       roles: payload.roles,
+      telegramChatId: payload.telegramChatId,
     };
   }
 }

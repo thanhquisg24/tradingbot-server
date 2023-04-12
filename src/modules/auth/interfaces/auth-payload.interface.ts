@@ -5,4 +5,5 @@ export interface AuthPayload {
   name: null | string;
   email: string;
   roles: ROLE[];
+  telegramChatId: string;
 }

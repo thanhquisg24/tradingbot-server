@@ -61,6 +61,7 @@ export class AuthService {
       email: user.email,
       id: user.id,
       roles: user.roles,
+      telegramChatId: user.telegramChatId,
     };
     return {
       access_token: this.jwtService.sign(payload),

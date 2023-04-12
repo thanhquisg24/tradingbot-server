@@ -17,6 +17,7 @@ import { UserService } from './user.service';
 import { RequestWithUser } from '../auth/type';
 import { encryptWithAES } from 'src/common/utils/hash-util';
 import { HasRoles } from 'src/common/decorators/has-roles.decorator';
+import { RolesGuard } from 'src/common/guards/roles.guard';
 
 @Controller('api/v1/user')
 @ApiTags('User APIs')
@@ -24,8 +25,8 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @HasRoles(ROLE.ADMIN)
-  // @UseGuards(JwtAuthGuard, RolesGuard)
   @Post()
   async create(@Body() createUserDto: CreateUserDto) {
     const user: UserEntity & CreateUserDto = await this.userService.create(

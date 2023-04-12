@@ -157,23 +157,33 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
   }
 
   async start(): Promise<boolean> {
-    const exchangeRow = this.botConfig.exchange;
-    const _exchange = ExchangeFactory.createExchange(
-      exchangeRow.name,
-      exchangeRow.apiKey,
-      exchangeRow.apiSecret,
-      exchangeRow.isTestNet,
-    );
-    const exInfo = await _exchange.checkExchangeOnlineStatus();
-    if (exInfo) {
-      this._exchangeRemote = _exchange;
-      this.isRunning = true;
-      this.logger = new Logger('Bot #' + this.botConfig.id);
-      this.sendMsgTelegram('Bot is Starting #' + this.botConfig.id);
-      return true;
+    try {
+      const exchangeRow = this.botConfig.exchange;
+      const _exchange = ExchangeFactory.createExchange(
+        exchangeRow.name,
+        exchangeRow.apiKey,
+        exchangeRow.apiSecret,
+        exchangeRow.isTestNet,
+      );
+      const exInfo = await _exchange.checkExchangeOnlineStatus();
+      console.log(
+        '🚀 ~ file: bot-trading.ts:169 ~ BaseBotTrading ~ start ~ exInfo:',
+        exInfo,
+      );
+      if (exInfo) {
+        this._exchangeRemote = _exchange;
+        this.isRunning = true;
+        this.logger = new Logger('Bot #' + this.botConfig.id);
+        this.sendMsgTelegram('Bot is Starting #' + this.botConfig.id);
+        // this._exchangeRemote.getCcxtExchange().getSib
+        return true;
+      }
+      this.logger.error('Cannot connect to Exchange API!');
+      return false;
+    } catch (ex) {
+      this.logger.error('Start Bot error: ' + ex.message);
+      return false;
     }
-    this.logger.log('Cannot connect to Exchange API!');
-    return false;
   }
 
   stop() {
@@ -216,10 +226,12 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     deal.safetyOrderStepScale = this.botConfig.safetyOrderStepScale;
     deal.status = DEAL_STATUS.CREATED;
     deal.startAt = new Date();
+    deal.orders = [];
     await this.dealRepo.save(deal);
     for (const buyOrder of buyOrders) {
       const order = createOrderEntity(buyOrder, deal);
-      await this.orderRepo.save(order);
+      const newOrder = await this.orderRepo.save(order);
+      deal.orders.push(newOrder);
     }
     return deal;
   }
@@ -257,7 +269,6 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         });
       }
     } catch (ex) {
-      this.logger.error(`${symbol}: Placing base Order error! ${ex.message}`);
       this.sendMsgTelegram(`${symbol}: Placing base Order error!`);
     }
   }
@@ -272,7 +283,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       return;
     }
     const existingPair = this.botConfig.pairs.find(
-      (o) => o.exchangePair === tv.pair,
+      (o) => o.commonPair === tv.pair,
     );
     if (!existingPair) {
       this.sendMsgTelegram('Pair is not valid :' + JSON.stringify(tv));
@@ -284,7 +295,10 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     }
     switch (tv.action) {
       case TVActionType.OPEN_DEAL:
-        await this.createAndPlaceBaseOrder(tv.pair, new BigNumber(tv.price));
+        await this.createAndPlaceBaseOrder(
+          existingPair.exchangePair,
+          new BigNumber(tv.price),
+        );
         break;
       default:
         break;
@@ -413,12 +427,12 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
           this.logger.error('Invalid order status', orderStatus);
       }
     } else {
-      currentOrder.status = orderStatus;
-      currentOrder.binanceOrderId = `${orderId}`;
-      await this.orderRepo.save(currentOrder);
-      this.logger.log(
-        `${currentOrder.pair}/${currentOrder.binanceOrderId}: Sell order is ${orderStatus}. Price: ${price}, Amount: ${currentOrder.quantity}`,
-      );
+      // currentOrder.status = orderStatus;
+      // currentOrder.binanceOrderId = `${orderId}`;
+      // await this.orderRepo.save(currentOrder);
+      // this.logger.log(
+      //   `${currentOrder.pair}/${currentOrder.binanceOrderId}: Sell order is ${orderStatus}. Price: ${price}, Amount: ${currentOrder.quantity}`,
+      // );
 
       if (orderStatus === 'FILLED') {
         await this.closeDeal(deal.id);
@@ -475,16 +489,15 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     deal.endAt = new Date();
     deal.profit = Number(profit);
     await this.dealRepo.save(deal);
-    this.logger.log(deal);
     this.logger.log(`Deal ${deal.id} closed, profit: ${profit}`);
   }
   async watchPosition() {
-    const deals = await this.getActiveDeals();
     if (this.isRunning) {
+      const deals = await this.getActiveDeals();
       await this.processActivePosition(deals);
-    }
-    if (this.botConfig.dealStartCondition === DEAL_START_TYPE.ASAP) {
-      await this.startDealASAP(deals);
+      if (this.botConfig.dealStartCondition === DEAL_START_TYPE.ASAP) {
+        await this.startDealASAP(deals);
+      }
     }
   }
 

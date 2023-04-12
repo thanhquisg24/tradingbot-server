@@ -51,10 +51,11 @@ export class BotManagerController {
   ) {
     return this.service.updateBotPairs(req.user.id, pairPayload);
   }
-
-  @Get('/addRunningBot/:id')
-  addRunningBot(@Param('id') id: number) {
-    return this.instanses.addRunningBot(id);
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Post('/addRunningBot/:id')
+  addRunningBot(@Request() req: RequestWithUser, @Param('id') id: number) {
+    return this.instanses.addRunningBot(id, req.user);
   }
 
   @Get('/stopBot/:id')

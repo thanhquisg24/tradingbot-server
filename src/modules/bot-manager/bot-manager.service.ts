@@ -58,6 +58,14 @@ export class BotManagerService {
       },
     });
   }
+  async findOneRelations(id: number) {
+    return await this.repo.findOne({
+      relations: ['exchange', 'pairs'],
+      where: {
+        id,
+      },
+    });
+  }
 
   async remove(id: number) {
     return await this.repo.delete(id);

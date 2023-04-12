@@ -93,7 +93,13 @@ export class OrderEntity {
   @Column({ length: 4 })
   side: OrderSide;
 
-  @Column({ length: 32 })
+  @Column({
+    name: 'price',
+    type: 'decimal',
+    precision: 20,
+    scale: 10,
+    nullable: true,
+  })
   price: number;
 
   @Column({
