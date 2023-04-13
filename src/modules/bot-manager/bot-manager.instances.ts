@@ -83,8 +83,8 @@ export class BotManagerInstances implements IBotManagerInstances {
     return 'bot not found';
   }
 
-  // @Cron(CronExpression.EVERY_10_SECONDS)
-  @Cron('*/20 * * * * *')
+  @Cron(CronExpression.EVERY_10_SECONDS)
+  // @Cron('*/20 * * * * *')
   async handleCron() {
     this.logger.debug('Called every 10 seconds');
     this.botInstances.forEach((bot) => {

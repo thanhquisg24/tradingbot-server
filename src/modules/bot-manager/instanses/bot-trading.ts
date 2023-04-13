@@ -465,18 +465,20 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
           });
       }
     } else {
-      currentOrder.status = orderStatus;
-      currentOrder.binanceOrderId = `${orderId}`;
-      await this.orderRepo.update(currentOrder.id, {
-        status: orderStatus,
-        binanceOrderId: `${orderId}`,
-      });
-      botLogger.info(
-        `${currentOrder.pair}/${currentOrder.binanceOrderId}: Sell order is ${orderStatus}.`,
-        {
-          label: this.logLabel,
-        },
-      );
+      if (orderStatus !== 'NEW') {
+        currentOrder.status = orderStatus;
+        currentOrder.binanceOrderId = `${orderId}`;
+        await this.orderRepo.update(currentOrder.id, {
+          status: orderStatus,
+          binanceOrderId: `${orderId}`,
+        });
+        botLogger.info(
+          `${currentOrder.pair}/${currentOrder.binanceOrderId}: Sell order is ${orderStatus}.`,
+          {
+            label: this.logLabel,
+          },
+        );
+      }
       if (orderStatus === 'FILLED') {
         // currentOrder.status = orderStatus;
         // currentOrder.binanceOrderId = `${orderId}`;
