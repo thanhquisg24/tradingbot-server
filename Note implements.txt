@@ -29,3 +29,7 @@ Note implements
 -start deal strategy
 -calculateBuyOrders 
 
+
+***bug report 
+--place TP order can be error and not place again
+-No STL order feature.
