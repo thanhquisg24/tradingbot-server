@@ -68,6 +68,10 @@ export class BotTradingEntity {
   @JoinTable()
   pairs: PairEntity[];
 
+  // LIMIT or MARKET
+  @Column({ name: 'start_order_type', length: 16, default: 'MARKET' })
+  startOrderType: 'LIMIT' | 'MARKET';
+
   // ASAP
   @Column({
     name: 'deal_start_condition',

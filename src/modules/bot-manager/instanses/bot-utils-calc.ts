@@ -10,6 +10,18 @@ import { BuyOrder } from 'src/modules/entities/order.entity';
 export function calcPositionQuantity(usdtAmt: number, positionPrice: number) {
   return usdtAmt / positionPrice;
 }
+
+export function calcPriceSpread(
+  direction: STRATEGY_DIRECTION,
+  _price: BigNumber,
+  _spread: BigNumber,
+) {
+  if (direction === STRATEGY_DIRECTION.LONG) {
+    return _price.multipliedBy(_spread.plus(1));
+  }
+  return _price.multipliedBy(BigNumber(1).minus(_spread));
+}
+
 export function calcTp(
   direction: STRATEGY_DIRECTION,
   avg_price: BigNumber,

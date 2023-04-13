@@ -1,10 +1,10 @@
-import { Logger } from '@nestjs/common';
 import BigNumber from 'bignumber.js';
 import {
-  Order as BinanceOrder,
+  FuturesOrder as BinanceOrder,
   OrderSide,
   OrderStatus,
   OrderType,
+  FuturesOrderType_LT,
 } from 'binance-api-node';
 import { getNewUUid } from 'src/common/utils/hash-util';
 import {
@@ -28,8 +28,9 @@ import {
 } from 'src/modules/exchange/remote-api/exchange.remote.api';
 import { TelegramService } from 'src/modules/telegram/telegram.service';
 import { Repository } from 'typeorm';
-import { calculateBuyDCAOrders } from './bot-utils-calc';
+import { calcPriceSpread, calculateBuyDCAOrders } from './bot-utils-calc';
 import { ITVPayload, TVActionType } from '../dto/deal-tv.payload';
+import { botLogger } from 'src/common/logger';
 
 interface IBaseBotTrading {
   botConfig: BotTradingEntity;
@@ -53,7 +54,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
 
   protected readonly telegramService: TelegramService;
 
-  protected logger: Logger;
+  protected logLabel: string;
 
   constructor(
     config: BotTradingEntity,
@@ -66,9 +67,10 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     this.dealRepo = dealRepo;
     this.orderRepo = orderRepo;
     this.telegramService = telegramService;
+    this.logLabel = `Bot#${config.id} ${config.name}`;
   }
   private sendMsgTelegram(msg: string): void {
-    this.logger.log(msg);
+    botLogger.info(msg, { label: this.logLabel });
     if (this.botConfig.exchange.user.telegramChatId) {
       this.telegramService.sendMessageToUser(
         this.botConfig.exchange.user.telegramChatId,
@@ -91,27 +93,33 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         positionSide: this.botConfig.strategyDirection,
         newClientOrderId: order.id,
       };
-      let orderType: OrderType = OrderType.LIMIT;
+      let ex_orderType: FuturesOrderType_LT = OrderType.LIMIT;
 
       switch (order.clientOrderType) {
         case CLIENT_ORDER_TYPE.BASE:
+          if (this.botConfig.startOrderType !== 'LIMIT') {
+            ex_orderType = OrderType.MARKET;
+          }
+          break;
         case CLIENT_ORDER_TYPE.SAFETY:
-          orderType = OrderType.LIMIT;
+          ex_orderType = OrderType.LIMIT;
           break;
         case CLIENT_ORDER_TYPE.STOP_LOSS:
         case CLIENT_ORDER_TYPE.REDUCE:
-          orderType = OrderType.STOP;
+          ex_orderType = OrderType.STOP;
           params = { ...params, stopPrice: order.price };
           break;
         case CLIENT_ORDER_TYPE.TAKE_PROFIT:
-          orderType = OrderType.TAKE_PROFIT_MARKET;
-          params = { ...params, stopPrice: order.price };
+          ex_orderType = 'LIMIT';
+          params = { ...params };
           break;
         default:
-          orderType = OrderType.LIMIT;
+          ex_orderType = OrderType.LIMIT;
           break;
       }
-
+      botLogger.info(`${order.id} , ${JSON.stringify(params)}`, {
+        label: this.logLabel,
+      });
       const symbol = order.pair;
       const side = order.side;
       const quantity = order.quantity;
@@ -123,19 +131,22 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         .getCcxtExchange()
         .createOrder(
           symbol,
-          orderType as any,
+          ex_orderType as any,
           side as any,
           quantity,
           price,
           params,
         );
 
-      this.logger.log(
+      botLogger.info(
         `${order.id}/${newOrder.id}: New ${order.side} order has been placed`,
+        { label: this.logLabel },
       );
       return newOrder.info;
     } catch (err) {
-      this.logger.error('Failed to place order', order, err);
+      botLogger.error('Failed to place order' + err.message, {
+        label: this.logLabel,
+      });
     }
   }
 
@@ -144,11 +155,15 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       const result = await this._exchangeRemote
         .getCcxtExchange()
         .cancelOrder(order.binanceOrderId, order.pair, {});
-      this.logger.log(
+
+      botLogger.info(
         `${result.side} order ${result.orderId} has been cancelled, status ${result.status}`,
+        { label: this.logLabel },
       );
     } catch (err) {
-      this.logger.error('Failed to cancel order', order, err);
+      botLogger.error('Failed to cancel order ' + order.binanceOrderId, {
+        label: this.logLabel,
+      });
     }
   }
 
@@ -166,22 +181,21 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         exchangeRow.isTestNet,
       );
       const exInfo = await _exchange.checkExchangeOnlineStatus();
-      console.log(
-        '🚀 ~ file: bot-trading.ts:169 ~ BaseBotTrading ~ start ~ exInfo:',
-        exInfo,
-      );
       if (exInfo) {
         this._exchangeRemote = _exchange;
         this.isRunning = true;
-        this.logger = new Logger('Bot #' + this.botConfig.id);
         this.sendMsgTelegram('Bot is Starting #' + this.botConfig.id);
         // this._exchangeRemote.getCcxtExchange().getSib
         return true;
       }
-      this.logger.error('Cannot connect to Exchange API!');
+      botLogger.error('Cannot connect to Exchange API!', {
+        label: this.logLabel,
+      });
       return false;
     } catch (ex) {
-      this.logger.error('Start Bot error: ' + ex.message);
+      botLogger.error('Start Bot error: ' + ex.message, {
+        label: this.logLabel,
+      });
       return false;
     }
   }
@@ -247,8 +261,17 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     symbol: string,
     currentPrice: BigNumber,
   ) {
+    const spread = new BigNumber(0.11).dividedBy(100);
+    const newPrice =
+      this.botConfig.startOrderType === 'LIMIT'
+        ? currentPrice
+        : calcPriceSpread(
+            this.botConfig.strategyDirection,
+            currentPrice,
+            spread,
+          );
     try {
-      const buyOrders = this.createBuyOrder(symbol, currentPrice);
+      const buyOrders = this.createBuyOrder(symbol, newPrice);
       const newDealEntity = await this.createDeal(buyOrders);
       const baseOrderEntity = newDealEntity.orders.find(
         (o) =>
@@ -315,7 +338,9 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       orderId,
       status: orderStatus,
       price,
+      avgPrice,
     } = executionReportEvt;
+    const filledPrice = Number(price) > 0 ? price : avgPrice;
     const currentOrder = await this.orderRepo.findOne({
       relations: ['deal'],
       where: {
@@ -323,11 +348,15 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       },
     });
     if (!currentOrder) {
-      this.logger.log(`Order ${clientOrderId} not found`);
+      botLogger.info(`Order ${clientOrderId} not found`, {
+        label: this.logLabel,
+      });
       return;
     }
     if (!deal) {
-      this.logger.warn(`Invalid deal ${currentOrder.deal.id}`);
+      botLogger.warn(`Invalid deal ${currentOrder.deal.id}`, {
+        label: this.logLabel,
+      });
       return;
     }
 
@@ -338,8 +367,11 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             currentOrder.binanceOrderId = `${orderId}`;
             currentOrder.status = OrderStatus.NEW;
             await this.orderRepo.save(currentOrder);
-            this.logger.log(
-              `${currentOrder.pair}/${currentOrder.binanceOrderId}: NEW buy order. Price: ${price}, Amount: ${currentOrder.quantity}`,
+            botLogger.info(
+              `${currentOrder.pair}/${currentOrder.binanceOrderId}: NEW buy order. Price: ${filledPrice}, Amount: ${currentOrder.quantity}`,
+              {
+                label: this.logLabel,
+              },
             );
           }
           break;
@@ -359,10 +391,11 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
 
             currentOrder.binanceOrderId = `${orderId}`;
             currentOrder.status = OrderStatus.FILLED;
-            currentOrder.filledPrice = Number(price);
+            currentOrder.filledPrice = Number(filledPrice);
             await this.orderRepo.save(currentOrder);
-            this.logger.log(
-              `${currentOrder.pair}/${currentOrder.binanceOrderId}: Buy order ${currentOrder.side} has been FILLED. Price: ${price}, Amount: ${currentOrder.quantity}`,
+            const title = currentOrder.sequence > 0 ? 'Safety' : 'Base';
+            this.sendMsgTelegram(
+              `${currentOrder.pair}/${currentOrder.binanceOrderId}: ${title} order ${currentOrder.side} has been FILLED. Price: ${filledPrice}, Amount: ${currentOrder.quantity}`,
             );
             // Cancel existing sell order (if any)
             // and create a new take-profit order
@@ -390,7 +423,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
               newSellOrder.status = OrderStatus.NEW;
               newSellOrder.binanceOrderId = `${bSellOrder.orderId}`;
               newSellOrder = await this.orderRepo.save(newSellOrder);
-              this.logger.log(
+              this.sendMsgTelegram(
                 `${newSellOrder.pair}/${newSellOrder.binanceOrderId}: Place new Take Profit Order. Price: ${newSellOrder.price}, Amount: ${newSellOrder.quantity}`,
               );
             }
@@ -405,7 +438,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
               nextsafety.status = OrderStatus.NEW;
               nextsafety.binanceOrderId = `${binanceSafety.orderId}`;
               await this.orderRepo.save(nextsafety);
-              this.logger.log(
+              this.sendMsgTelegram(
                 `${nextsafety.pair}/${nextsafety.binanceOrderId}: Place new Safety Order. Price: ${nextsafety.price}, Amount: ${nextsafety.quantity}`,
               );
             }
@@ -418,23 +451,42 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         case 'EXPIRED':
           currentOrder.status = orderStatus;
           await this.orderRepo.save(currentOrder);
-          this.logger.log(
+          botLogger.info(
             `${currentOrder.pair}/${currentOrder.binanceOrderId}: Buy order is ${orderStatus}. Price: ${price}, Amount: ${currentOrder.quantity}`,
+            {
+              label: this.logLabel,
+            },
           );
           break;
 
         default:
-          this.logger.error('Invalid order status', orderStatus);
+          botLogger.error(`Invalid order status : ${orderStatus}`, {
+            label: this.logLabel,
+          });
       }
     } else {
-      // currentOrder.status = orderStatus;
-      // currentOrder.binanceOrderId = `${orderId}`;
-      // await this.orderRepo.save(currentOrder);
-      // this.logger.log(
-      //   `${currentOrder.pair}/${currentOrder.binanceOrderId}: Sell order is ${orderStatus}. Price: ${price}, Amount: ${currentOrder.quantity}`,
-      // );
-
+      currentOrder.status = orderStatus;
+      currentOrder.binanceOrderId = `${orderId}`;
+      await this.orderRepo.update(currentOrder.id, {
+        status: orderStatus,
+        binanceOrderId: `${orderId}`,
+      });
+      botLogger.info(
+        `${currentOrder.pair}/${currentOrder.binanceOrderId}: Sell order is ${orderStatus}.`,
+        {
+          label: this.logLabel,
+        },
+      );
       if (orderStatus === 'FILLED') {
+        // currentOrder.status = orderStatus;
+        // currentOrder.binanceOrderId = `${orderId}`;
+        // await this.orderRepo.save(currentOrder);
+        botLogger.info(
+          `${currentOrder.pair}/${currentOrder.binanceOrderId}: Sell order is ${orderStatus}. Price: ${filledPrice}, Amount: ${currentOrder.quantity}`,
+          {
+            label: this.logLabel,
+          },
+        );
         await this.closeDeal(deal.id);
       }
     }
@@ -443,7 +495,9 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
   async closeDeal(dealId: number): Promise<void> {
     let deal = await this.getDeal(dealId);
     if (!deal) {
-      this.logger.error(`Deal ${dealId} not found`);
+      botLogger.error(`Deal ${dealId} not found`, {
+        label: this.logLabel,
+      });
       return;
     }
 
@@ -489,7 +543,9 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     deal.endAt = new Date();
     deal.profit = Number(profit);
     await this.dealRepo.save(deal);
-    this.logger.log(`Deal ${deal.id} closed, profit: ${profit}`);
+    this.sendMsgTelegram(
+      `${deal.pair} : Deal ${deal.id} closed, profit: ${profit}`,
+    );
   }
   async watchPosition() {
     if (this.isRunning) {
