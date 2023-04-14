@@ -1,0 +1,17 @@
+[Unit]
+Description=DCA BOT NEST API
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=root
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=dca_bot_api_node
+WorkingDirectory=/opt/node/dca-bot-api-node
+ExecStart=/usr/bin/node /opt/node/dca-bot-api-node/dist/src/main.js > /opt/node/dca-bot-api-node/log/out.log 2>&1
+EnvironmentFile=
+
+[Install]
+WantedBy=multi-user.target
