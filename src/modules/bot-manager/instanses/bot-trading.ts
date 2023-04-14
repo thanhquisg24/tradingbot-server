@@ -501,6 +501,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       if (orderStatus !== 'NEW') {
         currentOrder.status = orderStatus;
         currentOrder.binanceOrderId = `${orderId}`;
+        currentOrder.filledPrice = Number(filledPrice);
         await this.orderRepo.update(currentOrder.id, {
           status: orderStatus,
           binanceOrderId: `${orderId}`,
