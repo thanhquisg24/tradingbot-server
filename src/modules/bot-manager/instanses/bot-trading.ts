@@ -81,7 +81,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     if (this.botConfig.exchange.user.telegramChatId) {
       this.telegramService.sendMessageToUser(
         this.botConfig.exchange.user.telegramChatId,
-        msg,
+        `[${this.logLabel}] ${msg}`,
       );
     }
   }
@@ -293,14 +293,14 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         baseOrderEntity.binanceOrderId = `${binanceSafety.orderId}`;
         await this.orderRepo.save(baseOrderEntity);
         this.sendMsgTelegram(
-          `${baseOrderEntity.pair}/${baseOrderEntity.binanceOrderId}: Started a new Base Order. Price: ${baseOrderEntity.price}, Amount: ${baseOrderEntity.quantity}`,
+          `[${baseOrderEntity.pair}] [${baseOrderEntity.binanceOrderId}]: Started a new Base Order. Price: ${baseOrderEntity.price}, Amount: ${baseOrderEntity.quantity}`,
         );
         await this.dealRepo.update(newDealEntity.id, {
           status: DEAL_STATUS.ACTIVE,
         });
       }
     } catch (ex) {
-      this.sendMsgTelegram(`${symbol}: Placing base Order error!`);
+      this.sendMsgTelegram(`[${symbol}]: Placing base Order error!`);
     }
   }
 
@@ -383,7 +383,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             currentOrder.status = OrderStatus.NEW;
             await this.orderRepo.save(currentOrder);
             botLogger.info(
-              `${currentOrder.pair}/${currentOrder.binanceOrderId}: NEW buy order. Price: ${filledPrice}, Amount: ${currentOrder.quantity}`,
+              `[${currentOrder.pair}] [${currentOrder.binanceOrderId}]: NEW buy order. Price: ${filledPrice}, Amount: ${currentOrder.quantity}`,
               {
                 label: this.logLabel,
               },
@@ -410,7 +410,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             await this.orderRepo.save(currentOrder);
             const title = currentOrder.sequence > 0 ? 'Safety' : 'Base';
             this.sendMsgTelegram(
-              `${currentOrder.pair}/${currentOrder.binanceOrderId}: ${title} order ${currentOrder.side} has been FILLED. Price: ${filledPrice}, Amount: ${currentOrder.quantity}`,
+              `[${currentOrder.pair}] [${currentOrder.binanceOrderId}]: ${title} order ${currentOrder.side} has been FILLED. Price: ${filledPrice}, Amount: ${currentOrder.quantity}`,
             );
             // Cancel existing sell order (if any)
             // and create a new take-profit order
@@ -423,13 +423,13 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
               newSellOrder.status = OrderStatus.NEW;
               newSellOrder.binanceOrderId = `${bSellOrder.orderId}`;
               this.sendMsgTelegram(
-                `${newSellOrder.pair}/${newSellOrder.binanceOrderId}: Place new Take Profit Order. Price: ${newSellOrder.price}, Amount: ${newSellOrder.quantity}`,
+                `[${newSellOrder.pair}] [${newSellOrder.binanceOrderId}]: Place new Take Profit Order. Price: ${newSellOrder.price}, Amount: ${newSellOrder.quantity}`,
               );
             } else {
               newSellOrder.status = 'PLACING';
               newSellOrder.retryCount = newSellOrder.retryCount + 1;
               this.sendMsgTelegram(
-                `${newSellOrder.pair}:Error on placing a new Take Profit Order!. Price: ${newSellOrder.price}, Amount: ${newSellOrder.quantity}`,
+                `[${newSellOrder.pair}]:Error on placing a new Take Profit Order!. Price: ${newSellOrder.price}, Amount: ${newSellOrder.quantity}`,
               );
             }
             await this.orderRepo.save(newSellOrder);
@@ -449,13 +449,13 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
                 nextsafety.status = OrderStatus.NEW;
                 nextsafety.binanceOrderId = `${binanceSafety.orderId}`;
                 this.sendMsgTelegram(
-                  `${nextsafety.pair}/${nextsafety.binanceOrderId}: Place new Safety Order. Price: ${nextsafety.price}, Amount: ${nextsafety.quantity}`,
+                  `[${nextsafety.pair}] [${nextsafety.binanceOrderId}]: Place new Safety Order. Price: ${nextsafety.price}, Amount: ${nextsafety.quantity}`,
                 );
               } else {
                 nextsafety.status = 'PLACING';
                 nextsafety.retryCount = nextsafety.retryCount + 1;
                 this.sendMsgTelegram(
-                  `${nextsafety.pair}:Error on placing a new  Safety Order. Price: ${nextsafety.price}, Amount: ${nextsafety.quantity}`,
+                  `[${nextsafety.pair}]:Error on placing a new  Safety Order. Price: ${nextsafety.price}, Amount: ${nextsafety.quantity}`,
                 );
               }
               await this.orderRepo.save(nextsafety);
@@ -471,13 +471,13 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
                 stlOrder.status = OrderStatus.NEW;
                 stlOrder.binanceOrderId = `${binanceStl.orderId}`;
                 this.sendMsgTelegram(
-                  `${stlOrder.pair}/${stlOrder.binanceOrderId}: Place new Stop Loss Order. Price: ${stlOrder.price}, Amount: ${stlOrder.quantity}`,
+                  `[${stlOrder.pair}] [${stlOrder.binanceOrderId}]: Place new Stop Loss Order. Price: ${stlOrder.price}, Amount: ${stlOrder.quantity}`,
                 );
               } else {
                 stlOrder.status = 'PLACING';
                 stlOrder.retryCount = stlOrder.retryCount + 1;
                 this.sendMsgTelegram(
-                  `${stlOrder.pair}:Error on placing a new Stop Loss Order. Price: ${stlOrder.price}, Amount: ${stlOrder.quantity}`,
+                  `[${stlOrder.pair}]:Error on placing a new Stop Loss Order. Price: ${stlOrder.price}, Amount: ${stlOrder.quantity}`,
                 );
               }
               await this.orderRepo.save(stlOrder);
@@ -493,7 +493,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
           currentOrder.status = orderStatus;
           await this.orderRepo.save(currentOrder);
           botLogger.info(
-            `${currentOrder.pair}/${currentOrder.binanceOrderId}: Buy order is ${orderStatus}. Price: ${price}, Amount: ${currentOrder.quantity}`,
+            `[${currentOrder.pair}] [${currentOrder.binanceOrderId}]: Buy order is ${orderStatus}. Price: ${price}, Amount: ${currentOrder.quantity}`,
             {
               label: this.logLabel,
             },
@@ -515,7 +515,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
           binanceOrderId: `${orderId}`,
         });
         botLogger.info(
-          `${currentOrder.pair}/${currentOrder.binanceOrderId}: Sell order is ${orderStatus}.`,
+          `[${currentOrder.pair}] [${currentOrder.binanceOrderId}]: Sell order is ${orderStatus}.`,
           {
             label: this.logLabel,
           },
@@ -526,7 +526,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         // currentOrder.binanceOrderId = `${orderId}`;
         // await this.orderRepo.save(currentOrder);
         botLogger.info(
-          `${currentOrder.pair}/${currentOrder.binanceOrderId}: Sell order is ${orderStatus}. Price: ${filledPrice}, Amount: ${currentOrder.quantity}`,
+          `[${currentOrder.pair}] [${currentOrder.binanceOrderId}]: Sell order is ${orderStatus}. Price: ${filledPrice}, Amount: ${currentOrder.quantity}`,
           {
             label: this.logLabel,
           },
@@ -550,13 +550,13 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         order.status = OrderStatus.NEW;
         order.binanceOrderId = `${binanceOrder.orderId}`;
         this.sendMsgTelegram(
-          `${order.pair}/${order.binanceOrderId}: Place a Retry Order. Price: ${order.price}, Amount: ${order.quantity}`,
+          `[${order.pair}] [${order.binanceOrderId}]: Place a Retry Order. Price: ${order.price}, Amount: ${order.quantity}`,
         );
       } else {
         order.status = 'PLACING';
         order.retryCount = order.retryCount + 1;
         this.sendMsgTelegram(
-          `${order.pair}:Error on placing a Retry Order!. Client Order ID#: ${
+          `[${order.pair}]:Error on placing a Retry Order!. Client Order ID#: ${
             order.id
           }, RetryCount: ${order.retryCount - 1}`,
         );
@@ -585,7 +585,10 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
 
     let filledBuyVolume = new BigNumber(0);
     let filledSellVolume = new BigNumber(0);
-    const buyOrderSide = OrderSide.BUY;
+    const buyOrderSide = getOrderSide(
+      deal.strategyDirection,
+      ORDER_ACTION_ENUM.OPEN_POSITION,
+    );
     for (const order of deal.orders) {
       if (
         order.side === buyOrderSide &&
@@ -611,14 +614,18 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         }
       }
     }
-    const profit = filledSellVolume.minus(filledBuyVolume).toFixed();
+    const profitType = OrderSide.BUY ? 1 : -1;
+    const profit = filledSellVolume
+      .minus(filledBuyVolume)
+      .multipliedBy(profitType)
+      .toFixed();
 
     deal.status = DEAL_STATUS.CLOSED;
     deal.endAt = new Date();
     deal.profit = Number(profit);
     await this.dealRepo.save(deal);
     this.sendMsgTelegram(
-      `${deal.pair} : Deal ${deal.id} closed, profit: ${profit}`,
+      `[${deal.pair}]: Deal ${deal.id} closed, profit: ${profit} 💰`,
     );
   }
   async watchPosition() {
