@@ -4,6 +4,7 @@ import {
   IntMinMax,
   IsNotBlankString,
   IsPositiveInt,
+  MinMax,
   MinMaxPct,
 } from '@nestjsi/class-validator';
 import {
@@ -121,6 +122,19 @@ export class CreateBotPayload {
   @ApiProperty({
     type: 'int',
     required: true,
+    example: 8,
+    default: 8,
+    description: 'leverage',
+  })
+  @MinMax(
+    1, // number
+    100, // number
+  )
+  leverage: number;
+
+  @ApiProperty({
+    type: 'int',
+    required: true,
     example: 1,
     default: 1,
     description: 'targetProfitPercentage',
@@ -130,6 +144,15 @@ export class CreateBotPayload {
     100, // number
   )
   targetProfitPercentage: number;
+
+  @ApiProperty({
+    type: 'boolean',
+    required: false,
+    example: false,
+    default: false,
+    description: 'useStopLoss',
+  })
+  useStopLoss: boolean;
 
   @ApiProperty({
     type: 'int',

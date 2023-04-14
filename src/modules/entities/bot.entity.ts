@@ -72,6 +72,9 @@ export class BotTradingEntity {
   @Column({ name: 'start_order_type', length: 16, default: 'MARKET' })
   startOrderType: 'LIMIT' | 'MARKET';
 
+  @Column({ name: 'leverage', type: 'int', nullable: false, default: 8 })
+  leverage: number;
+
   // ASAP
   @Column({
     name: 'deal_start_condition',
@@ -114,6 +117,13 @@ export class BotTradingEntity {
     scale: 2,
   })
   targetStopLossPercentage: number;
+
+  @Column({
+    name: 'use_stop_loss',
+    type: 'boolean',
+    default: false,
+  })
+  useStopLoss: boolean;
 
   @Column({ name: 'max_active_deal', type: 'int' })
   maxActiveDeal: number;

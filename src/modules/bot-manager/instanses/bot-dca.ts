@@ -36,9 +36,10 @@ export class DCABot extends BaseBotTrading {
         if (exchangeOrder.info) {
           await this.refreshDealOnOrderUpdate(deal, exchangeOrder.info);
         }
-      }
-    }
-  }
+      } //end if
+      await this.doTryPlacingOrder(deal.id);
+    } //end for
+  } //end processExchangeDeal()
 
   async processActivePosition(activeDeals: DealEntity[]) {
     try {

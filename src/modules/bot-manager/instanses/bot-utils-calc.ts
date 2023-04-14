@@ -1,11 +1,18 @@
 import BigNumber from 'bignumber.js';
+import { OrderSide } from 'binance-api-node';
 import { Exchange } from 'ccxt';
 import { last } from 'lodash';
+import { getNewUUid } from 'src/common/utils/hash-util';
 import {
   BotTradingEntity,
   STRATEGY_DIRECTION,
 } from 'src/modules/entities/bot.entity';
-import { BuyOrder } from 'src/modules/entities/order.entity';
+import { DealEntity } from 'src/modules/entities/deal.entity';
+import {
+  BuyOrder,
+  CLIENT_ORDER_TYPE,
+  OrderEntity,
+} from 'src/modules/entities/order.entity';
 
 export function calcPositionQuantity(usdtAmt: number, positionPrice: number) {
   return usdtAmt / positionPrice;
@@ -33,7 +40,7 @@ export function calcTp(
   return avg_price.multipliedBy(BigNumber(1).minus(target_profit_percent));
 }
 
-export function calcPriceByDevation(
+export function calcPriceByDeviation(
   direction: STRATEGY_DIRECTION,
   currentPrice: BigNumber,
   deviation: BigNumber,
@@ -42,6 +49,21 @@ export function calcPriceByDevation(
     return currentPrice.multipliedBy(new BigNumber(1).minus(deviation));
   }
   return currentPrice.multipliedBy(new BigNumber(1).plus(deviation));
+}
+export function calcPriceByPrevDeviation(
+  direction: STRATEGY_DIRECTION,
+  prevPrice: BigNumber,
+  preDeviation: BigNumber,
+  nextDeviation: BigNumber,
+) {
+  if (direction === STRATEGY_DIRECTION.LONG) {
+    return prevPrice
+      .multipliedBy(new BigNumber(1).minus(nextDeviation))
+      .dividedBy(new BigNumber(1).minus(preDeviation));
+  }
+  return prevPrice
+    .multipliedBy(new BigNumber(1).plus(nextDeviation))
+    .dividedBy(new BigNumber(1).plus(preDeviation));
 }
 
 export const calculateBuyDCAOrders = (
@@ -105,7 +127,7 @@ export const calculateBuyDCAOrders = (
       const price = Number(
         exchange.priceToPrecision(
           symbol,
-          calcPriceByDevation(strategyDirection, currentPrice, deviation),
+          calcPriceByDeviation(strategyDirection, currentPrice, deviation),
         ),
       );
       const quantity = Number(
@@ -141,4 +163,56 @@ export const calculateBuyDCAOrders = (
   }
 
   return orders;
+};
+
+export const createNextTPOrder = (
+  deal: DealEntity,
+  currentOrder: OrderEntity,
+) => {
+  let newSellOrder = new OrderEntity();
+  newSellOrder.id = getNewUUid();
+  newSellOrder.deal = deal;
+  newSellOrder.side = OrderSide.SELL;
+  newSellOrder.status = 'CREATED';
+  newSellOrder.price = currentOrder.exitPrice;
+  newSellOrder.quantity = currentOrder.totalQuantity;
+  newSellOrder.volume = new BigNumber(currentOrder.exitPrice)
+    .multipliedBy(currentOrder.totalQuantity)
+    .toNumber();
+  newSellOrder.sequence = 1000 + currentOrder.sequence;
+  newSellOrder.botId = deal.botId;
+  newSellOrder.exchangeId = deal.exchangeId;
+  newSellOrder.userId = deal.userId;
+  newSellOrder.clientOrderType = CLIENT_ORDER_TYPE.TAKE_PROFIT;
+  newSellOrder.pair = currentOrder.pair;
+  return newSellOrder;
+};
+
+export const createStopLossOrder = (deal: DealEntity, lastSO: OrderEntity) => {
+  const prevDeviation = new BigNumber(lastSO.deviation).dividedBy(100);
+  const nextDeviation = new BigNumber(deal.targetStopLossPercentage).dividedBy(
+    100,
+  );
+  let newSTLOrder = new OrderEntity();
+  newSTLOrder.id = getNewUUid();
+  newSTLOrder.deal = deal;
+  newSTLOrder.side = OrderSide.SELL;
+  newSTLOrder.status = 'CREATED';
+  newSTLOrder.price = calcPriceByPrevDeviation(
+    deal.strategyDirection,
+    new BigNumber(lastSO.price),
+    prevDeviation,
+    nextDeviation,
+  ).toNumber();
+  newSTLOrder.quantity = lastSO.totalQuantity;
+  newSTLOrder.volume = new BigNumber(newSTLOrder.price)
+    .multipliedBy(lastSO.totalQuantity)
+    .toNumber();
+  newSTLOrder.sequence = 1000 + lastSO.sequence;
+  newSTLOrder.botId = deal.botId;
+  newSTLOrder.exchangeId = deal.exchangeId;
+  newSTLOrder.userId = deal.userId;
+  newSTLOrder.clientOrderType = CLIENT_ORDER_TYPE.STOP_LOSS;
+  newSTLOrder.pair = lastSO.pair;
+  return newSTLOrder;
 };

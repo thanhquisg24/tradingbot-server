@@ -6,7 +6,6 @@ import {
   OrderType,
   FuturesOrderType_LT,
 } from 'binance-api-node';
-import { getNewUUid } from 'src/common/utils/hash-util';
 import {
   BotTradingEntity,
   DEAL_START_TYPE,
@@ -28,7 +27,12 @@ import {
 } from 'src/modules/exchange/remote-api/exchange.remote.api';
 import { TelegramService } from 'src/modules/telegram/telegram.service';
 import { Repository } from 'typeorm';
-import { calcPriceSpread, calculateBuyDCAOrders } from './bot-utils-calc';
+import {
+  calcPriceSpread,
+  calculateBuyDCAOrders,
+  createNextTPOrder,
+  createStopLossOrder,
+} from './bot-utils-calc';
 import { ITVPayload, TVActionType } from '../dto/deal-tv.payload';
 import { botLogger } from 'src/common/logger';
 
@@ -40,6 +44,7 @@ interface IBaseBotTrading {
   start(): Promise<boolean>;
   stop(): void;
 }
+const MAX_RETRY = 5;
 
 export abstract class BaseBotTrading implements IBaseBotTrading {
   botConfig: BotTradingEntity;
@@ -124,9 +129,10 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       const side = order.side;
       const quantity = order.quantity;
       const price = order.price;
+      const leverage = this.botConfig.leverage;
       this._exchangeRemote
         .getCcxtExchange()
-        .setLeverage(10, symbol, { marginMode: 'cross' });
+        .setLeverage(leverage, symbol, { marginMode: 'cross' });
       const newOrder = await this._exchangeRemote
         .getCcxtExchange()
         .createOrder(
@@ -238,6 +244,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     deal.priceDeviationPercentage = this.botConfig.priceDeviationPercentage;
     deal.safetyOrderVolumeScale = this.botConfig.safetyOrderVolumeScale;
     deal.safetyOrderStepScale = this.botConfig.safetyOrderStepScale;
+    deal.useStopLoss = this.botConfig.useStopLoss;
     deal.status = DEAL_STATUS.CREATED;
     deal.startAt = new Date();
     deal.orders = [];
@@ -400,48 +407,74 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             // Cancel existing sell order (if any)
             // and create a new take-profit order
 
-            let newSellOrder = new OrderEntity();
-            newSellOrder.id = getNewUUid();
-            newSellOrder.deal = deal;
-            newSellOrder.side = OrderSide.SELL;
-            newSellOrder.status = 'CREATED';
-            newSellOrder.price = currentOrder.exitPrice;
-            newSellOrder.quantity = currentOrder.totalQuantity;
-            newSellOrder.volume = new BigNumber(currentOrder.exitPrice)
-              .multipliedBy(currentOrder.totalQuantity)
-              .toNumber();
-            newSellOrder.sequence = 1000 + currentOrder.sequence;
-            newSellOrder.botId = this.botConfig.id;
-            newSellOrder.exchangeId = this.botConfig.exchange.id;
-            newSellOrder.userId = this.botConfig.userId;
-            newSellOrder.clientOrderType = CLIENT_ORDER_TYPE.TAKE_PROFIT;
-            newSellOrder.pair = currentOrder.pair;
+            //placing TP line
+            let newSellOrder = createNextTPOrder(deal, currentOrder);
             newSellOrder = await this.orderRepo.save(newSellOrder);
-
             const bSellOrder = await this.placeBinanceOrder(newSellOrder);
             if (bSellOrder) {
               newSellOrder.status = OrderStatus.NEW;
               newSellOrder.binanceOrderId = `${bSellOrder.orderId}`;
-              newSellOrder = await this.orderRepo.save(newSellOrder);
               this.sendMsgTelegram(
                 `${newSellOrder.pair}/${newSellOrder.binanceOrderId}: Place new Take Profit Order. Price: ${newSellOrder.price}, Amount: ${newSellOrder.quantity}`,
               );
+            } else {
+              newSellOrder.status = 'PLACING';
+              newSellOrder.retryCount = newSellOrder.retryCount + 1;
+              this.sendMsgTelegram(
+                `${newSellOrder.pair}:Error on placing a new Take Profit Order!. Price: ${newSellOrder.price}, Amount: ${newSellOrder.quantity}`,
+              );
             }
+            await this.orderRepo.save(newSellOrder);
+            //end placing TP line
+
+            //placing next safety
             const nextsafety = deal.orders.find(
               (o) =>
                 o.side === 'BUY' &&
                 o.status === 'CREATED' &&
                 o.sequence === currentOrder.sequence + 1,
             );
+
             if (nextsafety) {
               const binanceSafety = await this.placeBinanceOrder(nextsafety);
-              nextsafety.status = OrderStatus.NEW;
-              nextsafety.binanceOrderId = `${binanceSafety.orderId}`;
+              if (binanceSafety) {
+                nextsafety.status = OrderStatus.NEW;
+                nextsafety.binanceOrderId = `${binanceSafety.orderId}`;
+                this.sendMsgTelegram(
+                  `${nextsafety.pair}/${nextsafety.binanceOrderId}: Place new Safety Order. Price: ${nextsafety.price}, Amount: ${nextsafety.quantity}`,
+                );
+              } else {
+                nextsafety.status = 'PLACING';
+                nextsafety.retryCount = nextsafety.retryCount + 1;
+                this.sendMsgTelegram(
+                  `${nextsafety.pair}:Error on placing a new  Safety Order. Price: ${nextsafety.price}, Amount: ${nextsafety.quantity}`,
+                );
+              }
               await this.orderRepo.save(nextsafety);
-              this.sendMsgTelegram(
-                `${nextsafety.pair}/${nextsafety.binanceOrderId}: Place new Safety Order. Price: ${nextsafety.price}, Amount: ${nextsafety.quantity}`,
-              );
             }
+            //end placing next safety
+
+            //placing stoploss
+            const isLastSO = currentOrder.sequence >= deal.maxSafetyTradesCount;
+            if (isLastSO && deal.useStopLoss) {
+              const stlOrder = createStopLossOrder(deal, currentOrder);
+              const binanceStl = await this.placeBinanceOrder(stlOrder);
+              if (binanceStl) {
+                stlOrder.status = OrderStatus.NEW;
+                stlOrder.binanceOrderId = `${binanceStl.orderId}`;
+                this.sendMsgTelegram(
+                  `${stlOrder.pair}/${stlOrder.binanceOrderId}: Place new Stop Loss Order. Price: ${stlOrder.price}, Amount: ${stlOrder.quantity}`,
+                );
+              } else {
+                stlOrder.status = 'PLACING';
+                stlOrder.retryCount = stlOrder.retryCount + 1;
+                this.sendMsgTelegram(
+                  `${stlOrder.pair}:Error on placing a new Stop Loss Order. Price: ${stlOrder.price}, Amount: ${stlOrder.quantity}`,
+                );
+              }
+              await this.orderRepo.save(stlOrder);
+            }
+            //end placing next stoploss
           }
           break;
 
@@ -491,6 +524,35 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         );
         await this.closeDeal(deal.id);
       }
+    }
+  }
+  async doTryPlacingOrder(deal_Id: number): Promise<void> {
+    const ordersOnPlacing = await this.orderRepo.findBy({
+      deal: {
+        id: deal_Id,
+        status: DEAL_STATUS.ACTIVE,
+      },
+      status: 'PLACING',
+    });
+    for (let index = 0; index < ordersOnPlacing.length; index++) {
+      const order = ordersOnPlacing[index];
+      const binanceOrder = await this.placeBinanceOrder(order);
+      if (binanceOrder) {
+        order.status = OrderStatus.NEW;
+        order.binanceOrderId = `${binanceOrder.orderId}`;
+        this.sendMsgTelegram(
+          `${order.pair}/${order.binanceOrderId}: Place a Retry Order. Price: ${order.price}, Amount: ${order.quantity}`,
+        );
+      } else {
+        order.status = 'PLACING';
+        order.retryCount = order.retryCount + 1;
+        this.sendMsgTelegram(
+          `${order.pair}:Error on placing a Retry Order!. Client Order ID#: ${
+            order.id
+          }, RetryCount: ${order.retryCount - 1}`,
+        );
+      }
+      await this.orderRepo.save(order);
     }
   }
 

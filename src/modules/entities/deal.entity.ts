@@ -119,6 +119,13 @@ export class DealEntity {
   targetProfitPercentage: number;
 
   @Column({
+    name: 'use_stop_loss',
+    type: 'boolean',
+    default: false,
+  })
+  useStopLoss: boolean;
+
+  @Column({
     name: 'target_stoploss_percentage',
     type: 'decimal',
     precision: 5,

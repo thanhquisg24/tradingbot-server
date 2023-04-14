@@ -6,7 +6,7 @@ Packages
     yarn add @nestjs/mapped-types
 Commands
     npm run start:dev / yarn start:dev
-     nest generate resource
+    nest generate resource
     nest generate controller / nest g co
     nest generate service / nest g s
     nest generate modue <name> / nest g mo

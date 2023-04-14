@@ -32,4 +32,5 @@ Note implements
 
 ***bug report 
 --place TP order can be error and not place again
--No STL order feature.
+--No STL order feature.
+--implement setLeverage dynamic

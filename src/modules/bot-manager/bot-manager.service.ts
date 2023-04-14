@@ -38,7 +38,9 @@ export class BotManagerService {
     });
     if (entity) {
       const listPair = await this.pairService.findByIds(pairPayload.pairs);
-      return this.repo.update(entity.id, { pairs: listPair });
+      entity.pairs = listPair;
+      await this.repo.save(entity);
+      return 'Success';
     }
     throw new Error('Not Found Bot #' + pairPayload.id);
   }

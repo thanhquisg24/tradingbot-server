@@ -1,13 +1,13 @@
 import { PartialType } from '@nestjs/mapped-types';
-import { CreateBotDto } from './create-bot.dto';
-import { IsNotNull } from '@nestjsi/class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsPositiveInt } from '@nestjsi/class-validator';
+import { CreateBotDto } from './create-bot.dto';
 export class UpdateBotDto extends PartialType(CreateBotDto) {
   @ApiProperty({
     required: true,
     description: 'id',
   })
-  @IsNotNull()
+  @IsPositiveInt()
   id: number;
 }
 
@@ -16,7 +16,7 @@ export class BotPairsPayload {
     required: true,
     description: 'id',
   })
-  @IsNotNull()
+  @IsPositiveInt()
   id: number;
 
   @ApiProperty({

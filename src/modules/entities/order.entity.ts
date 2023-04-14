@@ -1,10 +1,10 @@
-import { OrderSide, OrderStatus, OrderStatus_LT } from 'binance-api-node';
+import { OrderSide, OrderStatus_LT } from 'binance-api-node';
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
-  ManyToOne,
+  Entity,
   JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
 import { DealEntity } from './deal.entity';
 
@@ -129,7 +129,7 @@ export class OrderEntity {
   })
   exitPrice: number;
 
-  @Column({ length: 255, nullable: true })
+  @Column({ name: 'binance_order_id', length: 255, nullable: true })
   binanceOrderId: string;
 
   @Column({
@@ -160,7 +160,10 @@ export class OrderEntity {
   totalQuantity: number;
 
   @Column({ length: 16 })
-  status: 'CREATED' | OrderStatus_LT;
+  status: 'CREATED' | 'PLACING' | OrderStatus_LT;
+
+  @Column({ name: 'retry_count', type: 'int', default: 0 })
+  retryCount: number;
 
   @ManyToOne(() => DealEntity)
   @JoinColumn({ name: 'deal_id', referencedColumnName: 'id' })

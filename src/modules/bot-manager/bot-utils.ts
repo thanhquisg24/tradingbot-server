@@ -29,5 +29,8 @@ export function mappingNewBot(
   newBot.targetProfitPercentage = payload.targetProfitPercentage;
   newBot.targetStopLossPercentage = payload.targetStopLossPercentage;
   newBot.userId = payload.userId;
+  newBot.useStopLoss = payload.useStopLoss;
+  newBot.leverage = payload.leverage;
+
   return newBot;
 }
