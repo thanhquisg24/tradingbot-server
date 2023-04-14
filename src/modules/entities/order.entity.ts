@@ -9,6 +9,7 @@ import {
 import { DealEntity } from './deal.entity';
 
 export interface BuyOrder {
+  side: OrderSide;
   pair: string;
   sequence: number;
   deviation: number;
@@ -28,7 +29,7 @@ export function createOrderEntity(buyOrder: BuyOrder, deal: DealEntity) {
   order.sequence = buyOrder.sequence;
   order.volume = buyOrder.volume;
   order.deviation = buyOrder.deviation;
-  order.side = OrderSide.BUY;
+  order.side = buyOrder.side;
   order.price = buyOrder.price;
   order.quantity = buyOrder.quantity;
   order.totalQuantity = buyOrder.totalQuantity;

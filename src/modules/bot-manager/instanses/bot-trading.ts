@@ -1,10 +1,10 @@
 import BigNumber from 'bignumber.js';
 import {
   FuturesOrder as BinanceOrder,
-  OrderSide,
   OrderStatus,
   OrderType,
   FuturesOrderType_LT,
+  OrderSide,
 } from 'binance-api-node';
 import {
   BotTradingEntity,
@@ -28,10 +28,12 @@ import {
 import { TelegramService } from 'src/modules/telegram/telegram.service';
 import { Repository } from 'typeorm';
 import {
+  ORDER_ACTION_ENUM,
   calcPriceSpread,
   calculateBuyDCAOrders,
   createNextTPOrder,
   createStopLossOrder,
+  getOrderSide,
 } from './bot-utils-calc';
 import { ITVPayload, TVActionType } from '../dto/deal-tv.payload';
 import { botLogger } from 'src/common/logger';
@@ -282,7 +284,6 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       const newDealEntity = await this.createDeal(buyOrders);
       const baseOrderEntity = newDealEntity.orders.find(
         (o) =>
-          o.side === 'BUY' &&
           o.status === 'CREATED' &&
           o.clientOrderType === CLIENT_ORDER_TYPE.BASE,
       );
@@ -366,8 +367,15 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       });
       return;
     }
-
-    if (currentOrder.side === 'BUY') {
+    const _buyOrderSide = getOrderSide(
+      deal.strategyDirection,
+      ORDER_ACTION_ENUM.OPEN_POSITION,
+    );
+    const _sellOrderSide = getOrderSide(
+      deal.strategyDirection,
+      ORDER_ACTION_ENUM.CLOSE_POSITION,
+    );
+    if (currentOrder.side === _buyOrderSide) {
       switch (orderStatus) {
         case 'NEW':
           if (currentOrder.status === 'CREATED') {
@@ -390,7 +398,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             currentOrder.status === 'PARTIALLY_FILLED'
           ) {
             const existingSellOrder = deal.orders.find(
-              (o) => o.side === 'SELL' && o.status === 'NEW',
+              (o) => o.side === _sellOrderSide && o.status === 'NEW',
             );
             if (existingSellOrder) {
               await this.cancelOrder(existingSellOrder);
@@ -430,7 +438,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             //placing next safety
             const nextsafety = deal.orders.find(
               (o) =>
-                o.side === 'BUY' &&
+                o.side === _buyOrderSide &&
                 o.status === 'CREATED' &&
                 o.sequence === currentOrder.sequence + 1,
             );
@@ -577,16 +585,17 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
 
     let filledBuyVolume = new BigNumber(0);
     let filledSellVolume = new BigNumber(0);
+    const buyOrderSide = OrderSide.BUY;
     for (const order of deal.orders) {
       if (
-        order.side === OrderSide.BUY &&
+        order.side === buyOrderSide &&
         order.status === 'NEW' &&
         order.binanceOrderId
       ) {
         await this.cancelOrder(order);
         order.status = 'CANCELED';
       }
-      if (order.side === OrderSide.BUY) {
+      if (order.side === buyOrderSide) {
         if (order.status === 'FILLED') {
           filledBuyVolume = filledBuyVolume.plus(
             new BigNumber(order.filledPrice).multipliedBy(order.quantity),

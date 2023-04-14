@@ -14,6 +14,32 @@ import {
   OrderEntity,
 } from 'src/modules/entities/order.entity';
 
+export enum ORDER_ACTION_ENUM {
+  CLOSE_POSITION = 'CLOSE_POSITION',
+  OPEN_POSITION = 'OPEN_POSITION',
+}
+export const getOrderSide = (
+  strategyDirection: STRATEGY_DIRECTION,
+  actionType: ORDER_ACTION_ENUM,
+) => {
+  let orderSide = OrderSide.BUY;
+  switch (actionType) {
+    case ORDER_ACTION_ENUM.OPEN_POSITION:
+      orderSide =
+        strategyDirection === STRATEGY_DIRECTION.LONG
+          ? OrderSide.BUY
+          : OrderSide.SELL;
+      break;
+    case ORDER_ACTION_ENUM.CLOSE_POSITION:
+      orderSide =
+        strategyDirection === STRATEGY_DIRECTION.LONG
+          ? OrderSide.SELL
+          : OrderSide.BUY;
+      break;
+  }
+  return orderSide;
+};
+
 export function calcPositionQuantity(usdtAmt: number, positionPrice: number) {
   return usdtAmt / positionPrice;
 }
@@ -83,7 +109,7 @@ export const calculateBuyDCAOrders = (
   const { maxSafetyTradesCount, strategyDirection } = config;
   const safetyOrderVolumeScale = new BigNumber(config.safetyOrderVolumeScale);
   const safetyOrderStepScale = new BigNumber(config.safetyOrderStepScale);
-
+  const side = getOrderSide(strategyDirection, ORDER_ACTION_ENUM.OPEN_POSITION);
   const orders: BuyOrder[] = [];
   for (
     let safeTypeTradeCount = 0;
@@ -99,6 +125,7 @@ export const calculateBuyDCAOrders = (
       );
 
       orders.push({
+        side,
         pair: symbol,
         sequence: 0,
         deviation: 0,
@@ -143,6 +170,7 @@ export const calculateBuyDCAOrders = (
       const averagePrice = totalVolume.dividedBy(totalQuantity);
 
       orders.push({
+        side,
         pair: symbol,
         sequence: safeTypeTradeCount,
         deviation: deviation.multipliedBy(100).toNumber(),
@@ -172,7 +200,10 @@ export const createNextTPOrder = (
   let newSellOrder = new OrderEntity();
   newSellOrder.id = getNewUUid();
   newSellOrder.deal = deal;
-  newSellOrder.side = OrderSide.SELL;
+  newSellOrder.side = getOrderSide(
+    deal.strategyDirection,
+    ORDER_ACTION_ENUM.CLOSE_POSITION,
+  );
   newSellOrder.status = 'CREATED';
   newSellOrder.price = currentOrder.exitPrice;
   newSellOrder.quantity = currentOrder.totalQuantity;
@@ -196,7 +227,10 @@ export const createStopLossOrder = (deal: DealEntity, lastSO: OrderEntity) => {
   let newSTLOrder = new OrderEntity();
   newSTLOrder.id = getNewUUid();
   newSTLOrder.deal = deal;
-  newSTLOrder.side = OrderSide.SELL;
+  newSTLOrder.side = getOrderSide(
+    deal.strategyDirection,
+    ORDER_ACTION_ENUM.CLOSE_POSITION,
+  );
   newSTLOrder.status = 'CREATED';
   newSTLOrder.price = calcPriceByPrevDeviation(
     deal.strategyDirection,
