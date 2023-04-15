@@ -193,6 +193,38 @@ export const calculateBuyDCAOrders = (
   return orders;
 };
 
+export const createMarketBaseOrder = (
+  exchange: Exchange,
+  strategyDirection: STRATEGY_DIRECTION,
+  pair: string,
+  price: BigNumber,
+  baseOrderSize: number,
+) => {
+  const quantity = Number(
+    exchange.amountToPrecision(
+      pair,
+      new BigNumber(baseOrderSize).dividedBy(price).toNumber(),
+    ),
+  );
+  let newBaseOrder = new OrderEntity();
+  newBaseOrder.id = getNewUUid();
+  newBaseOrder.side = getOrderSide(
+    strategyDirection,
+    ORDER_ACTION_ENUM.OPEN_POSITION,
+  );
+  newBaseOrder.status = 'CREATED';
+  newBaseOrder.price = price.toNumber();
+  newBaseOrder.quantity = quantity;
+  newBaseOrder.volume = 0;
+  newBaseOrder.sequence = 0;
+  newBaseOrder.botId = 0;
+  newBaseOrder.exchangeId = 0;
+  newBaseOrder.userId = 0;
+  newBaseOrder.clientOrderType = CLIENT_ORDER_TYPE.BASE;
+  newBaseOrder.pair = pair;
+  return newBaseOrder;
+};
+
 export const createNextTPOrder = (
   deal: DealEntity,
   currentOrder: OrderEntity,

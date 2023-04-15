@@ -31,6 +31,7 @@ import {
   ORDER_ACTION_ENUM,
   calcPriceSpread,
   calculateBuyDCAOrders,
+  createMarketBaseOrder,
   createNextTPOrder,
   createStopLossOrder,
   getOrderSide,
@@ -124,6 +125,9 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
           ex_orderType = OrderType.LIMIT;
           break;
       }
+      if (ex_orderType === 'MARKET') {
+        params = { ...params, newOrderRespType: 'RESULT' };
+      }
       botLogger.info(`${order.id} , ${JSON.stringify(params)}`, {
         label: this.logLabel,
       });
@@ -165,7 +169,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         .cancelOrder(order.binanceOrderId, order.pair, {});
 
       botLogger.info(
-        `${result.side} order ${result.orderId} has been cancelled, status ${result.status}`,
+        `[${order.pair}] :${order.side} Order ${result.binanceOrderId} has been cancelled, status ${result.status}`,
         { label: this.logLabel },
       );
     } catch (err) {
@@ -227,7 +231,10 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     });
   }
 
-  private async createDeal(buyOrders: BuyOrder[]): Promise<DealEntity> {
+  private async createDeal(
+    buyOrders: BuyOrder[],
+    baseClientOrderId?: string,
+  ): Promise<DealEntity> {
     const deal = new DealEntity();
     deal.userId = this.botConfig.userId;
     deal.botId = this.botConfig.id;
@@ -253,6 +260,12 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     await this.dealRepo.save(deal);
     for (const buyOrder of buyOrders) {
       const order = createOrderEntity(buyOrder, deal);
+      if (
+        baseClientOrderId &&
+        order.clientOrderType === CLIENT_ORDER_TYPE.BASE
+      ) {
+        order.id = baseClientOrderId;
+      }
       const newOrder = await this.orderRepo.save(order);
       deal.orders.push(newOrder);
     }
@@ -270,38 +283,110 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     symbol: string,
     currentPrice: BigNumber,
   ) {
-    const spread = new BigNumber(0.11).dividedBy(100);
-    const newPrice =
-      this.botConfig.startOrderType === 'LIMIT'
-        ? currentPrice
-        : calcPriceSpread(
-            this.botConfig.strategyDirection,
-            currentPrice,
-            spread,
-          );
+    let newDealEntity: DealEntity | null = null;
+    let baseOrderEntity: OrderEntity | null = null;
+    const { strategyDirection, baseOrderSize } = this.botConfig;
     try {
-      const buyOrders = this.createBuyOrder(symbol, newPrice);
-      const newDealEntity = await this.createDeal(buyOrders);
-      const baseOrderEntity = newDealEntity.orders.find(
-        (o) =>
-          o.status === 'CREATED' &&
-          o.clientOrderType === CLIENT_ORDER_TYPE.BASE,
-      );
-      if (baseOrderEntity) {
-        const binanceSafety = await this.placeBinanceOrder(baseOrderEntity);
-        baseOrderEntity.status = OrderStatus.NEW;
-        baseOrderEntity.binanceOrderId = `${binanceSafety.orderId}`;
+      switch (this.botConfig.startOrderType) {
+        case 'MARKET':
+          const prepareBaseOrder = createMarketBaseOrder(
+            this._exchangeRemote.getCcxtExchange(),
+            strategyDirection,
+            symbol,
+            currentPrice,
+            baseOrderSize,
+          );
+          const binanceMarketBaseOrder = await this.placeBinanceOrder(
+            prepareBaseOrder,
+          );
+          if (binanceMarketBaseOrder) {
+            const filledPrice =
+              Number(binanceMarketBaseOrder.avgPrice) > 0
+                ? binanceMarketBaseOrder.avgPrice
+                : binanceMarketBaseOrder.price;
+            const buyOrdersMarket = this.createBuyOrder(
+              symbol,
+              new BigNumber(filledPrice),
+            );
+            newDealEntity = await this.createDeal(
+              buyOrdersMarket,
+              prepareBaseOrder.id,
+            );
+            baseOrderEntity = newDealEntity.orders.find(
+              (o) =>
+                o.status === 'CREATED' &&
+                o.clientOrderType === CLIENT_ORDER_TYPE.BASE,
+            );
+            if (baseOrderEntity) {
+              baseOrderEntity.status = OrderStatus.NEW;
+              baseOrderEntity.binanceOrderId = `${binanceMarketBaseOrder.orderId}`;
+            }
+          }
+
+          break;
+        case 'LIMIT':
+          const buyOrders = this.createBuyOrder(symbol, currentPrice);
+          newDealEntity = await this.createDeal(buyOrders);
+          baseOrderEntity = newDealEntity.orders.find(
+            (o) =>
+              o.status === 'CREATED' &&
+              o.clientOrderType === CLIENT_ORDER_TYPE.BASE,
+          );
+          if (baseOrderEntity) {
+            const binanceLimitBaseOrder = await this.placeBinanceOrder(
+              baseOrderEntity,
+            );
+            baseOrderEntity.status = OrderStatus.NEW;
+            baseOrderEntity.binanceOrderId = `${binanceLimitBaseOrder.orderId}`;
+          }
+          break;
+      }
+
+      if (newDealEntity !== null && baseOrderEntity !== null) {
         await this.orderRepo.save(baseOrderEntity);
-        this.sendMsgTelegram(
-          `[${baseOrderEntity.pair}] [${baseOrderEntity.binanceOrderId}]: Started a new Base Order. Price: ${baseOrderEntity.price}, Amount: ${baseOrderEntity.quantity}`,
-        );
         await this.dealRepo.update(newDealEntity.id, {
           status: DEAL_STATUS.ACTIVE,
         });
+        this.sendMsgTelegram(
+          `[${baseOrderEntity.pair}] [${baseOrderEntity.binanceOrderId}]: Started a new Base Order. Price: ${baseOrderEntity.price}, Amount: ${baseOrderEntity.quantity}`,
+        );
       }
     } catch (ex) {
       this.sendMsgTelegram(`[${symbol}]: Placing base Order error!`);
     }
+    // const spread = new BigNumber(0.11).dividedBy(100);
+    // const newPrice =
+    //   this.botConfig.startOrderType === 'LIMIT'
+    //     ? currentPrice
+    //     : calcPriceSpread(
+    //         this.botConfig.strategyDirection,
+    //         currentPrice,
+    //         spread,
+    //       );
+
+    // try {
+    //   const buyOrders = this.createBuyOrder(symbol, newPrice);
+    //   const newDealEntity = await this.createDeal(buyOrders);
+    //   const baseOrderEntity = newDealEntity.orders.find(
+    //     (o) =>
+    //       o.status === 'CREATED' &&
+    //       o.clientOrderType === CLIENT_ORDER_TYPE.BASE,
+    //   );
+    //   if (baseOrderEntity) {
+    //     const binanceSafety = await this.placeBinanceOrder(baseOrderEntity);
+    //     baseOrderEntity.status = OrderStatus.NEW;
+    //     baseOrderEntity.binanceOrderId = `${binanceSafety.orderId}`;
+    //     await this.orderRepo.save(baseOrderEntity);
+    //     this.sendMsgTelegram(
+    //       `[${baseOrderEntity.pair}] [${baseOrderEntity.binanceOrderId}]: Started a new Base Order. Price: ${baseOrderEntity.price}, Amount: ${baseOrderEntity.quantity}`,
+    //     );
+    //     await this.dealRepo.update(newDealEntity.id, {
+    //       status: DEAL_STATUS.ACTIVE,
+    //     });
+    //   }
+    // } catch (ex) {
+    //   this.sendMsgTelegram(`[${symbol}]: Placing base Order error!`);
+    // }
   }
 
   async processTvAction(tv: ITVPayload): Promise<void> {
@@ -614,10 +699,10 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         }
       }
     }
-    const profitType = OrderSide.BUY ? 1 : -1;
+    // const profitType = OrderSide.BUY ? 1 : -1;
     const profit = filledSellVolume
       .minus(filledBuyVolume)
-      .multipliedBy(profitType)
+      // .multipliedBy(profitType)
       .toFixed();
 
     deal.status = DEAL_STATUS.CLOSED;

@@ -31,6 +31,8 @@ Note implements
 
 
 ***bug report 
---place TP order can be error and not place again
---No STL order feature.
---implement setLeverage dynamic
+--place TP order can be error and not place again(done)
+--No STL order feature.(done)
+--implement setLeverage dynamic(done)
+
+--implement calcDcaDeal and order when take a start deal with orderType=MARKET (done)
