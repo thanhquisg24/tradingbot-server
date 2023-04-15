@@ -18,6 +18,7 @@ export class BinanceUSDMApi extends AbstractExchangeAPI {
       secret: apiSerect,
     });
     this.exchange_remote.setSandboxMode(isDemo);
+    this.exchange_remote.precisionMode = ccxt.DECIMAL_PLACES;
   }
 
   async checkExchangeOnlineStatus(): Promise<boolean> {

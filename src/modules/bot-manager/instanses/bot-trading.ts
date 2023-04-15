@@ -26,10 +26,9 @@ import {
   ExchangeFactory,
 } from 'src/modules/exchange/remote-api/exchange.remote.api';
 import { TelegramService } from 'src/modules/telegram/telegram.service';
-import { Repository } from 'typeorm';
+import { Raw, Repository } from 'typeorm';
 import {
   ORDER_ACTION_ENUM,
-  calcPriceSpread,
   calculateBuyDCAOrders,
   createMarketBaseOrder,
   createNextTPOrder,
@@ -47,7 +46,7 @@ interface IBaseBotTrading {
   start(): Promise<boolean>;
   stop(): void;
 }
-const MAX_RETRY = 5;
+const MAX_RETRY = 55;
 
 export abstract class BaseBotTrading implements IBaseBotTrading {
   botConfig: BotTradingEntity;
@@ -169,7 +168,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         .cancelOrder(order.binanceOrderId, order.pair, {});
 
       botLogger.info(
-        `[${order.pair}] :${order.side} Order ${result.binanceOrderId} has been cancelled, status ${result.status}`,
+        `[${order.pair}] :${order.side} Order ${order.binanceOrderId} has been cancelled, status ${result.status}`,
         { label: this.logLabel },
       );
     } catch (err) {
@@ -321,6 +320,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             if (baseOrderEntity) {
               baseOrderEntity.status = OrderStatus.NEW;
               baseOrderEntity.binanceOrderId = `${binanceMarketBaseOrder.orderId}`;
+              baseOrderEntity.placeCount = baseOrderEntity.placeCount + 1;
             }
           }
 
@@ -373,16 +373,18 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       await this.sendMsgTelegram('Pair is not valid :' + JSON.stringify(tv));
       return;
     }
-    const isValidMaxDeal = await this.checkMaxActiveDeal();
-    if (isValidMaxDeal === false) {
-      return;
-    }
+
     switch (tv.action) {
       case TVActionType.OPEN_DEAL:
-        await this.createAndPlaceBaseOrder(
-          existingPair.exchangePair,
-          new BigNumber(tv.price),
-        );
+        const isValidMaxDeal = await this.checkMaxActiveDeal();
+        if (isValidMaxDeal) {
+          await this.createAndPlaceBaseOrder(
+            existingPair.exchangePair,
+            new BigNumber(tv.price),
+          );
+        }
+        break;
+      case TVActionType.CLOSE_DEAL:
         break;
       default:
         break;
@@ -475,6 +477,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             if (bSellOrder) {
               newSellOrder.status = OrderStatus.NEW;
               newSellOrder.binanceOrderId = `${bSellOrder.orderId}`;
+              newSellOrder.placeCount = newSellOrder.placeCount + 1;
               await this.sendMsgTelegram(
                 `[${newSellOrder.pair}] [${newSellOrder.binanceOrderId}]: Place new Take Profit Order. Price: ${newSellOrder.price}, Amount: ${newSellOrder.quantity}`,
               );
@@ -501,6 +504,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
               if (binanceSafety) {
                 nextsafety.status = OrderStatus.NEW;
                 nextsafety.binanceOrderId = `${binanceSafety.orderId}`;
+                nextsafety.placeCount = nextsafety.placeCount + 1;
                 await this.sendMsgTelegram(
                   `[${nextsafety.pair}] [${nextsafety.binanceOrderId}]: Place new Safety Order. Price: ${nextsafety.price}, Amount: ${nextsafety.quantity}`,
                 );
@@ -523,6 +527,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
               if (binanceStl) {
                 stlOrder.status = OrderStatus.NEW;
                 stlOrder.binanceOrderId = `${binanceStl.orderId}`;
+                stlOrder.placeCount = stlOrder.placeCount + 1;
                 await this.sendMsgTelegram(
                   `[${stlOrder.pair}] [${stlOrder.binanceOrderId}]: Place new Stop Loss Order. Price: ${stlOrder.price}, Amount: ${stlOrder.quantity}`,
                 );
@@ -595,6 +600,9 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         status: DEAL_STATUS.ACTIVE,
       },
       status: 'PLACING',
+      retryCount: Raw((alias) => `${alias} <:maxretry`, {
+        maxretry: MAX_RETRY,
+      }),
     });
     for (let index = 0; index < ordersOnPlacing.length; index++) {
       const order = ordersOnPlacing[index];
@@ -602,6 +610,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       if (binanceOrder) {
         order.status = OrderStatus.NEW;
         order.binanceOrderId = `${binanceOrder.orderId}`;
+        order.placeCount = order.placeCount + 1;
         await this.sendMsgTelegram(
           `[${order.pair}] [${order.binanceOrderId}]: Place a Retry Order. Price: ${order.price}, Amount: ${order.quantity}`,
         );
