@@ -1,4 +1,4 @@
-import { OrderType } from 'binance-api-node';
+import { FuturesOrderType_LT, OrderType } from 'binance-api-node';
 import {
   Entity,
   Column,
@@ -98,8 +98,8 @@ export class DealEntity {
   strategyDirection: STRATEGY_DIRECTION;
 
   // LIMIT or MARKET
-  @Column({ name: 'start_order_type', length: 16 })
-  startOrderType: OrderType;
+  @Column({ name: 'start_order_type', length: 64 })
+  startOrderType: FuturesOrderType_LT;
 
   // ASAP
   @Column({

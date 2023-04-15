@@ -244,7 +244,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     deal.baseOrderSize = this.botConfig.baseOrderSize;
     deal.safetyOrderSize = this.botConfig.safetyOrderSize;
     deal.strategyDirection = this.botConfig.strategyDirection;
-    deal.startOrderType = OrderType.LIMIT;
+    deal.startOrderType = this.botConfig.startOrderType;
     deal.dealStartCondition = this.botConfig.dealStartCondition;
     deal.targetProfitPercentage = this.botConfig.targetProfitPercentage;
     deal.targetStopLossPercentage = this.botConfig.targetStopLossPercentage;

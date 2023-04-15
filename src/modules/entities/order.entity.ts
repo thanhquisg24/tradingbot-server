@@ -160,7 +160,7 @@ export class OrderEntity {
   })
   totalQuantity: number;
 
-  @Column({ length: 16 })
+  @Column({ length: 64 })
   status: 'CREATED' | 'PLACING' | OrderStatus_LT;
 
   @Column({ name: 'retry_count', type: 'int', default: 0 })
