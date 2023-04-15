@@ -10,7 +10,7 @@ import {
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RefreshTokenGuard } from 'src/common/guards/refresh-auth.guard';
 import { LocalAuthGuard } from '../../common/guards/local-auth.guard';
-import { UserService } from '../user/user.service';
+// import { UserService } from '../user/user.service';
 import { AuthService } from './auth.service';
 import { RefreshTokenDto } from './dto/RefreshTokenDto';
 import { UserLoginDto } from './dto/UserLoginDto';
@@ -20,11 +20,11 @@ import { RequestWithUser } from './type';
 @ApiTags('Auth APIs')
 export class AuthController {
   constructor(
-    private userService: UserService,
+    // private userService: UserService,
     private authService: AuthService,
   ) {}
 
-  private logger = new Logger(AuthController.name);
+  // private logger = new Logger(AuthController.name);
   //handle login
 
   @ApiBody({ type: UserLoginDto })

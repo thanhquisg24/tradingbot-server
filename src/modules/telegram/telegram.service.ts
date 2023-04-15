@@ -13,9 +13,9 @@ export class TelegramService {
     );
   }
 
-  sendMessageToUser = (userId: string, message: string) => {
+  sendMessageToUser = async (userId: string, message: string) => {
     try {
-      this.bot.telegram.sendMessage(userId, message);
+      await this.bot.telegram.sendMessage(userId, message);
     } catch (ex) {
       console.log("Can't not send Msg Via telegram Bot");
     }

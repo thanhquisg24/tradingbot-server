@@ -54,6 +54,9 @@ export class ExchangeController {
     return this.exchangeService.create(createExchangedto);
   }
 
+  @ApiBearerAuth()
+  @HasRoles(ROLE.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Get()
   findAll() {
     return this.exchangeService.findAll();
