@@ -30,9 +30,11 @@ export class DCABot extends BaseBotTrading {
           order.binanceOrderId,
           order.pair,
         );
-        // console.log(
-        //   'order.binanceOrderId ' + JSON.stringify(exchangeOrder.info),
-        // );
+        console.log(
+          `[${order.pair}] [${
+            order.binanceOrderId
+          }]: fetch binance ${JSON.stringify(exchangeOrder.info)}`,
+        );
         if (exchangeOrder.info) {
           await this.refreshDealOnOrderUpdate(deal, exchangeOrder.info);
         }
