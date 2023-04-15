@@ -339,6 +339,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             );
             baseOrderEntity.status = OrderStatus.NEW;
             baseOrderEntity.binanceOrderId = `${binanceLimitBaseOrder.orderId}`;
+            baseOrderEntity.placeCount = baseOrderEntity.placeCount + 1;
           }
           break;
       }
