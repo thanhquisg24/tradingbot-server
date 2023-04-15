@@ -658,7 +658,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
           );
         }
       } else {
-        if (order.status === 'FILLED') {
+        if (order.status === 'FILLED' || order.status === 'PARTIALLY_FILLED') {
           filledSellVolume = filledSellVolume.plus(
             new BigNumber(order.price).multipliedBy(
               new BigNumber(order.quantity),
@@ -667,10 +667,10 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         }
       }
     }
-    // const profitType = OrderSide.BUY ? 1 : -1;
+    const profitType = buyOrderSide === OrderSide.BUY ? 1 : -1;
     const profit = filledSellVolume
       .minus(filledBuyVolume)
-      // .multipliedBy(profitType)
+      .multipliedBy(profitType)
       .toFixed();
 
     deal.status = DEAL_STATUS.CLOSED;
