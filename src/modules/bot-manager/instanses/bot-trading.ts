@@ -187,6 +187,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     try {
       const exchangeRow = this.botConfig.exchange;
       const _exchange = ExchangeFactory.createExchange(
+        exchangeRow.id,
         exchangeRow.name,
         exchangeRow.apiKey,
         exchangeRow.apiSecret,
@@ -354,39 +355,6 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     } catch (ex) {
       this.sendMsgTelegram(`[${symbol}]: Placing base Order error!`);
     }
-    // const spread = new BigNumber(0.11).dividedBy(100);
-    // const newPrice =
-    //   this.botConfig.startOrderType === 'LIMIT'
-    //     ? currentPrice
-    //     : calcPriceSpread(
-    //         this.botConfig.strategyDirection,
-    //         currentPrice,
-    //         spread,
-    //       );
-
-    // try {
-    //   const buyOrders = this.createBuyOrder(symbol, newPrice);
-    //   const newDealEntity = await this.createDeal(buyOrders);
-    //   const baseOrderEntity = newDealEntity.orders.find(
-    //     (o) =>
-    //       o.status === 'CREATED' &&
-    //       o.clientOrderType === CLIENT_ORDER_TYPE.BASE,
-    //   );
-    //   if (baseOrderEntity) {
-    //     const binanceSafety = await this.placeBinanceOrder(baseOrderEntity);
-    //     baseOrderEntity.status = OrderStatus.NEW;
-    //     baseOrderEntity.binanceOrderId = `${binanceSafety.orderId}`;
-    //     await this.orderRepo.save(baseOrderEntity);
-    //     this.sendMsgTelegram(
-    //       `[${baseOrderEntity.pair}] [${baseOrderEntity.binanceOrderId}]: Started a new Base Order. Price: ${baseOrderEntity.price}, Amount: ${baseOrderEntity.quantity}`,
-    //     );
-    //     await this.dealRepo.update(newDealEntity.id, {
-    //       status: DEAL_STATUS.ACTIVE,
-    //     });
-    //   }
-    // } catch (ex) {
-    //   this.sendMsgTelegram(`[${symbol}]: Placing base Order error!`);
-    // }
   }
 
   async processTvAction(tv: ITVPayload): Promise<void> {

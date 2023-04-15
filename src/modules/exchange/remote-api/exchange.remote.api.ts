@@ -27,16 +27,31 @@ export class BinanceUSDMApi extends AbstractExchangeAPI {
 }
 
 export class ExchangeFactory {
+  static exchangeInstances: Map<number, AbstractExchangeAPI> = new Map();
+  // private static getExchangeById(id: number) {
+  //   if (ExchangeFactory.exchangeInstances.has(id)) {
+  //     return ExchangeFactory.exchangeInstances.get(id);
+  //   }
+  //   return null;
+  // }
+  static removeExchangeIns(exchangeId: number): void {
+    ExchangeFactory.exchangeInstances.delete(exchangeId);
+  }
   static createExchange(
+    exchangeId: number,
     exchangeName: ExchangesEnum,
     apiKey: string,
     apiSerect: string,
     isDemo: boolean,
   ) {
+    if (ExchangeFactory.exchangeInstances.has(exchangeId)) {
+      return ExchangeFactory.exchangeInstances.get(exchangeId);
+    }
     switch (exchangeName) {
       case ExchangesEnum.PAPER:
       case ExchangesEnum.BINANCEUSDM:
         const _exchange = new BinanceUSDMApi(apiKey, apiSerect, isDemo);
+        ExchangeFactory.exchangeInstances.set(exchangeId, _exchange);
         return _exchange;
     }
     throw new Error('Can not find exchange name :' + exchangeName);

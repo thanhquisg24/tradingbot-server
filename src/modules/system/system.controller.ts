@@ -45,6 +45,7 @@ export class SystemController {
     );
     if (exchangeRow) {
       const _exchange = ExchangeFactory.createExchange(
+        exchangeRow.id,
         exchangeRow.name,
         exchangeRow.apiKey,
         exchangeRow.apiSecret,

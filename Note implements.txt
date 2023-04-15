@@ -36,3 +36,7 @@ Note implements
 --implement setLeverage dynamic(done)
 
 --implement calcDcaDeal and order when take a start deal with orderType=MARKET (done)
+
+--implements one ccxt market instance by multiple bot using same ccxt market (done)
+
+--implement out of memory by static exchangeInstances: Map<number, AbstractExchangeAPI> 

@@ -31,7 +31,10 @@ export class BotManagerInstances implements IBotManagerInstances {
     private readonly telegramService: TelegramService,
   ) {}
   getBotById(id: number) {
-    return this.botInstances.get(id);
+    if (this.botInstances.has(id)) {
+      return this.botInstances.get(id);
+    }
+    return null;
   }
 
   async addRunningBot(id: number, user: UserEntity) {
@@ -78,8 +81,9 @@ export class BotManagerInstances implements IBotManagerInstances {
   }
 
   getRunningBotById(id: number) {
-    const bot = this.getBotById(id);
-    if (bot) return bot;
+    if (this.botInstances.has(id)) {
+      return this.getBotById(id);
+    }
     return 'bot not found';
   }
 
