@@ -69,7 +69,7 @@ export class BotTradingEntity {
   pairs: PairEntity[];
 
   // LIMIT or MARKET
-  @Column({ name: 'start_order_type', length: 16, default: 'MARKET' })
+  @Column({ name: 'start_order_type', length: 64, default: 'MARKET' })
   startOrderType: 'LIMIT' | 'MARKET';
 
   @Column({ name: 'leverage', type: 'int', nullable: false, default: 8 })
