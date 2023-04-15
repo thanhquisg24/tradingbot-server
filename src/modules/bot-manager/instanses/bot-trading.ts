@@ -549,8 +549,10 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         case 'CANCELED':
         case 'REJECTED':
         case 'EXPIRED':
-          currentOrder.status = orderStatus;
-          await this.orderRepo.save(currentOrder);
+          if (currentOrder.status !== orderStatus) {
+            currentOrder.status = orderStatus;
+            await this.orderRepo.save(currentOrder);
+          }
           botLogger.info(
             `[${currentOrder.pair}] [${currentOrder.binanceOrderId}]: Buy order is ${orderStatus}. Price: ${price}, Amount: ${currentOrder.quantity}`,
             {
@@ -565,7 +567,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
           });
       }
     } else {
-      if (orderStatus !== 'NEW') {
+      if (orderStatus !== 'NEW' && currentOrder.status !== orderStatus) {
         currentOrder.status = orderStatus;
         currentOrder.binanceOrderId = `${orderId}`;
         currentOrder.filledPrice = Number(filledPrice);
