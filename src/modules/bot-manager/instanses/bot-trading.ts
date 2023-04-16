@@ -767,12 +767,19 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       }
     }
     for (let i = 0; i < pairNeedStart.length; i++) {
-      const pairItem = pairNeedStart[i];
-      const binanceUSDM = this._exchangeRemote.getCcxtExchange();
-      const ticker = await binanceUSDM.fetchTicker(pairItem);
-      const lastPrice = ticker.last;
-      if (lastPrice) {
-        await this.createAndPlaceBaseOrder(pairItem, new BigNumber(lastPrice));
+      const isValidActiveDealCount = await this.checkMaxActiveDeal();
+
+      if (isValidActiveDealCount) {
+        const pairItem = pairNeedStart[i];
+        const binanceUSDM = this._exchangeRemote.getCcxtExchange();
+        const ticker = await binanceUSDM.fetchTicker(pairItem);
+        const lastPrice = ticker.last;
+        if (lastPrice) {
+          await this.createAndPlaceBaseOrder(
+            pairItem,
+            new BigNumber(lastPrice),
+          );
+        }
       }
     }
   }
