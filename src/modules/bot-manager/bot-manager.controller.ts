@@ -18,6 +18,8 @@ import { BotManagerService } from './bot-manager.service';
 import { CreateBotPayload } from './dto/create-bot.payload';
 import { BotPairsPayload } from './dto/update-bot.dto';
 import { CloseDealAtMarketPrice } from './dto/close-deal-market-price.payload';
+import { TVPayload } from './tv-webhook/dto/deal-tv.payload';
+import { PostCommonPayload } from './dto/post-common';
 
 @ApiTags('Bot Manager APIs')
 @Controller('api/v1/bot-manager')
@@ -65,6 +67,7 @@ export class BotManagerController {
   ) {
     return this.service.updateBotPairs(req.user.id, pairPayload);
   }
+
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Post('/addRunningBot/:id')
@@ -85,5 +88,31 @@ export class BotManagerController {
   @Get(':id')
   findOne(@Param('id') id: number) {
     return this.instanses.getRunningBotById(id);
+  }
+  @Post('/get-bot/:id')
+  getBotId(@Param('id') id: number) {
+    return this.instanses.getRunningBotById(id);
+  }
+
+  @Post('/get-bot-post')
+  getBotIdPost(@Body() payload: PostCommonPayload) {
+    return this.instanses.getRunningBotById(payload.id);
+  }
+
+  @Post('tv-webhooks')
+  handleTVSignal(@Body() payload: TVPayload) {
+    // this.eventEmitter.emit(TV_DEAL_EVENT, payload);
+
+    console.log(
+      '🚀 ~ file: bot-manager.controller.ts:98 ~ BotManagerController ~ handleTVSignal ~ payload:',
+      payload,
+    );
+    const bot11 = this.instanses.getRunningBotById(3);
+    console.log(
+      '🚀 ~ file: bot-manager.controller.ts:99 ~ BotManagerController ~ handleTVSignal ~ bot11:',
+      bot11,
+    );
+    return this.instanses.getRunningBotById(payload.botId);
+    // return this.instanses.handleTvEvent(payload);
   }
 }

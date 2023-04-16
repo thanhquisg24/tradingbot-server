@@ -1,30 +1,29 @@
 import { classes } from '@automapper/classes';
 import { AutomapperModule } from '@automapper/nestjs';
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import dotenv from 'dotenv';
+import {
+  WinstonModule,
+  utilities as nestWinstonModuleUtilities,
+} from 'nest-winston';
+import { TelegrafModule } from 'nestjs-telegraf';
+import winston from 'winston';
+import DailyRotateFile from 'winston-daily-rotate-file';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { typeOrmAsyncConfig } from './config/typeorm.config';
 import { AuthModule } from './modules/auth/auth.module';
-import { BotManagerModule } from './modules/bot-manager/bot.-manager.module';
+import { BotManagerModule } from './modules/bot-manager/bot-manager.module';
+import { DealModule } from './modules/deal/deal.module';
 import { ExchangeModule } from './modules/exchange/exchange.module';
-import { UserModule } from './modules/user/user.module';
 import { PairModule } from './modules/pair/pair.module';
 import { SystemModule } from './modules/system/system.module';
-import { TelegrafModule } from 'nestjs-telegraf';
 import { TelegramModule } from './modules/telegram/telegram.module';
-import DailyRotateFile from 'winston-daily-rotate-file';
-import winston from 'winston';
-import {
-  utilities as nestWinstonModuleUtilities,
-  WinstonModule,
-} from 'nest-winston';
-import { DealModule } from './modules/deal/deal.module';
-import { TvWebhookModule } from './modules/tv-webhook/tv-webhook.module';
-import { EventEmitterModule } from '@nestjs/event-emitter';
+import { UserModule } from './modules/user/user.module';
 
 dotenv.config();
 // import entities from './config/typeorm.entities';
@@ -82,7 +81,6 @@ const logTransportDaily: DailyRotateFile = new DailyRotateFile({
     PairModule,
     SystemModule,
     DealModule,
-    TvWebhookModule,
   ],
   controllers: [AppController],
   providers: [AppService],

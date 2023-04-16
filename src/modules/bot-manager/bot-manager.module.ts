@@ -8,6 +8,7 @@ import { TelegramModule } from '../telegram/telegram.module';
 import { BotManagerController } from './bot-manager.controller';
 import { BotManagerInstances } from './bot-manager.instances';
 import { BotManagerService } from './bot-manager.service';
+import { TvWebhookController } from './tv-webhook/tv-webhook.controller';
 
 @Module({
   imports: [
@@ -17,7 +18,7 @@ import { BotManagerService } from './bot-manager.service';
     ExchangeModule,
     PairModule,
   ],
-  controllers: [BotManagerController],
+  controllers: [BotManagerController, TvWebhookController],
   providers: [BotManagerInstances, BotManagerService],
   exports: [BotManagerInstances, BotManagerService],
 })

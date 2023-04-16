@@ -35,6 +35,7 @@ export class BotManagerInstances implements IBotManagerInstances {
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
   ) {}
+
   getBotById(id: number) {
     if (this.botInstances.has(id)) {
       return this.botInstances.get(id);
@@ -99,8 +100,8 @@ export class BotManagerInstances implements IBotManagerInstances {
     return 'bot not found';
   }
 
-  @OnEvent(TV_DEAL_EVENT)
-  async handleTvEvent(payload: OnTVEventPayload) {
+  // @OnEvent(TV_DEAL_EVENT)
+  handleTvEvent(payload: OnTVEventPayload) {
     console.log(
       '🚀 ~ file: bot-manager.instances.ts:104 ~ BotManagerInstances ~ handleTvEvent ~ payload:',
       payload,
@@ -111,13 +112,14 @@ export class BotManagerInstances implements IBotManagerInstances {
       payload.botId,
       this.botInstances.has(payload.botId),
     );
-    if (this.botInstances.has(payload.botId)) {
-      console.log(
-        '🚀 ~ file: bot-manager.instances.ts:109 ~ BotManagerInstances ~ handleTvEvent ~ payload.botId:',
-        payload.botId,
-      );
-      await this.botInstances.get(payload.botId).processTvAction(payload);
-    }
+    return this.getRunningBotById(payload.botId);
+    // if (this.botInstances.has(payload.botId)) {
+    //   console.log(
+    //     '🚀 ~ file: bot-manager.instances.ts:109 ~ BotManagerInstances ~ handleTvEvent ~ payload.botId:',
+    //     payload.botId,
+    //   );
+    //   await this.botInstances.get(payload.botId).processTvAction(payload);
+    // }
   }
 
   @Cron(CronExpression.EVERY_10_SECONDS)
