@@ -365,6 +365,9 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
   }
 
   async processTvAction(tv: OnTVEventPayload): Promise<void> {
+    if (this.botConfig.dealStartCondition !== DEAL_START_TYPE.TRADINGVIEW) {
+      return;
+    }
     if (tv.userId !== this.botConfig.userId) {
       await this.sendMsgTelegram('User is not valid :' + JSON.stringify(tv));
       return;
