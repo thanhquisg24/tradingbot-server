@@ -30,6 +30,7 @@ import { Raw, Repository } from 'typeorm';
 import {
   ORDER_ACTION_ENUM,
   calculateBuyDCAOrders,
+  createCloseMarketOrder,
   createMarketBaseOrder,
   createNextTPOrder,
   createStopLossOrder,
@@ -45,7 +46,7 @@ interface IBaseBotTrading {
   updateConfig(partConfig: Partial<BotTradingEntity>): void;
   start(): Promise<boolean>;
   stop(): void;
-  closeAtMarketPrice(): Promise<void>;
+  closeAtMarketPrice(dealId: number, userId: number): Promise<void>;
 }
 const MAX_RETRY = 55;
 
@@ -120,7 +121,9 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
           break;
         case CLIENT_ORDER_TYPE.TAKE_PROFIT:
           ex_orderType = 'LIMIT';
-          params = { ...params };
+          break;
+        case CLIENT_ORDER_TYPE.CLOSE_AT_MARKET:
+          ex_orderType = 'MARKET';
           break;
         default:
           ex_orderType = OrderType.LIMIT;
@@ -658,7 +661,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     );
     for (const order of deal.orders) {
       if (
-        order.side === buyOrderSide &&
+        // order.side === buyOrderSide &&
         order.status === 'NEW' &&
         order.binanceOrderId
       ) {
@@ -696,8 +699,47 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     );
   }
 
-  async closeAtMarketPrice(): Promise<void> {
-    throw new Error('Method not implemented.');
+  async closeAtMarketPrice(dealId: number, userId: number): Promise<void> {
+    if (userId !== this.botConfig.userId) {
+      await this.sendMsgTelegram(`closeAtMarketPrice error .User Id invalid!`);
+      return;
+    }
+    try {
+      const activeDeal = await this.dealRepo.findOneBy({
+        id: dealId,
+        status: DEAL_STATUS.ACTIVE,
+        botId: this.botConfig.id,
+        userId,
+      });
+      if (activeDeal) {
+        const { totalFilledQuantity } = await this.orderRepo
+          .createQueryBuilder('order_entity')
+          .select('SUM(order_entity.quantity)', 'totalFilledQuantity')
+          .getRawOne();
+        if (totalFilledQuantity > 0) {
+          const closeMarketOrder = createCloseMarketOrder(
+            activeDeal,
+            totalFilledQuantity,
+          );
+          const exOrder = await this.placeBinanceOrder(closeMarketOrder);
+          closeMarketOrder.status = exOrder.status;
+          closeMarketOrder.binanceOrderId = `${exOrder.orderId}`;
+          closeMarketOrder.price = Number(exOrder.avgPrice);
+          closeMarketOrder.averagePrice = closeMarketOrder.price;
+          closeMarketOrder.filledPrice = closeMarketOrder.price;
+          closeMarketOrder.volume = Number(exOrder.cumQuote);
+          closeMarketOrder.quantity = Number(exOrder.cumQty);
+          await this.orderRepo.save(closeMarketOrder);
+          await this.closeDeal(dealId);
+        }
+      } else {
+        await this.sendMsgTelegram(`Deal ${dealId} not found`);
+      }
+    } catch (error) {
+      await this.sendMsgTelegram(
+        `Deal ${dealId} close at market price error! ${error.message}`,
+      );
+    }
   }
   async watchPosition() {
     if (this.isRunning) {

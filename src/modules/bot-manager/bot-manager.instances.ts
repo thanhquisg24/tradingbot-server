@@ -11,6 +11,7 @@ import { TelegramService } from '../telegram/telegram.service';
 import { BotManagerService } from './bot-manager.service';
 import { BotFactory } from './instanses/bot-factory';
 import { BaseBotTrading } from './instanses/bot-trading';
+import { CloseDealAtMarketPrice } from './dto/close-deal-market-price.payload';
 
 export interface IBotManagerInstances {
   botInstances: Map<number, BaseBotTrading>;
@@ -75,6 +76,13 @@ export class BotManagerInstances implements IBotManagerInstances {
       return 'stop bot #' + id;
     }
     return 'bot not found';
+  }
+  async closeDealAtMarketPrice(payload: CloseDealAtMarketPrice) {
+    if (this.botInstances.has(payload.botId)) {
+      await this.botInstances
+        .get(payload.botId)
+        .closeAtMarketPrice(payload.dealId, payload.userId);
+    }
   }
 
   getAllRunning() {

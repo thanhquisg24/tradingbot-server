@@ -17,6 +17,7 @@ import { BotManagerInstances } from './bot-manager.instances';
 import { BotManagerService } from './bot-manager.service';
 import { CreateBotPayload } from './dto/create-bot.payload';
 import { BotPairsPayload } from './dto/update-bot.dto';
+import { CloseDealAtMarketPrice } from './dto/close-deal-market-price.payload';
 
 @Controller('api/v1/bot-manager')
 @ApiTags('Bot Manager APIs')
@@ -45,6 +46,14 @@ export class BotManagerController {
       BotManagerController.name,
     );
     return this.service.createWithPayload(createBotPayload);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Post('/close-deal-at-market-price')
+  async closeDealAtMarketPrice(@Body() payload: CloseDealAtMarketPrice) {
+    await this.instanses.closeDealAtMarketPrice(payload);
+    return 'Action has been sent!';
   }
 
   @ApiBearerAuth()

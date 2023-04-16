@@ -225,6 +225,30 @@ export const createMarketBaseOrder = (
   return newBaseOrder;
 };
 
+export const createCloseMarketOrder = (
+  deal: DealEntity,
+  totalQuantity: number,
+) => {
+  let newSellOrder = new OrderEntity();
+  newSellOrder.id = getNewUUid();
+  newSellOrder.deal = deal;
+  newSellOrder.side = getOrderSide(
+    deal.strategyDirection,
+    ORDER_ACTION_ENUM.CLOSE_POSITION,
+  );
+  newSellOrder.status = 'CREATED';
+  newSellOrder.price = 0;
+  newSellOrder.quantity = totalQuantity;
+  newSellOrder.volume = 0;
+  newSellOrder.sequence = 9999;
+  newSellOrder.botId = deal.botId;
+  newSellOrder.exchangeId = deal.exchangeId;
+  newSellOrder.userId = deal.userId;
+  newSellOrder.clientOrderType = CLIENT_ORDER_TYPE.CLOSE_AT_MARKET;
+  newSellOrder.pair = deal.pair;
+  return newSellOrder;
+};
+
 export const createNextTPOrder = (
   deal: DealEntity,
   currentOrder: OrderEntity,
