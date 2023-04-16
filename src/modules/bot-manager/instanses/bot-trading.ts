@@ -45,6 +45,7 @@ interface IBaseBotTrading {
   updateConfig(partConfig: Partial<BotTradingEntity>): void;
   start(): Promise<boolean>;
   stop(): void;
+  closeAtMarketPrice(): Promise<void>;
 }
 const MAX_RETRY = 55;
 
@@ -76,6 +77,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     this.telegramService = telegramService;
     this.logLabel = `Bot#${config.id} ${config.name}`;
   }
+
   private async sendMsgTelegram(msg: string): Promise<void> {
     botLogger.info(msg, { label: this.logLabel });
     if (this.botConfig.exchange.user.telegramChatId) {
@@ -692,6 +694,10 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     await this.sendMsgTelegram(
       `[${deal.pair}]: Deal ${deal.id} closed, profit: ${profit} 💰`,
     );
+  }
+
+  async closeAtMarketPrice(): Promise<void> {
+    throw new Error('Method not implemented.');
   }
   async watchPosition() {
     if (this.isRunning) {

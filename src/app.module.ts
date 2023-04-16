@@ -22,6 +22,7 @@ import {
   utilities as nestWinstonModuleUtilities,
   WinstonModule,
 } from 'nest-winston';
+import { DealModule } from './modules/deal/deal.module';
 
 dotenv.config();
 // import entities from './config/typeorm.entities';
@@ -77,6 +78,7 @@ const logTransportDaily: DailyRotateFile = new DailyRotateFile({
     BotManagerModule,
     PairModule,
     SystemModule,
+    DealModule,
   ],
   controllers: [AppController],
   providers: [AppService],
