@@ -93,7 +93,7 @@ export class BotManagerInstances implements IBotManagerInstances {
     return obj;
   }
 
-  getRunningBotById(id: number) {
+  async getRunningBotById(id: number) {
     if (this.botInstances.has(id)) {
       return this.getBotById(id).botConfig.id;
     }

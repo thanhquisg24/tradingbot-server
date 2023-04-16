@@ -96,6 +96,10 @@ export class BotManagerController {
 
   @Post('/get-bot-post')
   getBotIdPost(@Body() payload: PostCommonPayload) {
+    console.log(
+      '🚀 ~ file: bot-manager.controller.ts:99 ~ BotManagerController ~ getBotIdPost ~ payload:',
+      payload,
+    );
     return this.instanses.getRunningBotById(payload.id);
   }
 
