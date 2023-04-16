@@ -75,6 +75,13 @@ export class BotTradingEntity {
   @Column({ name: 'leverage', type: 'int', nullable: false, default: 8 })
   leverage: number;
 
+  @Column({
+    name: 'allow_deals_same_pair',
+    type: 'boolean',
+    default: false,
+  })
+  allowDealSamePair: boolean;
+
   // ASAP
   @Column({
     name: 'deal_start_condition',

@@ -96,6 +96,19 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     });
     return countActiveDeal < this.botConfig.maxActiveDeal;
   }
+
+  private async checkValidPair(pair: string) {
+    if (this.botConfig.allowDealSamePair) {
+      return true;
+    }
+    const countActiveDealByPair = await this.dealRepo.countBy({
+      status: DEAL_STATUS.ACTIVE,
+      botId: this.botConfig.id,
+      pair,
+    });
+    return countActiveDealByPair === 0;
+  }
+
   private async placeBinanceOrder(
     order: OrderEntity,
   ): Promise<BinanceOrder | undefined> {
@@ -386,8 +399,11 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
 
     switch (tv.action) {
       case TVActionType.OPEN_DEAL:
+        const isValidPair = await this.checkValidPair(
+          existingPair.exchangePair,
+        );
         const isValidMaxDeal = await this.checkMaxActiveDeal();
-        if (isValidMaxDeal) {
+        if (isValidMaxDeal && isValidPair) {
           await this.createAndPlaceBaseOrder(
             existingPair.exchangePair,
             new BigNumber(tv.price),
@@ -767,9 +783,9 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       }
     }
     for (let i = 0; i < pairNeedStart.length; i++) {
+      const isValidPair = await this.checkValidPair(pairNeedStart[i]);
       const isValidActiveDealCount = await this.checkMaxActiveDeal();
-
-      if (isValidActiveDealCount) {
+      if (isValidActiveDealCount && isValidPair) {
         const pairItem = pairNeedStart[i];
         const binanceUSDM = this._exchangeRemote.getCcxtExchange();
         const ticker = await binanceUSDM.fetchTicker(pairItem);
