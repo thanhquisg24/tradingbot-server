@@ -378,6 +378,10 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
   }
 
   async processTvAction(tv: OnTVEventPayload): Promise<void> {
+    botLogger.log(
+      `receive msg from tradingview ${JSON.stringify(tv)}`,
+      this.logLabel,
+    );
     if (this.botConfig.dealStartCondition !== DEAL_START_TYPE.TRADINGVIEW) {
       return;
     }

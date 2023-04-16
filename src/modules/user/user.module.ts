@@ -13,5 +13,6 @@ import { ExchangeEntity } from '../entities/exchange.entity';
   ],
   controllers: [UserController],
   providers: [UserService],
+  exports: [UserService],
 })
 export class UserModule {}

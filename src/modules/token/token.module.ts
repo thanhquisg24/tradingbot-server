@@ -8,5 +8,6 @@ import { TokenEntity } from '../entities/token.entity';
   imports: [TypeOrmModule.forFeature([TokenEntity])],
   controllers: [TokenController],
   providers: [TokenService],
+  exports: [TokenService],
 })
 export class TokenModule {}

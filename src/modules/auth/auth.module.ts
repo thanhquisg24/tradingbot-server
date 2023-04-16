@@ -15,16 +15,15 @@ import entities from 'src/config/typeorm.entities';
 @Module({
   imports: [
     TypeOrmModule.forFeature(entities),
-    UserModule,
     PassportModule,
     JwtModule.register({
       secret: 'JWT_SECRET_KEY',
       signOptions: { expiresIn: '60m' },
     }),
+    UserModule,
   ],
   providers: [
     AuthService,
-    UserService,
     LocalStrategy,
     JsonWebTokenStrategy,
     JwtRefreshTokenStrategy,

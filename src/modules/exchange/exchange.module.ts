@@ -10,5 +10,6 @@ import { ExchangeEntity } from '../entities/exchange.entity';
   imports: [TypeOrmModule.forFeature([ExchangeEntity]), AutomapperModule],
   controllers: [ExchangeController],
   providers: [ExchangeService, ExchangePayloadToDto],
+  exports: [ExchangeService],
 })
 export class ExchangeModule {}

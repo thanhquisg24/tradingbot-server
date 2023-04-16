@@ -94,14 +94,28 @@ export class BotManagerInstances implements IBotManagerInstances {
 
   getRunningBotById(id: number) {
     if (this.botInstances.has(id)) {
-      return this.getBotById(id);
+      return this.getBotById(id).botConfig.id;
     }
     return 'bot not found';
   }
 
-  @OnEvent(TV_DEAL_EVENT, { async: true })
+  @OnEvent(TV_DEAL_EVENT)
   async handleTvEvent(payload: OnTVEventPayload) {
+    console.log(
+      '🚀 ~ file: bot-manager.instances.ts:104 ~ BotManagerInstances ~ handleTvEvent ~ payload:',
+      payload,
+    );
+    this.botInstances.has(payload.botId);
+    console.log(
+      '🚀 ~ file: bot-manager.instances.ts:109 ~ BotManagerInstances ~ handleTvEvent ~ this.botInstances.has(payload.botId):',
+      payload.botId,
+      this.botInstances.has(payload.botId),
+    );
     if (this.botInstances.has(payload.botId)) {
+      console.log(
+        '🚀 ~ file: bot-manager.instances.ts:109 ~ BotManagerInstances ~ handleTvEvent ~ payload.botId:',
+        payload.botId,
+      );
       await this.botInstances.get(payload.botId).processTvAction(payload);
     }
   }

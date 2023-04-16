@@ -9,5 +9,6 @@ import { PairEntity } from '../entities/pair.entity';
   imports: [TypeOrmModule.forFeature([PairEntity]), AutomapperModule],
   controllers: [PairController],
   providers: [PairService],
+  exports: [PairService],
 })
 export class PairModule {}
