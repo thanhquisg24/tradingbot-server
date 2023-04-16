@@ -1,15 +1,16 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, LoggerService } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { InjectRepository } from '@nestjs/typeorm';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { COMMON_STATUS } from 'src/common/constants';
+import { Repository } from 'typeorm';
+import { DealEntity } from '../entities/deal.entity';
+import { OrderEntity } from '../entities/order.entity';
+import { UserEntity } from '../entities/user.entity';
 import { TelegramService } from '../telegram/telegram.service';
 import { BotManagerService } from './bot-manager.service';
-import { DealEntity } from '../entities/deal.entity';
-import { Repository } from 'typeorm';
-import { OrderEntity } from '../entities/order.entity';
 import { BotFactory } from './instanses/bot-factory';
 import { BaseBotTrading } from './instanses/bot-trading';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { COMMON_STATUS } from 'src/common/constants';
-import { InjectRepository } from '@nestjs/typeorm';
-import { UserEntity } from '../entities/user.entity';
 
 export interface IBotManagerInstances {
   botInstances: Map<number, BaseBotTrading>;
@@ -19,7 +20,6 @@ export interface IBotManagerInstances {
 export class BotManagerInstances implements IBotManagerInstances {
   botInstances: Map<number, BaseBotTrading> = new Map();
 
-  private readonly logger = new Logger(BotManagerInstances.name);
   constructor(
     private readonly botManagerService: BotManagerService,
 
@@ -29,6 +29,8 @@ export class BotManagerInstances implements IBotManagerInstances {
     private readonly orderRepo: Repository<OrderEntity>,
 
     private readonly telegramService: TelegramService,
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService,
   ) {}
   getBotById(id: number) {
     if (this.botInstances.has(id)) {
@@ -90,7 +92,7 @@ export class BotManagerInstances implements IBotManagerInstances {
   @Cron(CronExpression.EVERY_10_SECONDS)
   // @Cron('*/20 * * * * *')
   async handleCron() {
-    this.logger.debug('Called every 10 seconds');
+    this.logger.log('Called every 10 seconds', BotManagerInstances.name);
     this.botInstances.forEach(async (bot) => {
       await bot.watchPosition();
     });

@@ -1,17 +1,19 @@
 import {
+  Body,
   Controller,
   Get,
-  Logger,
+  Inject,
+  LoggerService,
   Param,
   Post,
-  UseGuards,
   Request,
-  Body,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { BotManagerInstances } from './bot-manager.instances';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RequestWithUser } from '../auth/type';
+import { BotManagerInstances } from './bot-manager.instances';
 import { BotManagerService } from './bot-manager.service';
 import { CreateBotPayload } from './dto/create-bot.payload';
 import { BotPairsPayload } from './dto/update-bot.dto';
@@ -22,9 +24,9 @@ export class BotManagerController {
   constructor(
     private readonly instanses: BotManagerInstances,
     private readonly service: BotManagerService,
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService,
   ) {}
-
-  private logger = new Logger(BotManagerController.name);
 
   // checkUser(req: RequestWithUser,userId:)
 
@@ -38,7 +40,10 @@ export class BotManagerController {
     if (req.user.id !== createBotPayload.userId) {
       throw new Error('User is not valid !');
     }
-    this.logger.debug(JSON.stringify(createBotPayload));
+    this.logger.log(
+      JSON.stringify(createBotPayload),
+      BotManagerController.name,
+    );
     return this.service.createWithPayload(createBotPayload);
   }
 

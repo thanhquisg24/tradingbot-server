@@ -36,7 +36,7 @@ import {
   getOrderSide,
 } from './bot-utils-calc';
 import { ITVPayload, TVActionType } from '../dto/deal-tv.payload';
-import { botLogger } from 'src/common/logger';
+import { botLogger } from 'src/common/bot-logger';
 
 interface IBaseBotTrading {
   botConfig: BotTradingEntity;

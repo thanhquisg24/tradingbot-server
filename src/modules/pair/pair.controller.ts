@@ -10,7 +10,9 @@ import {
 import { PairService } from './pair.service';
 import { CreatePairDto } from './dto/create-pair.dto';
 import { UpdatePairDto } from './dto/update-pair.dto';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Pair APIs')
 @Controller('pair')
 export class PairController {
   constructor(private readonly pairService: PairService) {}

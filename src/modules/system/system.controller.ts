@@ -3,7 +3,8 @@ import {
   Controller,
   Delete,
   Get,
-  Logger,
+  Inject,
+  LoggerService,
   NotFoundException,
   Param,
   Patch,
@@ -12,6 +13,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RequestWithUser } from '../auth/type';
 import { ExchangesEnum } from '../entities/exchange.entity';
@@ -30,9 +32,10 @@ export class SystemController {
     private readonly systemService: SystemService,
     private readonly exChangeService: ExchangeService,
     private readonly pairService: PairService,
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService,
   ) {}
 
-  private logger = new Logger(SystemController.name);
   //handle login
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
@@ -71,7 +74,7 @@ export class SystemController {
           [],
         );
         await this.pairService.saveBatch(pairs);
-        this.logger.log('init-binance-usdm-pair OK!');
+        this.logger.log('init-binance-usdm-pair OK!', SystemController.name);
         return 'init-binance-usdm-pair OK!';
       }
     }

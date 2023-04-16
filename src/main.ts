@@ -6,16 +6,18 @@ import {
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { json, urlencoded } from 'express';
 
-import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import { initializeTransactionalContext } from 'typeorm-transactional';
+import { AppModule } from './app.module';
 import { TransformInterceptor } from './common/interceptors/response-mapping.interceptor';
 import { filterMessages } from './common/utils/validationUtils';
-import { initializeTransactionalContext } from 'typeorm-transactional';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 async function bootstrap() {
   initializeTransactionalContext();
   const app = await NestFactory.create(AppModule);
+  app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
   app.useGlobalPipes(
     new ValidationPipe({
       exceptionFactory: (errors: ValidationError[]) => {

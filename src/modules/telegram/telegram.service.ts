@@ -11,6 +11,10 @@ export class TelegramService {
       TEST_USER_ID,
       `Bot Server started at ${new Date()}`,
     );
+    bot.catch((err, ctx) => {
+      console.log(`Ooops, encountered an error for ${ctx.updateType}`, err);
+      throw err;
+    });
   }
 
   sendMessageToUser = async (userId: string, message: string) => {
@@ -18,6 +22,7 @@ export class TelegramService {
       await this.bot.telegram.sendMessage(userId, message);
     } catch (ex) {
       console.log("Can't not send Msg Via telegram Bot");
+      throw ex;
     }
   };
 }

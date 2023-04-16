@@ -1,27 +1,29 @@
+import { Mapper } from '@automapper/core';
+import { InjectMapper } from '@automapper/nestjs';
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
-  UseGuards,
+  Get,
+  Inject,
+  LoggerService,
+  Param,
+  Patch,
+  Post,
   Request,
-  Logger,
+  UseGuards,
 } from '@nestjs/common';
-import { ExchangeService } from './exchange.service';
-import { CreateExchangeDto } from './dto/create-exchange.dto';
-import { UpdateExchangeDto } from './dto/update-exchange.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { ROLE } from 'src/common/constants';
 import { HasRoles } from 'src/common/decorators/has-roles.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
-import { ROLE } from 'src/common/constants';
 import { RolesGuard } from 'src/common/guards/roles.guard';
-import { CreateExchangePayload } from './dto/create-exchange.payload';
 import { RequestWithUser } from '../auth/type';
-import { InjectMapper } from '@automapper/nestjs';
-import { Mapper } from '@automapper/core';
+import { CreateExchangeDto } from './dto/create-exchange.dto';
+import { CreateExchangePayload } from './dto/create-exchange.payload';
+import { UpdateExchangeDto } from './dto/update-exchange.dto';
+import { ExchangeService } from './exchange.service';
 
 @Controller('api/v1/exchange')
 @ApiTags('Exchange APIs')
@@ -29,9 +31,11 @@ export class ExchangeController {
   constructor(
     @InjectMapper() private readonly mapper: Mapper,
     private readonly exchangeService: ExchangeService,
+
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService,
   ) {}
 
-  private logger = new Logger(ExchangeController.name);
   //handle login
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
@@ -47,9 +51,9 @@ export class ExchangeController {
     );
     createExchangedto.user = req.user;
     this.logger.log(
-      `User #${req.user.id} Creating exchange row : ${JSON.stringify(
-        createExchangePayload,
-      )}`,
+      `User #${req.user.id} Creating exchange row : ${
+        (JSON.stringify(createExchangePayload), ExchangeController.name)
+      }`,
     );
     return this.exchangeService.create(createExchangedto);
   }
