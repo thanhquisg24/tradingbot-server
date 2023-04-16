@@ -1,19 +1,7 @@
 import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotBlankString, IsPositiveInt } from '@nestjsi/class-validator';
-
-export enum TVActionType {
-  OPEN_DEAL = 'openDeal',
-  CLOSE_DEAL = 'closeDeal',
-}
-
-export interface ITVPayload {
-  botId: number;
-  pair: string;
-  userId: number;
-  action: TVActionType;
-  price: number;
-}
+import { ITVPayload, TVActionType } from 'src/common/event/tv_events';
 
 export class TVPayload implements ITVPayload {
   @AutoMap()

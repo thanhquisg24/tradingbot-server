@@ -23,6 +23,8 @@ import {
   WinstonModule,
 } from 'nest-winston';
 import { DealModule } from './modules/deal/deal.module';
+import { TvWebhookModule } from './modules/tv-webhook/tv-webhook.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 dotenv.config();
 // import entities from './config/typeorm.entities';
@@ -51,6 +53,7 @@ const logTransportDaily: DailyRotateFile = new DailyRotateFile({
       token: TELEGRAM_TOKEN,
       include: [TelegramModule],
     }),
+    EventEmitterModule.forRoot(),
     WinstonModule.forRoot({
       format: winston.format.combine(
         winston.format.timestamp(),
@@ -79,6 +82,7 @@ const logTransportDaily: DailyRotateFile = new DailyRotateFile({
     PairModule,
     SystemModule,
     DealModule,
+    TvWebhookModule,
   ],
   controllers: [AppController],
   providers: [AppService],

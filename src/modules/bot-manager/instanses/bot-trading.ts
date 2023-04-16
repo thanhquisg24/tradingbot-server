@@ -36,8 +36,8 @@ import {
   createStopLossOrder,
   getOrderSide,
 } from './bot-utils-calc';
-import { ITVPayload, TVActionType } from '../dto/deal-tv.payload';
 import { botLogger } from 'src/common/bot-logger';
+import { TVActionType, OnTVEventPayload } from 'src/common/event/tv_events';
 
 interface IBaseBotTrading {
   botConfig: BotTradingEntity;
@@ -47,6 +47,7 @@ interface IBaseBotTrading {
   start(): Promise<boolean>;
   stop(): void;
   closeAtMarketPrice(dealId: number, userId: number): Promise<void>;
+  processTvAction(tv: OnTVEventPayload): Promise<void>;
 }
 const MAX_RETRY = 55;
 
@@ -363,7 +364,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     }
   }
 
-  async processTvAction(tv: ITVPayload): Promise<void> {
+  async processTvAction(tv: OnTVEventPayload): Promise<void> {
     if (tv.userId !== this.botConfig.userId) {
       await this.sendMsgTelegram('User is not valid :' + JSON.stringify(tv));
       return;

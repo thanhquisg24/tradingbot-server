@@ -12,6 +12,8 @@ import { BotManagerService } from './bot-manager.service';
 import { BotFactory } from './instanses/bot-factory';
 import { BaseBotTrading } from './instanses/bot-trading';
 import { CloseDealAtMarketPrice } from './dto/close-deal-market-price.payload';
+import { OnEvent } from '@nestjs/event-emitter';
+import { OnTVEventPayload, TV_DEAL_EVENT } from 'src/common/event/tv_events';
 
 export interface IBotManagerInstances {
   botInstances: Map<number, BaseBotTrading>;
@@ -95,6 +97,13 @@ export class BotManagerInstances implements IBotManagerInstances {
       return this.getBotById(id);
     }
     return 'bot not found';
+  }
+
+  @OnEvent(TV_DEAL_EVENT, { async: true })
+  async handleTvEvent(payload: OnTVEventPayload) {
+    if (this.botInstances.has(payload.botId)) {
+      await this.botInstances.get(payload.botId).processTvAction(payload);
+    }
   }
 
   @Cron(CronExpression.EVERY_10_SECONDS)

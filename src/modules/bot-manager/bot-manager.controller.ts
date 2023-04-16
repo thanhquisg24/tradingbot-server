@@ -19,8 +19,8 @@ import { CreateBotPayload } from './dto/create-bot.payload';
 import { BotPairsPayload } from './dto/update-bot.dto';
 import { CloseDealAtMarketPrice } from './dto/close-deal-market-price.payload';
 
-@Controller('api/v1/bot-manager')
 @ApiTags('Bot Manager APIs')
+@Controller('api/v1/bot-manager')
 export class BotManagerController {
   constructor(
     private readonly instanses: BotManagerInstances,
