@@ -217,7 +217,6 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
           label: this.logLabel,
         },
       );
-      throw err;
     }
   }
 
@@ -465,9 +464,9 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       }
       return;
     } catch (ex) {
-      console.log(
-        '🚀 ~ file: bot-trading.ts:433 ~ BaseBotTrading ~ processTvAction ~ ex:',
-        ex,
+      botLogger.error(
+        `[${tv.pair}] processTvAction() error ${ex.message}`,
+        this.logLabel,
       );
       return;
     }
@@ -484,196 +483,201 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       price,
       avgPrice,
     } = executionReportEvt;
-    const filledPrice = Number(price) > 0 ? price : avgPrice;
-    const currentOrder = await this.orderRepo.findOne({
-      relations: ['deal'],
-      where: {
-        id: clientOrderId,
-      },
-    });
-    if (!currentOrder) {
-      botLogger.info(`Order ${clientOrderId} not found`, {
-        label: this.logLabel,
+    try {
+      const filledPrice = Number(price) > 0 ? price : avgPrice;
+      const currentOrder = await this.orderRepo.findOne({
+        relations: ['deal'],
+        where: {
+          id: clientOrderId,
+        },
       });
-      return;
-    }
-    if (!deal) {
-      botLogger.warn(`Invalid deal ${currentOrder.deal.id}`, {
-        label: this.logLabel,
-      });
-      return;
-    }
-    const _buyOrderSide = getOrderSide(
-      deal.strategyDirection,
-      ORDER_ACTION_ENUM.OPEN_POSITION,
-    );
-    const _sellOrderSide = getOrderSide(
-      deal.strategyDirection,
-      ORDER_ACTION_ENUM.CLOSE_POSITION,
-    );
-    if (currentOrder.side === _buyOrderSide) {
-      switch (orderStatus) {
-        case 'NEW':
-          if (currentOrder.status === 'CREATED') {
-            currentOrder.binanceOrderId = `${orderId}`;
-            currentOrder.status = OrderStatus.NEW;
-            await this.orderRepo.save(currentOrder);
+      if (!currentOrder) {
+        botLogger.info(`Order ${clientOrderId} not found`, {
+          label: this.logLabel,
+        });
+        return;
+      }
+      if (!deal) {
+        botLogger.warn(`Invalid deal ${currentOrder.deal.id}`, {
+          label: this.logLabel,
+        });
+        return;
+      }
+      const _buyOrderSide = getOrderSide(
+        deal.strategyDirection,
+        ORDER_ACTION_ENUM.OPEN_POSITION,
+      );
+      const _sellOrderSide = getOrderSide(
+        deal.strategyDirection,
+        ORDER_ACTION_ENUM.CLOSE_POSITION,
+      );
+      if (currentOrder.side === _buyOrderSide) {
+        switch (orderStatus) {
+          case 'NEW':
+            if (currentOrder.status === 'CREATED') {
+              currentOrder.binanceOrderId = `${orderId}`;
+              currentOrder.status = OrderStatus.NEW;
+              await this.orderRepo.save(currentOrder);
+              botLogger.info(
+                `[${currentOrder.pair}] [${currentOrder.binanceOrderId}]: NEW buy order. Price: ${filledPrice}, Amount: ${currentOrder.quantity}`,
+                {
+                  label: this.logLabel,
+                },
+              );
+            }
+            break;
+
+          case 'FILLED':
+            if (
+              currentOrder.status === 'CREATED' ||
+              currentOrder.status === 'NEW' ||
+              currentOrder.status === 'PARTIALLY_FILLED'
+            ) {
+              const existingSellOrder = deal.orders.find(
+                (o) => o.side === _sellOrderSide && o.status === 'NEW',
+              );
+              if (existingSellOrder) {
+                await this.cancelOrder(existingSellOrder);
+              }
+
+              currentOrder.binanceOrderId = `${orderId}`;
+              currentOrder.status = OrderStatus.FILLED;
+              currentOrder.filledPrice = Number(filledPrice);
+              await this.orderRepo.save(currentOrder);
+              const title = currentOrder.sequence > 0 ? 'Safety' : 'Base';
+              await this.sendMsgTelegram(
+                `[${currentOrder.pair}] [${currentOrder.binanceOrderId}]: ${title} order ${currentOrder.side} has been FILLED. Price: ${filledPrice}, Amount: ${currentOrder.quantity}`,
+              );
+              // Cancel existing sell order (if any)
+              // and create a new take-profit order
+
+              //placing TP line
+              let newSellOrder = createNextTPOrder(deal, currentOrder);
+              newSellOrder = await this.orderRepo.save(newSellOrder);
+              const bSellOrder = await this.placeBinanceOrder(newSellOrder);
+              if (bSellOrder) {
+                newSellOrder.status = OrderStatus.NEW;
+                newSellOrder.binanceOrderId = `${bSellOrder.orderId}`;
+                newSellOrder.placeCount = newSellOrder.placeCount + 1;
+                await this.sendMsgTelegram(
+                  `[${newSellOrder.pair}] [${newSellOrder.binanceOrderId}]: Place new Take Profit Order. Price: ${newSellOrder.price}, Amount: ${newSellOrder.quantity}`,
+                );
+              } else {
+                newSellOrder.status = 'PLACING';
+                newSellOrder.retryCount = newSellOrder.retryCount + 1;
+                await this.sendMsgTelegram(
+                  `[${newSellOrder.pair}]:Error on placing a new Take Profit Order!. Price: ${newSellOrder.price}, Amount: ${newSellOrder.quantity}`,
+                );
+              }
+              await this.orderRepo.save(newSellOrder);
+              //end placing TP line
+
+              //placing next safety
+              const nextsafety = deal.orders.find(
+                (o) =>
+                  o.side === _buyOrderSide &&
+                  o.status === 'CREATED' &&
+                  o.sequence === currentOrder.sequence + 1,
+              );
+
+              if (nextsafety) {
+                const binanceSafety = await this.placeBinanceOrder(nextsafety);
+                if (binanceSafety) {
+                  nextsafety.status = OrderStatus.NEW;
+                  nextsafety.binanceOrderId = `${binanceSafety.orderId}`;
+                  nextsafety.placeCount = nextsafety.placeCount + 1;
+                  await this.sendMsgTelegram(
+                    `[${nextsafety.pair}] [${nextsafety.binanceOrderId}]: Place new Safety Order. Price: ${nextsafety.price}, Amount: ${nextsafety.quantity}`,
+                  );
+                } else {
+                  nextsafety.status = 'PLACING';
+                  nextsafety.retryCount = nextsafety.retryCount + 1;
+                  await this.sendMsgTelegram(
+                    `[${nextsafety.pair}]:Error on placing a new  Safety Order. Price: ${nextsafety.price}, Amount: ${nextsafety.quantity}`,
+                  );
+                }
+                await this.orderRepo.save(nextsafety);
+              }
+              //end placing next safety
+
+              //placing stoploss
+              const isLastSO =
+                currentOrder.sequence >= deal.maxSafetyTradesCount;
+              if (isLastSO && deal.useStopLoss) {
+                const stlOrder = createStopLossOrder(deal, currentOrder);
+                const binanceStl = await this.placeBinanceOrder(stlOrder);
+                if (binanceStl) {
+                  stlOrder.status = OrderStatus.NEW;
+                  stlOrder.binanceOrderId = `${binanceStl.orderId}`;
+                  stlOrder.placeCount = stlOrder.placeCount + 1;
+                  await this.sendMsgTelegram(
+                    `[${stlOrder.pair}] [${stlOrder.binanceOrderId}]: Place new Stop Loss Order. Price: ${stlOrder.price}, Amount: ${stlOrder.quantity}`,
+                  );
+                } else {
+                  stlOrder.status = 'PLACING';
+                  stlOrder.retryCount = stlOrder.retryCount + 1;
+                  await this.sendMsgTelegram(
+                    `[${stlOrder.pair}]:Error on placing a new Stop Loss Order. Price: ${stlOrder.price}, Amount: ${stlOrder.quantity}`,
+                  );
+                }
+                await this.orderRepo.save(stlOrder);
+              }
+              //end placing next stoploss
+            }
+            break;
+
+          case 'PARTIALLY_FILLED':
+          case 'CANCELED':
+          case 'REJECTED':
+          case 'EXPIRED':
+            if (currentOrder.status !== orderStatus) {
+              currentOrder.status = orderStatus;
+              await this.orderRepo.save(currentOrder);
+            }
             botLogger.info(
-              `[${currentOrder.pair}] [${currentOrder.binanceOrderId}]: NEW buy order. Price: ${filledPrice}, Amount: ${currentOrder.quantity}`,
+              `[${currentOrder.pair}] [${currentOrder.binanceOrderId}]: Buy order is ${orderStatus}. Price: ${price}, Amount: ${currentOrder.quantity}`,
               {
                 label: this.logLabel,
               },
             );
-          }
-          break;
+            break;
 
-        case 'FILLED':
-          if (
-            currentOrder.status === 'CREATED' ||
-            currentOrder.status === 'NEW' ||
-            currentOrder.status === 'PARTIALLY_FILLED'
-          ) {
-            const existingSellOrder = deal.orders.find(
-              (o) => o.side === _sellOrderSide && o.status === 'NEW',
-            );
-            if (existingSellOrder) {
-              await this.cancelOrder(existingSellOrder);
-            }
-
-            currentOrder.binanceOrderId = `${orderId}`;
-            currentOrder.status = OrderStatus.FILLED;
-            currentOrder.filledPrice = Number(filledPrice);
-            await this.orderRepo.save(currentOrder);
-            const title = currentOrder.sequence > 0 ? 'Safety' : 'Base';
-            await this.sendMsgTelegram(
-              `[${currentOrder.pair}] [${currentOrder.binanceOrderId}]: ${title} order ${currentOrder.side} has been FILLED. Price: ${filledPrice}, Amount: ${currentOrder.quantity}`,
-            );
-            // Cancel existing sell order (if any)
-            // and create a new take-profit order
-
-            //placing TP line
-            let newSellOrder = createNextTPOrder(deal, currentOrder);
-            newSellOrder = await this.orderRepo.save(newSellOrder);
-            const bSellOrder = await this.placeBinanceOrder(newSellOrder);
-            if (bSellOrder) {
-              newSellOrder.status = OrderStatus.NEW;
-              newSellOrder.binanceOrderId = `${bSellOrder.orderId}`;
-              newSellOrder.placeCount = newSellOrder.placeCount + 1;
-              await this.sendMsgTelegram(
-                `[${newSellOrder.pair}] [${newSellOrder.binanceOrderId}]: Place new Take Profit Order. Price: ${newSellOrder.price}, Amount: ${newSellOrder.quantity}`,
-              );
-            } else {
-              newSellOrder.status = 'PLACING';
-              newSellOrder.retryCount = newSellOrder.retryCount + 1;
-              await this.sendMsgTelegram(
-                `[${newSellOrder.pair}]:Error on placing a new Take Profit Order!. Price: ${newSellOrder.price}, Amount: ${newSellOrder.quantity}`,
-              );
-            }
-            await this.orderRepo.save(newSellOrder);
-            //end placing TP line
-
-            //placing next safety
-            const nextsafety = deal.orders.find(
-              (o) =>
-                o.side === _buyOrderSide &&
-                o.status === 'CREATED' &&
-                o.sequence === currentOrder.sequence + 1,
-            );
-
-            if (nextsafety) {
-              const binanceSafety = await this.placeBinanceOrder(nextsafety);
-              if (binanceSafety) {
-                nextsafety.status = OrderStatus.NEW;
-                nextsafety.binanceOrderId = `${binanceSafety.orderId}`;
-                nextsafety.placeCount = nextsafety.placeCount + 1;
-                await this.sendMsgTelegram(
-                  `[${nextsafety.pair}] [${nextsafety.binanceOrderId}]: Place new Safety Order. Price: ${nextsafety.price}, Amount: ${nextsafety.quantity}`,
-                );
-              } else {
-                nextsafety.status = 'PLACING';
-                nextsafety.retryCount = nextsafety.retryCount + 1;
-                await this.sendMsgTelegram(
-                  `[${nextsafety.pair}]:Error on placing a new  Safety Order. Price: ${nextsafety.price}, Amount: ${nextsafety.quantity}`,
-                );
-              }
-              await this.orderRepo.save(nextsafety);
-            }
-            //end placing next safety
-
-            //placing stoploss
-            const isLastSO = currentOrder.sequence >= deal.maxSafetyTradesCount;
-            if (isLastSO && deal.useStopLoss) {
-              const stlOrder = createStopLossOrder(deal, currentOrder);
-              const binanceStl = await this.placeBinanceOrder(stlOrder);
-              if (binanceStl) {
-                stlOrder.status = OrderStatus.NEW;
-                stlOrder.binanceOrderId = `${binanceStl.orderId}`;
-                stlOrder.placeCount = stlOrder.placeCount + 1;
-                await this.sendMsgTelegram(
-                  `[${stlOrder.pair}] [${stlOrder.binanceOrderId}]: Place new Stop Loss Order. Price: ${stlOrder.price}, Amount: ${stlOrder.quantity}`,
-                );
-              } else {
-                stlOrder.status = 'PLACING';
-                stlOrder.retryCount = stlOrder.retryCount + 1;
-                await this.sendMsgTelegram(
-                  `[${stlOrder.pair}]:Error on placing a new Stop Loss Order. Price: ${stlOrder.price}, Amount: ${stlOrder.quantity}`,
-                );
-              }
-              await this.orderRepo.save(stlOrder);
-            }
-            //end placing next stoploss
-          }
-          break;
-
-        case 'PARTIALLY_FILLED':
-        case 'CANCELED':
-        case 'REJECTED':
-        case 'EXPIRED':
-          if (currentOrder.status !== orderStatus) {
-            currentOrder.status = orderStatus;
-            await this.orderRepo.save(currentOrder);
-          }
+          default:
+            botLogger.error(`Invalid order status : ${orderStatus}`, {
+              label: this.logLabel,
+            });
+        }
+      } else {
+        if (orderStatus !== 'NEW' && currentOrder.status !== orderStatus) {
+          currentOrder.status = orderStatus;
+          currentOrder.binanceOrderId = `${orderId}`;
+          currentOrder.filledPrice = Number(filledPrice);
+          await this.orderRepo.update(currentOrder.id, {
+            status: orderStatus,
+            binanceOrderId: `${orderId}`,
+          });
           botLogger.info(
-            `[${currentOrder.pair}] [${currentOrder.binanceOrderId}]: Buy order is ${orderStatus}. Price: ${price}, Amount: ${currentOrder.quantity}`,
+            `[${currentOrder.pair}] [${currentOrder.binanceOrderId}]: Sell order is ${orderStatus}.`,
             {
               label: this.logLabel,
             },
           );
-          break;
-
-        default:
-          botLogger.error(`Invalid order status : ${orderStatus}`, {
-            label: this.logLabel,
-          });
+        }
+        if (orderStatus === 'FILLED') {
+          // currentOrder.status = orderStatus;
+          // currentOrder.binanceOrderId = `${orderId}`;
+          // await this.orderRepo.save(currentOrder);
+          botLogger.info(
+            `[${currentOrder.pair}] [${currentOrder.binanceOrderId}]: Sell order is ${orderStatus}. Price: ${filledPrice}, Amount: ${currentOrder.quantity}`,
+            {
+              label: this.logLabel,
+            },
+          );
+          await this.closeDeal(deal.id);
+        }
       }
-    } else {
-      if (orderStatus !== 'NEW' && currentOrder.status !== orderStatus) {
-        currentOrder.status = orderStatus;
-        currentOrder.binanceOrderId = `${orderId}`;
-        currentOrder.filledPrice = Number(filledPrice);
-        await this.orderRepo.update(currentOrder.id, {
-          status: orderStatus,
-          binanceOrderId: `${orderId}`,
-        });
-        botLogger.info(
-          `[${currentOrder.pair}] [${currentOrder.binanceOrderId}]: Sell order is ${orderStatus}.`,
-          {
-            label: this.logLabel,
-          },
-        );
-      }
-      if (orderStatus === 'FILLED') {
-        // currentOrder.status = orderStatus;
-        // currentOrder.binanceOrderId = `${orderId}`;
-        // await this.orderRepo.save(currentOrder);
-        botLogger.info(
-          `[${currentOrder.pair}] [${currentOrder.binanceOrderId}]: Sell order is ${orderStatus}. Price: ${filledPrice}, Amount: ${currentOrder.quantity}`,
-          {
-            label: this.logLabel,
-          },
-        );
-        await this.closeDeal(deal.id);
-      }
+    } catch (error) {
+      throw new Error(error.message);
     }
   }
   async doTryPlacingOrder(deal_Id: number): Promise<void> {
@@ -839,24 +843,31 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       }
     }
     for (let i = 0; i < pairNeedStart.length; i++) {
-      const isValidPair = await this.checkValidPair(pairNeedStart[i]);
-      const isValidActiveDealCount = await this.checkMaxActiveDeal();
-      if (isValidActiveDealCount && isValidPair) {
-        const pairItem = pairNeedStart[i];
-        const binanceUSDM = this._exchangeRemote.getCcxtExchange();
-        const funding = await wrapExReq(
-          binanceUSDM.fetchFundingRate(pairItem),
-          botLogger,
-        );
-        const markPrice = funding.markPrice;
-        if (markPrice) {
-          await this.createAndPlaceBaseOrder(
-            pairItem,
-            new BigNumber(markPrice),
+      try {
+        const isValidPair = await this.checkValidPair(pairNeedStart[i]);
+        const isValidActiveDealCount = await this.checkMaxActiveDeal();
+        if (isValidActiveDealCount && isValidPair) {
+          const pairItem = pairNeedStart[i];
+          const binanceUSDM = this._exchangeRemote.getCcxtExchange();
+          const funding = await wrapExReq(
+            binanceUSDM.fetchFundingRate(pairItem),
+            botLogger,
           );
-        }
-      }
-    }
+          const markPrice = funding.markPrice;
+          if (markPrice) {
+            await this.createAndPlaceBaseOrder(
+              pairItem,
+              new BigNumber(markPrice),
+            );
+          }
+        } //end if
+      } catch (ex) {
+        botLogger.error(
+          `${pairNeedStart[i]} startDealASAP error${ex.message}`,
+          this.logLabel,
+        );
+      } //end try
+    } //end for
   }
 
   abstract processActivePosition(activeDeals: DealEntity[]);

@@ -90,7 +90,9 @@ export class BotManagerInstances implements IBotManagerInstances {
       await this.botInstances
         .get(strId)
         .closeAtMarketPrice(payload.dealId, payload.userId);
+      return 'success';
     }
+    return 'fail';
   }
 
   getAllRunning() {

@@ -41,23 +41,25 @@ export class DCABot extends BaseBotTrading {
           await this.refreshDealOnOrderUpdate(deal, exchangeOrder.info);
         }
       } //end if
-      await this.doTryPlacingOrder(deal.id);
     } //end for
   } //end processExchangeDeal()
 
   async processActivePosition(activeDeals: DealEntity[]) {
-    try {
-      if (this.isWatchingPosition === false) {
-        this.isWatchingPosition = true;
-        for (let index = 0; index < activeDeals.length; index++) {
-          const deal = activeDeals[index];
+    if (this.isWatchingPosition === false) {
+      this.isWatchingPosition = true;
+      for (let index = 0; index < activeDeals.length; index++) {
+        const deal = activeDeals[index];
+        try {
           await this.processExchangeDeal(deal);
+        } catch (ex) {
+          botLogger.error(
+            `[${deal.pair}] [${deal.id}] processExchangeDeal() error ${ex.message}`,
+            this.logLabel,
+          );
         }
-        this.isWatchingPosition = false;
+        await this.doTryPlacingOrder(deal.id);
       }
-    } catch (ex) {
       this.isWatchingPosition = false;
-      throw ex;
     }
   }
 }

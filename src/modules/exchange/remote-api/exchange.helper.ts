@@ -26,6 +26,6 @@ export const wrapExReq = async (
       }
     }
 
-    throw new Error(e);
+    throw new Error(e.message);
   }
 };
