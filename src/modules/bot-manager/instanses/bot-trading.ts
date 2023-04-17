@@ -191,9 +191,12 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         { label: this.logLabel },
       );
     } catch (err) {
-      botLogger.error('Failed to cancel order ' + order.binanceOrderId, {
-        label: this.logLabel,
-      });
+      botLogger.error(
+        err.message + ' Failed to cancel order ' + order.binanceOrderId,
+        {
+          label: this.logLabel,
+        },
+      );
     }
   }
 
@@ -214,6 +217,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       const exInfo = await _exchange.checkExchangeOnlineStatus();
       if (exInfo) {
         this._exchangeRemote = _exchange;
+        // await this._exchangeRemote.getCcxtExchange().loadMarkets();
         this.isRunning = true;
         await this.sendMsgTelegram('Bot is Starting #' + this.botConfig.id);
         // this._exchangeRemote.getCcxtExchange().getSib
@@ -373,6 +377,10 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         );
       }
     } catch (ex) {
+      botLogger.error(
+        `[${symbol}]: Placing base Order error! ${ex.message}`,
+        this.logLabel,
+      );
       await this.sendMsgTelegram(`[${symbol}]: Placing base Order error!`);
     }
   }
@@ -382,44 +390,59 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       `receive msg from tradingview ${JSON.stringify(tv)}`,
       this.logLabel,
     );
-    if (this.botConfig.dealStartCondition !== DEAL_START_TYPE.TRADINGVIEW) {
-      return;
-    }
-    if (tv.userId !== this.botConfig.userId) {
-      await this.sendMsgTelegram('User is not valid :' + JSON.stringify(tv));
-      return;
-    }
-    if (tv.botId !== this.botConfig.id) {
-      await this.sendMsgTelegram('Bot is not valid :' + JSON.stringify(tv));
-      return;
-    }
-    const existingPair = this.botConfig.pairs.find(
-      (o) => o.commonPair === tv.pair,
-    );
-    if (!existingPair) {
-      await this.sendMsgTelegram('Pair is not valid :' + JSON.stringify(tv));
-      return;
-    }
+    try {
+      if (this.botConfig.dealStartCondition !== DEAL_START_TYPE.TRADINGVIEW) {
+        return;
+      }
+      if (tv.userId !== this.botConfig.userId) {
+        await this.sendMsgTelegram('User is not valid :' + JSON.stringify(tv));
+        return;
+      }
+      if (tv.botId !== this.botConfig.id) {
+        await this.sendMsgTelegram('Bot is not valid :' + JSON.stringify(tv));
+        return;
+      }
+      const existingPair = this.botConfig.pairs.find(
+        (o) => o.commonPair === tv.pair,
+      );
+      if (!existingPair) {
+        await this.sendMsgTelegram('Pair is not valid :' + JSON.stringify(tv));
+        return;
+      }
 
-    switch (tv.action) {
-      case TVActionType.OPEN_DEAL:
-        const isValidPair = await this.checkValidPair(
-          existingPair.exchangePair,
-        );
-        const isValidMaxDeal = await this.checkMaxActiveDeal();
-        if (isValidMaxDeal && isValidPair) {
-          await this.createAndPlaceBaseOrder(
+      switch (tv.action) {
+        case TVActionType.OPEN_DEAL:
+          const isValidPair = await this.checkValidPair(
             existingPair.exchangePair,
-            new BigNumber(tv.price),
           );
-        }
-        break;
-      case TVActionType.CLOSE_DEAL:
-        break;
-      default:
-        break;
+          const isValidMaxDeal = await this.checkMaxActiveDeal();
+          if (isValidMaxDeal && isValidPair) {
+            const binanceUSDM = this._exchangeRemote.getCcxtExchange();
+            const ticker = await binanceUSDM.fetchTicker(
+              existingPair.exchangePair,
+            );
+            const lastPrice = ticker.last;
+            if (lastPrice) {
+              await this.createAndPlaceBaseOrder(
+                existingPair.exchangePair,
+                new BigNumber(tv.price),
+              );
+            }
+          }
+          break;
+        case TVActionType.CLOSE_DEAL:
+          break;
+        default:
+          break;
+      }
+      return;
+    } catch (ex) {
+      console.log(
+        '🚀 ~ file: bot-trading.ts:433 ~ BaseBotTrading ~ processTvAction ~ ex:',
+        ex,
+      );
+      return;
     }
-    return;
   }
 
   async refreshDealOnOrderUpdate(

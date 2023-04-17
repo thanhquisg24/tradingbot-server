@@ -3,25 +3,25 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { COMMON_STATUS } from 'src/common/constants';
+import { OnTVEventPayload, TV_DEAL_EVENT } from 'src/common/event/tv_events';
 import { Repository } from 'typeorm';
 import { DealEntity } from '../entities/deal.entity';
 import { OrderEntity } from '../entities/order.entity';
 import { UserEntity } from '../entities/user.entity';
 import { TelegramService } from '../telegram/telegram.service';
 import { BotManagerService } from './bot-manager.service';
+import { CloseDealAtMarketPrice } from './dto/close-deal-market-price.payload';
 import { BotFactory } from './instanses/bot-factory';
 import { BaseBotTrading } from './instanses/bot-trading';
-import { CloseDealAtMarketPrice } from './dto/close-deal-market-price.payload';
 import { OnEvent } from '@nestjs/event-emitter';
-import { OnTVEventPayload, TV_DEAL_EVENT } from 'src/common/event/tv_events';
 
 export interface IBotManagerInstances {
-  botInstances: Map<number, BaseBotTrading>;
+  botInstances: Map<string, BaseBotTrading>;
 }
 
 @Injectable()
 export class BotManagerInstances implements IBotManagerInstances {
-  botInstances: Map<number, BaseBotTrading> = new Map();
+  botInstances: Map<string, BaseBotTrading>;
 
   constructor(
     private readonly botManagerService: BotManagerService,
@@ -34,11 +34,15 @@ export class BotManagerInstances implements IBotManagerInstances {
     private readonly telegramService: TelegramService,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
-  ) {}
+  ) {
+    this.botInstances = new Map();
+    console.log('🚀 NEW ins BotManagerInstances ~:');
+  }
 
   getBotById(id: number) {
-    if (this.botInstances.has(id)) {
-      return this.botInstances.get(id);
+    const strId = `${id}`;
+    if (this.botInstances.has(strId)) {
+      return this.botInstances.get(strId);
     }
     return null;
   }
@@ -63,7 +67,7 @@ export class BotManagerInstances implements IBotManagerInstances {
       );
       const isStartSuccess = await newBot.start();
       if (isStartSuccess) {
-        this.botInstances.set(id, newBot);
+        this.botInstances.set(`${id}`, newBot);
         await this.botManagerService.updateStatus(id, COMMON_STATUS.ACTIVE);
       }
     }
@@ -74,52 +78,43 @@ export class BotManagerInstances implements IBotManagerInstances {
     const bot = this.getBotById(id);
     if (bot) {
       await bot.stop();
-      this.botInstances.delete(id);
+      this.botInstances.delete(`${id}`);
       await this.botManagerService.updateStatus(id, COMMON_STATUS.DISABLED);
       return 'stop bot #' + id;
     }
     return 'bot not found';
   }
   async closeDealAtMarketPrice(payload: CloseDealAtMarketPrice) {
-    if (this.botInstances.has(payload.botId)) {
+    const strId = `${payload.botId}`;
+    if (this.botInstances.has(strId)) {
       await this.botInstances
-        .get(payload.botId)
+        .get(strId)
         .closeAtMarketPrice(payload.dealId, payload.userId);
     }
   }
 
   getAllRunning() {
     const obj = Object.fromEntries(this.botInstances);
-    return obj;
+    return Object.keys(obj);
   }
 
-  async getRunningBotById(id: number) {
+  async getRunningBotById(id: any) {
     if (this.botInstances.has(id)) {
       return this.getBotById(id).botConfig.id;
     }
     return 'bot not found';
   }
 
-  // @OnEvent(TV_DEAL_EVENT)
-  handleTvEvent(payload: OnTVEventPayload) {
-    console.log(
-      '🚀 ~ file: bot-manager.instances.ts:104 ~ BotManagerInstances ~ handleTvEvent ~ payload:',
-      payload,
+  @OnEvent(TV_DEAL_EVENT)
+  async handleTvEvent(payload: OnTVEventPayload) {
+    this.logger.log(
+      `receive msg from tradingview ${JSON.stringify(payload)}`,
+      BotManagerInstances.name,
     );
-    this.botInstances.has(payload.botId);
-    console.log(
-      '🚀 ~ file: bot-manager.instances.ts:109 ~ BotManagerInstances ~ handleTvEvent ~ this.botInstances.has(payload.botId):',
-      payload.botId,
-      this.botInstances.has(payload.botId),
-    );
-    return this.getRunningBotById(payload.botId);
-    // if (this.botInstances.has(payload.botId)) {
-    //   console.log(
-    //     '🚀 ~ file: bot-manager.instances.ts:109 ~ BotManagerInstances ~ handleTvEvent ~ payload.botId:',
-    //     payload.botId,
-    //   );
-    //   await this.botInstances.get(payload.botId).processTvAction(payload);
-    // }
+    const strId = `${payload.botId}`;
+    if (this.botInstances.has(strId)) {
+      await this.botInstances.get(strId).processTvAction(payload);
+    }
   }
 
   @Cron(CronExpression.EVERY_10_SECONDS)

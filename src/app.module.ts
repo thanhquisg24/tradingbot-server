@@ -52,7 +52,7 @@ const logTransportDaily: DailyRotateFile = new DailyRotateFile({
       token: TELEGRAM_TOKEN,
       include: [TelegramModule],
     }),
-    EventEmitterModule.forRoot(),
+
     WinstonModule.forRoot({
       format: winston.format.combine(
         winston.format.timestamp(),
@@ -60,6 +60,7 @@ const logTransportDaily: DailyRotateFile = new DailyRotateFile({
       ),
       transports: [new winston.transports.Console(), logTransportDaily],
     }),
+    EventEmitterModule.forRoot(),
     // TypeOrmModule.forRoot({
     //   type: 'mysql',
     //   host: 'localhost',

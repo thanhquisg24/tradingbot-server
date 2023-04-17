@@ -15,11 +15,10 @@ import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RequestWithUser } from '../auth/type';
 import { BotManagerInstances } from './bot-manager.instances';
 import { BotManagerService } from './bot-manager.service';
-import { CreateBotPayload } from './dto/create-bot.payload';
-import { BotPairsPayload } from './dto/update-bot.dto';
 import { CloseDealAtMarketPrice } from './dto/close-deal-market-price.payload';
-import { TVPayload } from './tv-webhook/dto/deal-tv.payload';
+import { CreateBotPayload } from './dto/create-bot.payload';
 import { PostCommonPayload } from './dto/post-common';
+import { BotPairsPayload } from './dto/update-bot.dto';
 
 @ApiTags('Bot Manager APIs')
 @Controller('api/v1/bot-manager')
@@ -100,23 +99,16 @@ export class BotManagerController {
       '🚀 ~ file: bot-manager.controller.ts:99 ~ BotManagerController ~ getBotIdPost ~ payload:',
       payload,
     );
-    return this.instanses.getRunningBotById(payload.id);
+    return this.instanses.getRunningBotById(`${payload.id}`);
   }
 
-  @Post('tv-webhooks')
-  handleTVSignal(@Body() payload: TVPayload) {
-    // this.eventEmitter.emit(TV_DEAL_EVENT, payload);
-
-    console.log(
-      '🚀 ~ file: bot-manager.controller.ts:98 ~ BotManagerController ~ handleTVSignal ~ payload:',
-      payload,
-    );
-    const bot11 = this.instanses.getRunningBotById(3);
-    console.log(
-      '🚀 ~ file: bot-manager.controller.ts:99 ~ BotManagerController ~ handleTVSignal ~ bot11:',
-      bot11,
-    );
-    return this.instanses.getRunningBotById(payload.botId);
-    // return this.instanses.handleTvEvent(payload);
-  }
+  // @ApiBody({
+  //   description: 'Bot req body',
+  //   schema: {
+  //     type: 'object',
+  //     properties: {
+  //       id: { type: 'number' },
+  //     },
+  //   },
+  // })
 }

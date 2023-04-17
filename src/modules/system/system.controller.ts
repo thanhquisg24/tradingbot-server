@@ -61,10 +61,7 @@ export class SystemController {
         const symbolsUsdt = ccxtExchange.symbols.filter((e) => {
           return e.endsWith(':USDT');
         });
-        console.log(
-          '🚀 ~ file: system.controller.ts:61 ~ SystemController ~ symbolsUsdt ~ symbolsUsdt:',
-          symbolsUsdt,
-        );
+
         const pairs: PairEntity[] = symbolsUsdt.reduce(
           (store: PairEntity[], cur: string) => {
             const commonPair = cur.split(':USDT')[0];
