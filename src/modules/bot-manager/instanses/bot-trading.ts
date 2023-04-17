@@ -41,6 +41,7 @@ import { TVActionType, OnTVEventPayload } from 'src/common/event/tv_events';
 import { wrapExReq } from 'src/modules/exchange/remote-api/exchange.helper';
 
 interface IBaseBotTrading {
+  isWatchingPosition: boolean;
   botConfig: BotTradingEntity;
   _exchangeRemote: AbstractExchangeAPI;
   watchPosition(): Promise<void>;
@@ -67,6 +68,8 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
 
   protected logLabel: string;
 
+  isWatchingPosition: boolean;
+
   constructor(
     config: BotTradingEntity,
     dealRepo: Repository<DealEntity>,
@@ -78,6 +81,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     this.dealRepo = dealRepo;
     this.orderRepo = orderRepo;
     this.telegramService = telegramService;
+    this.isWatchingPosition = false;
     this.logLabel = `Bot#${config.id} ${config.name}`;
   }
 
@@ -124,6 +128,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         case CLIENT_ORDER_TYPE.BASE:
           if (this.botConfig.startOrderType !== 'LIMIT') {
             ex_orderType = OrderType.MARKET;
+            params = { ...params };
           }
           break;
         case CLIENT_ORDER_TYPE.SAFETY:
@@ -147,7 +152,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       if (ex_orderType === 'MARKET') {
         params = { ...params, newOrderRespType: 'RESULT' };
       }
-      botLogger.info(`${order.id} , ${JSON.stringify(params)}`, {
+      botLogger.info(`${order.pair} ${order.id} , ${JSON.stringify(params)}`, {
         label: this.logLabel,
       });
       const symbol = order.pair;
@@ -177,14 +182,18 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       );
 
       botLogger.info(
-        `${order.id}/${newOrder.id}: New ${order.side} order has been placed`,
+        `[${order.pair}][${newOrder.id}]: New ${order.side} order has been placed`,
         { label: this.logLabel },
       );
       return newOrder.info;
     } catch (err) {
-      botLogger.error('Failed to place order' + err.message, {
-        label: this.logLabel,
-      });
+      botLogger.error(
+        `[${order.pair}][${order.id}]Failed to place order  ${err.message}`,
+        {
+          label: this.logLabel,
+        },
+      );
+      throw new Error(err);
     }
   }
 
@@ -208,6 +217,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
           label: this.logLabel,
         },
       );
+      throw err;
     }
   }
 
@@ -231,7 +241,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       );
       if (exInfo) {
         this._exchangeRemote = _exchange;
-        // await this._exchangeRemote.getCcxtExchange().loadMarkets();
+        await this._exchangeRemote.getCcxtExchange().loadMarkets();
         this.isRunning = true;
         await this.sendMsgTelegram('Bot is Starting #' + this.botConfig.id);
         // this._exchangeRemote.getCcxtExchange().getSib
@@ -333,6 +343,10 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             currentPrice,
             baseOrderSize,
           );
+          console.log(
+            '🚀 ~ file: bot-trading.ts:346 ~ BaseBotTrading ~ prepareBaseOrder:',
+            prepareBaseOrder,
+          );
           const binanceMarketBaseOrder = await this.placeBinanceOrder(
             prepareBaseOrder,
           );
@@ -396,6 +410,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         this.logLabel,
       );
       await this.sendMsgTelegram(`[${symbol}]: Placing base Order error!`);
+      throw ex;
     }
   }
 
@@ -440,7 +455,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             if (lastPrice) {
               await this.createAndPlaceBaseOrder(
                 existingPair.exchangePair,
-                new BigNumber(tv.price),
+                new BigNumber(lastPrice),
               );
             }
           }
@@ -801,6 +816,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       await this.sendMsgTelegram(
         `Deal ${dealId} close at market price error! ${error.message}`,
       );
+      throw error;
     }
   }
   async watchPosition() {

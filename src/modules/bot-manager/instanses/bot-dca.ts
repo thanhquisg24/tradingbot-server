@@ -47,12 +47,17 @@ export class DCABot extends BaseBotTrading {
 
   async processActivePosition(activeDeals: DealEntity[]) {
     try {
-      for (let index = 0; index < activeDeals.length; index++) {
-        const deal = activeDeals[index];
-        await this.processExchangeDeal(deal);
+      if (this.isWatchingPosition === false) {
+        this.isWatchingPosition = true;
+        for (let index = 0; index < activeDeals.length; index++) {
+          const deal = activeDeals[index];
+          await this.processExchangeDeal(deal);
+        }
+        this.isWatchingPosition = false;
       }
     } catch (ex) {
-      return;
+      this.isWatchingPosition = false;
+      throw ex;
     }
   }
 }
