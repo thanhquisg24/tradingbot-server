@@ -446,18 +446,16 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
           );
           const isValidMaxDeal = await this.checkMaxActiveDeal();
           if (isValidMaxDeal && isValidPair) {
-            const binanceUSDM = this._exchangeRemote.getCcxtExchange();
-            const ticker = await wrapExReq(
-              binanceUSDM.fetchTicker(existingPair.exchangePair),
-              botLogger,
+            // const binanceUSDM = this._exchangeRemote.getCcxtExchange();
+            // const ticker = await wrapExReq(
+            //   binanceUSDM.fetchTicker(existingPair.exchangePair),
+            //   botLogger,
+            // );
+            // const lastPrice = ticker.last;
+            await this.createAndPlaceBaseOrder(
+              existingPair.exchangePair,
+              new BigNumber(tv.price),
             );
-            const lastPrice = ticker.last;
-            if (lastPrice) {
-              await this.createAndPlaceBaseOrder(
-                existingPair.exchangePair,
-                new BigNumber(lastPrice),
-              );
-            }
           }
           break;
         case TVActionType.CLOSE_DEAL:
@@ -846,15 +844,15 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       if (isValidActiveDealCount && isValidPair) {
         const pairItem = pairNeedStart[i];
         const binanceUSDM = this._exchangeRemote.getCcxtExchange();
-        const ticker = await wrapExReq(
-          binanceUSDM.fetchTicker(pairItem),
+        const funding = await wrapExReq(
+          binanceUSDM.fetchFundingRate(pairItem),
           botLogger,
         );
-        const lastPrice = ticker.last;
-        if (lastPrice) {
+        const markPrice = funding.markPrice;
+        if (markPrice) {
           await this.createAndPlaceBaseOrder(
             pairItem,
-            new BigNumber(lastPrice),
+            new BigNumber(markPrice),
           );
         }
       }
