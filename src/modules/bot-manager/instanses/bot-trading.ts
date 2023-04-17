@@ -38,6 +38,7 @@ import {
 } from './bot-utils-calc';
 import { botLogger } from 'src/common/bot-logger';
 import { TVActionType, OnTVEventPayload } from 'src/common/event/tv_events';
+import { wrapExReq } from 'src/modules/exchange/remote-api/exchange.helper';
 
 interface IBaseBotTrading {
   botConfig: BotTradingEntity;
@@ -154,19 +155,26 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       const quantity = order.quantity;
       const price = order.price;
       const leverage = this.botConfig.leverage;
-      this._exchangeRemote
-        .getCcxtExchange()
-        .setLeverage(leverage, symbol, { marginMode: 'cross' });
-      const newOrder = await this._exchangeRemote
-        .getCcxtExchange()
-        .createOrder(
-          symbol,
-          ex_orderType as any,
-          side as any,
-          quantity,
-          price,
-          params,
-        );
+      await wrapExReq(
+        this._exchangeRemote
+          .getCcxtExchange()
+          .setLeverage(leverage, symbol, { marginMode: 'cross' }),
+        botLogger,
+      );
+
+      const newOrder = await wrapExReq(
+        this._exchangeRemote
+          .getCcxtExchange()
+          .createOrder(
+            symbol,
+            ex_orderType as any,
+            side as any,
+            quantity,
+            price,
+            params,
+          ),
+        botLogger,
+      );
 
       botLogger.info(
         `${order.id}/${newOrder.id}: New ${order.side} order has been placed`,
@@ -182,9 +190,12 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
 
   async cancelOrder(order: OrderEntity): Promise<void> {
     try {
-      const result = await this._exchangeRemote
-        .getCcxtExchange()
-        .cancelOrder(order.binanceOrderId, order.pair, {});
+      const result = await wrapExReq(
+        this._exchangeRemote
+          .getCcxtExchange()
+          .cancelOrder(order.binanceOrderId, order.pair, {}),
+        botLogger,
+      );
 
       botLogger.info(
         `[${order.pair}] :${order.side} Order ${order.binanceOrderId} has been cancelled, status ${result.status}`,
@@ -214,7 +225,10 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         exchangeRow.apiSecret,
         exchangeRow.isTestNet,
       );
-      const exInfo = await _exchange.checkExchangeOnlineStatus();
+      const exInfo = await wrapExReq(
+        _exchange.checkExchangeOnlineStatus(),
+        botLogger,
+      );
       if (exInfo) {
         this._exchangeRemote = _exchange;
         // await this._exchangeRemote.getCcxtExchange().loadMarkets();
@@ -418,8 +432,9 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
           const isValidMaxDeal = await this.checkMaxActiveDeal();
           if (isValidMaxDeal && isValidPair) {
             const binanceUSDM = this._exchangeRemote.getCcxtExchange();
-            const ticker = await binanceUSDM.fetchTicker(
-              existingPair.exchangePair,
+            const ticker = await wrapExReq(
+              binanceUSDM.fetchTicker(existingPair.exchangePair),
+              botLogger,
             );
             const lastPrice = ticker.last;
             if (lastPrice) {
@@ -815,7 +830,10 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       if (isValidActiveDealCount && isValidPair) {
         const pairItem = pairNeedStart[i];
         const binanceUSDM = this._exchangeRemote.getCcxtExchange();
-        const ticker = await binanceUSDM.fetchTicker(pairItem);
+        const ticker = await wrapExReq(
+          binanceUSDM.fetchTicker(pairItem),
+          botLogger,
+        );
         const lastPrice = ticker.last;
         if (lastPrice) {
           await this.createAndPlaceBaseOrder(

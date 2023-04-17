@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  INestApplication,
   ValidationError,
   ValidationPipe,
 } from '@nestjs/common';
@@ -16,7 +17,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 async function bootstrap() {
   initializeTransactionalContext();
-  const app = await NestFactory.create(AppModule);
+  const app: INestApplication = await NestFactory.create(AppModule);
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
   app.useGlobalPipes(
     new ValidationPipe({

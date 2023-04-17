@@ -5,6 +5,8 @@ import { TelegramService } from 'src/modules/telegram/telegram.service';
 import { OrderEntity } from 'src/modules/entities/order.entity';
 import { Repository } from 'typeorm';
 import { BotTradingEntity } from 'src/modules/entities/bot.entity';
+import { wrapExReq } from 'src/modules/exchange/remote-api/exchange.helper';
+import { botLogger } from 'src/common/bot-logger';
 
 export class DCABot extends BaseBotTrading {
   constructor(
@@ -26,9 +28,9 @@ export class DCABot extends BaseBotTrading {
       ) {
         // this.logger.debug(JSON.stringify(order));
         // this.logger.debug(JSON.stringify(binanceUSDM));
-        const exchangeOrder = await binanceUSDM.fetchOrder(
-          order.binanceOrderId,
-          order.pair,
+        const exchangeOrder = await wrapExReq(
+          binanceUSDM.fetchOrder(order.binanceOrderId, order.pair),
+          botLogger,
         );
         console.log(
           `[${order.pair}] [${

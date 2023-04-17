@@ -77,7 +77,7 @@ export class BotManagerInstances implements IBotManagerInstances {
   async stopBotIns(id: number) {
     const bot = this.getBotById(id);
     if (bot) {
-      await bot.stop();
+      await this.botInstances.get(`${id}`).stop();
       this.botInstances.delete(`${id}`);
       await this.botManagerService.updateStatus(id, COMMON_STATUS.DISABLED);
       return 'stop bot #' + id;
@@ -122,6 +122,7 @@ export class BotManagerInstances implements IBotManagerInstances {
   async handleCron() {
     this.logger.log('Called every 10 seconds', BotManagerInstances.name);
     this.botInstances.forEach(async (bot) => {
+      this.logger.log('Called every 10 seconds', 'BotId#' + bot.botConfig.id);
       await bot.watchPosition();
     });
   }
