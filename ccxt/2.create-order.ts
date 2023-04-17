@@ -17,12 +17,11 @@ const createOrder = async () => {
   const symbol = 'BTC/USDT:USDT';
   const price = 27900;
   const amount = getDecidePositionQuantity(300, price);
-  const params = { positionSide: 'SHORT' };
+  const params = { positionSide: 'SHORT', newOrderRespType: 'RESULT' };
   binanceUSDM.setLeverage(10, symbol, { marginMode: 'cross' });
-  const newOrder = await binanceUSDM.createLimitSellOrder(
+  const newOrder = await binanceUSDM.createMarketSellOrder(
     symbol,
     amount,
-    price,
     params,
   );
   console.log(

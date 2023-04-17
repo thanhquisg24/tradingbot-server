@@ -34,8 +34,18 @@ const fetchTicker = async (symbol: string) => {
     enableRateLimit: true,
   });
   binanceUSDM.setSandboxMode(true);
-  const ticker = await binanceUSDM.fetchTicker(symbol);
-  console.log('🚀 ~ file: 0.hello.ts:38 ~ fetchTicker ~ ticker:', ticker);
-  return ticker;
+  await binanceUSDM.loadMarkets();
+  // const ticker = await binanceUSDM.fetchTicker(symbol);
+  // console.log('🚀 ~ file: 0.hello.ts:38 ~ fetchTicker ~ ticker:', ticker);
+  const market = binanceUSDM.market(symbol);
+  console.log('🚀 ~ file: 0.hello.ts:41 ~ fetchTicker ~ market:', market);
+  console.log(
+    '🚀 ~ file: 0.hello.ts:41 ~ fetchTicker ~ marketfilters:',
+    market.info.filters,
+  );
+  const fun = await binanceUSDM.fetchFundingRate(symbol);
+  console.log('🚀 ~ file: 0.hello.ts:47 ~ fetchTicker ~ fun:', fun);
+
+  // return ticker;
 };
-fetchTicker('XRP/USDT:USDT');
+fetchTicker('MANA/USDT:USDT');

@@ -40,3 +40,9 @@ Note implements
 --implements one ccxt market instance by multiple bot using same ccxt market (done)
 
 --implement out of memory by static exchangeInstances: Map<number, AbstractExchangeAPI> 
+
+
+
+***Importancee Note
+-for a error: https://dev.binance.vision/t/got-the-counterpartys-best-price-does-not-meet-the-percent-price-filter-limit/10962 
+    createOrder At Market Price error because does not match a valid volume to match (liquidity e.b open volumn Long <= total volume of Short direction on order book)
