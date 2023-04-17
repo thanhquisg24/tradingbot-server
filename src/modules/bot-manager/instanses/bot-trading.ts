@@ -404,11 +404,9 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         );
       }
     } catch (ex) {
-      botLogger.error(
-        `[${symbol}]: Placing base Order error! ${ex.message}`,
-        this.logLabel,
+      await this.sendMsgTelegram(
+        `[${symbol}]: Placing base Order error!  ${ex.message}`,
       );
-      await this.sendMsgTelegram(`[${symbol}]: Placing base Order error!`);
       throw ex;
     }
   }
