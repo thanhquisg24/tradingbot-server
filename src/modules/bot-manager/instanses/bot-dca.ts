@@ -1,3 +1,4 @@
+import { sortBy } from 'lodash';
 import { DealEntity } from 'src/modules/entities/deal.entity';
 import { BaseBotTrading } from './bot-trading';
 import { OrderStatus } from 'binance-api-node';
@@ -20,6 +21,11 @@ export class DCABot extends BaseBotTrading {
   async processExchangeDeal(deal: DealEntity) {
     const binanceUSDM = this._exchangeRemote.getCcxtExchange();
     // binanceUSDM.setSandboxMode(true);
+    //sort asc order by sequence
+    const newDeal = deal;
+    deal.orders = sortBy(deal.orders, (e: OrderEntity) => {
+      return e.sequence;
+    });
     for (let i = 0; i < deal.orders.length; i++) {
       const order = deal.orders[i];
       if (
@@ -49,6 +55,7 @@ export class DCABot extends BaseBotTrading {
       this.isWatchingPosition = true;
       for (let index = 0; index < activeDeals.length; index++) {
         const deal = activeDeals[index];
+        await this.doTryPlacingOrder(deal.id);
         try {
           await this.processExchangeDeal(deal);
         } catch (ex) {
@@ -57,7 +64,6 @@ export class DCABot extends BaseBotTrading {
             this.logLabel,
           );
         }
-        await this.doTryPlacingOrder(deal.id);
       }
       this.isWatchingPosition = false;
     }

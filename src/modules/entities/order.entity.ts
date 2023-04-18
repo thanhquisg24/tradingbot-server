@@ -144,6 +144,15 @@ export class OrderEntity {
   quantity: number;
 
   @Column({
+    name: 'filled_quantity',
+    type: 'decimal',
+    precision: 20,
+    scale: 10,
+    nullable: true,
+  })
+  filledQuantity: number;
+
+  @Column({
     name: 'volume',
     type: 'decimal',
     precision: 20,

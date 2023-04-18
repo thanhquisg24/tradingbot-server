@@ -11,6 +11,7 @@ StandardError=syslog
 SyslogIdentifier=dca_bot_api_node
 WorkingDirectory=/opt/node/dca-bot-api-node
 ExecStart=/usr/bin/node /opt/node/dca-bot-api-node/dist/src/main.js > /opt/node/dca-bot-api-node/log/out.log 2>&1
+ExecStop=
 EnvironmentFile=
 
 [Install]

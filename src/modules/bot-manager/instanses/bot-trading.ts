@@ -358,6 +358,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
               symbol,
               new BigNumber(filledPrice),
             );
+
             newDealEntity = await this.createDeal(
               buyOrdersMarket,
               prepareBaseOrder.id,
@@ -470,6 +471,35 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     }
   }
 
+  private async handleCancelNewSellOrderFirst(existingSellOrder: OrderEntity) {
+    try {
+      const exchangeSellOrder: BinanceOrder = await wrapExReq(
+        this._exchangeRemote
+          .getCcxtExchange()
+          .fetchOrder(existingSellOrder.binanceOrderId, existingSellOrder.pair),
+        botLogger,
+      );
+      existingSellOrder.status = exchangeSellOrder.status;
+      existingSellOrder.filledQuantity = Number(exchangeSellOrder.executedQty);
+      if (
+        exchangeSellOrder.status === 'PARTIALLY_FILLED' ||
+        exchangeSellOrder.status === 'NEW'
+      ) {
+        await this.cancelOrder(existingSellOrder);
+        existingSellOrder.status = 'CANCELED';
+      }
+    } catch (error) {
+      botLogger.error(
+        `[${existingSellOrder.pair}] [${existingSellOrder.binanceOrderId}]: NEW buy order. Price: handleNewSellOrderFilledFirst ${error.message}`,
+        {
+          label: this.logLabel,
+        },
+      );
+    }
+    const sellOrderEntity = await this.orderRepo.save(existingSellOrder);
+    return sellOrderEntity;
+  }
+
   async refreshDealOnOrderUpdate(
     deal: DealEntity,
     executionReportEvt: BinanceOrder,
@@ -480,6 +510,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       status: orderStatus,
       price,
       avgPrice,
+      executedQty,
     } = executionReportEvt;
     try {
       const filledPrice = Number(price) > 0 ? price : avgPrice;
@@ -534,13 +565,41 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
               const existingSellOrder = deal.orders.find(
                 (o) => o.side === _sellOrderSide && o.status === 'NEW',
               );
+
               if (existingSellOrder) {
-                await this.cancelOrder(existingSellOrder);
+                //cancel sell order handle nen rau dai
+                const newCancelSellOrder =
+                  await this.handleCancelNewSellOrderFirst(existingSellOrder);
+                if (newCancelSellOrder.filledQuantity > 0) {
+                  currentOrder.totalQuantity =
+                    currentOrder.totalQuantity -
+                    newCancelSellOrder.filledQuantity;
+                  await this.orderRepo
+                    .createQueryBuilder()
+                    .update('order_entity')
+                    .set({
+                      total_quantity: Raw(
+                        (total_quantity) => `${total_quantity} - :prmSellQty`,
+                        {
+                          prmSellQty: newCancelSellOrder.filledQuantity,
+                        },
+                      ),
+                    })
+                    .where(
+                      'order_entity.client_order_type = :prmClient_od_ty',
+                      { prmClient_od_ty: CLIENT_ORDER_TYPE.SAFETY },
+                    )
+                    .andWhere('order_entity.status = :prmStatus', {
+                      prmStatus: 'CREATED',
+                    })
+                    .execute();
+                }
               }
 
               currentOrder.binanceOrderId = `${orderId}`;
               currentOrder.status = OrderStatus.FILLED;
               currentOrder.filledPrice = Number(filledPrice);
+              currentOrder.filledQuantity = Number(executedQty);
               await this.orderRepo.save(currentOrder);
               const title = currentOrder.sequence > 0 ? 'Safety' : 'Base';
               await this.sendMsgTelegram(
@@ -628,6 +687,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
           case 'CANCELED':
           case 'REJECTED':
           case 'EXPIRED':
+            currentOrder.filledQuantity = Number(executedQty);
             if (currentOrder.status !== orderStatus) {
               currentOrder.status = orderStatus;
               await this.orderRepo.save(currentOrder);
@@ -650,6 +710,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
           currentOrder.status = orderStatus;
           currentOrder.binanceOrderId = `${orderId}`;
           currentOrder.filledPrice = Number(filledPrice);
+          currentOrder.filledQuantity = Number(executedQty);
           await this.orderRepo.update(currentOrder.id, {
             status: orderStatus,
             binanceOrderId: `${orderId}`,
@@ -661,7 +722,11 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             },
           );
         }
-        if (orderStatus === 'FILLED') {
+        if (
+          orderStatus === 'FILLED' &&
+          (currentOrder.status === 'NEW' ||
+            currentOrder.status === 'PARTIALLY_FILLED')
+        ) {
           // currentOrder.status = orderStatus;
           // currentOrder.binanceOrderId = `${orderId}`;
           // await this.orderRepo.save(currentOrder);
@@ -748,14 +813,14 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       if (order.side === buyOrderSide) {
         if (order.status === 'FILLED') {
           filledBuyVolume = filledBuyVolume.plus(
-            new BigNumber(order.filledPrice).multipliedBy(order.quantity),
+            new BigNumber(order.filledPrice).multipliedBy(order.filledQuantity),
           );
         }
       } else {
         if (order.status === 'FILLED' || order.status === 'PARTIALLY_FILLED') {
           filledSellVolume = filledSellVolume.plus(
-            new BigNumber(order.price).multipliedBy(
-              new BigNumber(order.quantity),
+            new BigNumber(order.filledPrice).multipliedBy(
+              new BigNumber(order.filledQuantity),
             ),
           );
         }
@@ -805,7 +870,8 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
           closeMarketOrder.averagePrice = closeMarketOrder.price;
           closeMarketOrder.filledPrice = closeMarketOrder.price;
           closeMarketOrder.volume = Number(exOrder.cumQuote);
-          closeMarketOrder.quantity = Number(exOrder.cumQty);
+          closeMarketOrder.quantity = Number(exOrder.executedQty);
+          closeMarketOrder.filledQuantity = closeMarketOrder.quantity;
           await this.orderRepo.save(closeMarketOrder);
           await this.closeDeal(dealId);
         }
