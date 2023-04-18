@@ -706,6 +706,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             });
         }
       } else {
+        const _prevStatus = currentOrder.status;
         if (orderStatus !== 'NEW' && currentOrder.status !== orderStatus) {
           currentOrder.status = orderStatus;
           currentOrder.binanceOrderId = `${orderId}`;
@@ -724,8 +725,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         }
         if (
           orderStatus === 'FILLED' &&
-          (currentOrder.status === 'NEW' ||
-            currentOrder.status === 'PARTIALLY_FILLED')
+          (_prevStatus === 'NEW' || _prevStatus === 'PARTIALLY_FILLED')
         ) {
           // currentOrder.status = orderStatus;
           // currentOrder.binanceOrderId = `${orderId}`;
