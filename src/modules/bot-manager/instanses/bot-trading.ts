@@ -716,7 +716,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             binanceOrderId: `${orderId}`,
           });
           botLogger.info(
-            `[${currentOrder.pair}] [${currentOrder.binanceOrderId}]: Sell order is ${orderStatus}.`,
+            `[${currentOrder.pair}] [${currentOrder.binanceOrderId}]: Market Sell order is ${orderStatus}. Current Sell order is ${currentOrder.status}`,
             {
               label: this.logLabel,
             },
@@ -730,12 +730,12 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
           // currentOrder.status = orderStatus;
           // currentOrder.binanceOrderId = `${orderId}`;
           // await this.orderRepo.save(currentOrder);
-          botLogger.info(
-            `[${currentOrder.pair}] [${currentOrder.binanceOrderId}]: Sell order is ${orderStatus}. Price: ${filledPrice}, Amount: ${currentOrder.quantity}`,
-            {
-              label: this.logLabel,
-            },
-          );
+          // botLogger.info(
+          //   `[${currentOrder.pair}] [${currentOrder.binanceOrderId}]: Sell order is ${orderStatus}. Price: ${filledPrice}, Amount: ${currentOrder.quantity}`,
+          //   {
+          //     label: this.logLabel,
+          //   },
+          // );
           await this.closeDeal(deal.id);
         }
       }
