@@ -499,6 +499,42 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     const sellOrderEntity = await this.orderRepo.save(existingSellOrder);
     return sellOrderEntity;
   }
+  private async isInterruptWhenSellFilled(
+    existingSellOrder: OrderEntity,
+    currentBuyOrder: OrderEntity,
+  ) {
+    let isTrue = false;
+    if (existingSellOrder) {
+      //cancel sell order handle nen rau dai
+      const newCancelSellOrder = await this.handleCancelNewSellOrderFirst(
+        existingSellOrder,
+      );
+      if (newCancelSellOrder.filledQuantity > 0) {
+        currentBuyOrder.totalQuantity =
+          currentBuyOrder.totalQuantity - newCancelSellOrder.filledQuantity;
+        await this.orderRepo
+          .createQueryBuilder()
+          .update('order_entity')
+          .set({
+            total_quantity: Raw(
+              (total_quantity) => `${total_quantity} - :prmSellQty`,
+              {
+                prmSellQty: newCancelSellOrder.filledQuantity,
+              },
+            ),
+          })
+          .where('order_entity.client_order_type = :prmClient_od_ty', {
+            prmClient_od_ty: CLIENT_ORDER_TYPE.SAFETY,
+          })
+          .andWhere('order_entity.status = :prmStatus', {
+            prmStatus: 'CREATED',
+          })
+          .execute();
+      }
+      isTrue = newCancelSellOrder.status === OrderStatus.FILLED;
+    }
+    return isTrue;
+  }
 
   async refreshDealOnOrderUpdate(
     deal: DealEntity,
@@ -518,6 +554,9 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         relations: ['deal'],
         where: {
           id: clientOrderId,
+          deal: {
+            status: DEAL_STATUS.ACTIVE,
+          },
         },
       });
       if (!currentOrder) {
@@ -565,36 +604,10 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
               const existingSellOrder = deal.orders.find(
                 (o) => o.side === _sellOrderSide && o.status === 'NEW',
               );
-
-              if (existingSellOrder) {
-                //cancel sell order handle nen rau dai
-                const newCancelSellOrder =
-                  await this.handleCancelNewSellOrderFirst(existingSellOrder);
-                if (newCancelSellOrder.filledQuantity > 0) {
-                  currentOrder.totalQuantity =
-                    currentOrder.totalQuantity -
-                    newCancelSellOrder.filledQuantity;
-                  await this.orderRepo
-                    .createQueryBuilder()
-                    .update('order_entity')
-                    .set({
-                      total_quantity: Raw(
-                        (total_quantity) => `${total_quantity} - :prmSellQty`,
-                        {
-                          prmSellQty: newCancelSellOrder.filledQuantity,
-                        },
-                      ),
-                    })
-                    .where(
-                      'order_entity.client_order_type = :prmClient_od_ty',
-                      { prmClient_od_ty: CLIENT_ORDER_TYPE.SAFETY },
-                    )
-                    .andWhere('order_entity.status = :prmStatus', {
-                      prmStatus: 'CREATED',
-                    })
-                    .execute();
-                }
-              }
+              const isInterrupt = await this.isInterruptWhenSellFilled(
+                existingSellOrder,
+                currentOrder,
+              );
 
               currentOrder.binanceOrderId = `${orderId}`;
               currentOrder.status = OrderStatus.FILLED;
@@ -607,6 +620,24 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
               );
               // Cancel existing sell order (if any)
               // and create a new take-profit order
+              if (isInterrupt) {
+                const closeMarketOrder = createCloseMarketOrder(
+                  currentOrder.deal,
+                  currentOrder.totalQuantity,
+                );
+                const exOrder = await this.placeBinanceOrder(closeMarketOrder);
+                closeMarketOrder.status = exOrder.status;
+                closeMarketOrder.binanceOrderId = `${exOrder.orderId}`;
+                closeMarketOrder.price = Number(exOrder.avgPrice);
+                closeMarketOrder.averagePrice = closeMarketOrder.price;
+                closeMarketOrder.filledPrice = closeMarketOrder.price;
+                closeMarketOrder.volume = Number(exOrder.cumQuote);
+                closeMarketOrder.quantity = Number(exOrder.executedQty);
+                closeMarketOrder.filledQuantity = closeMarketOrder.quantity;
+                await this.orderRepo.save(closeMarketOrder);
+                await this.closeDeal(currentOrder.deal.id);
+                return;
+              }
 
               //placing TP line
               let newSellOrder = createNextTPOrder(deal, currentOrder);
