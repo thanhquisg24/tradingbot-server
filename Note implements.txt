@@ -42,6 +42,23 @@ Note implements
 --implement out of memory by static exchangeInstances: Map<number, AbstractExchangeAPI> 
 
 
+***Reduce strategy
+step--- LR is order of Bot1 (long) on Round n ,SR is order of Bot2 (short) on Round n
+0.base (long)
+    if order SO1 FILLED
+        Bot1 (long)
+            -emit event open a new deal with reduce mode to Bot2 (short)(preference reduce# botId,ref_reduce_deal_id)
+            -Cancel all TP order 
+            -update current deal is reduceCount = reduceCount + 1 and deal type is REDUCE_MODE
+            -place new 2 order close position (LR1#1 line is higher than (+%price by deviation config) avg_position_price  ,LR1#2 line is less than (+%price+1% by deviation config) SO1 filled price)
+        Bot2 (short)
+            -onEvent from Bot1 ,createDealAtmarketPrice with qty=totalQuantity deal of Bot1 with reduceCount+1 and deal type is REDUCE_MODE and ref_reduce_deal_id = deal of long need cover
+            -place new 2 order close position (SR1#1 line is higher than (+(%avg_devation_long_position x 2)) avg_position_price  ,SR1#2 line is less than (+%price+1% by avg_devation_long_position) current filled price)
+1.Round 1 
+    -if #1 line is higher is filled 
+            -close long position
+        
+
 
 ***Importancee Note
 -for a error: https://dev.binance.vision/t/got-the-counterpartys-best-price-does-not-meet-the-percent-price-filter-limit/10962 
