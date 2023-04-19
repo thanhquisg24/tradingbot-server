@@ -509,28 +509,28 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       const newCancelSellOrder = await this.handleCancelNewSellOrderFirst(
         existingSellOrder,
       );
-      if (newCancelSellOrder.filledQuantity > 0) {
-        currentBuyOrder.totalQuantity =
-          currentBuyOrder.totalQuantity - newCancelSellOrder.filledQuantity;
-        await this.orderRepo
-          .createQueryBuilder()
-          .update('order_entity')
-          .set({
-            total_quantity: Raw(
-              (total_quantity) => `${total_quantity} - :prmSellQty`,
-              {
-                prmSellQty: newCancelSellOrder.filledQuantity,
-              },
-            ),
-          })
-          .where('order_entity.client_order_type = :prmClient_od_ty', {
-            prmClient_od_ty: CLIENT_ORDER_TYPE.SAFETY,
-          })
-          .andWhere('order_entity.status = :prmStatus', {
-            prmStatus: 'CREATED',
-          })
-          .execute();
-      }
+      // if (newCancelSellOrder.filledQuantity > 0) {
+      //   currentBuyOrder.totalQuantity =
+      //     currentBuyOrder.totalQuantity - newCancelSellOrder.filledQuantity;
+      //   await this.orderRepo
+      //     .createQueryBuilder()
+      //     .update('order_entity')
+      //     .set({
+      //       total_quantity: Raw(
+      //         (total_quantity) => `${total_quantity} - :prmSellQty`,
+      //         {
+      //           prmSellQty: newCancelSellOrder.filledQuantity,
+      //         },
+      //       ),
+      //     })
+      //     .where('order_entity.client_order_type = :prmClient_od_ty', {
+      //       prmClient_od_ty: CLIENT_ORDER_TYPE.SAFETY,
+      //     })
+      //     .andWhere('order_entity.status = :prmStatus', {
+      //       prmStatus: 'CREATED',
+      //     })
+      //     .execute();
+      // }
       isTrue = newCancelSellOrder.status === OrderStatus.FILLED;
     }
     return isTrue;
