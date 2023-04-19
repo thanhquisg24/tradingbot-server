@@ -148,6 +148,7 @@ export class OrderEntity {
     type: 'decimal',
     precision: 20,
     scale: 10,
+    default: 0,
     nullable: true,
   })
   filledQuantity: number;
