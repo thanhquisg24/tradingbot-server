@@ -746,6 +746,8 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
           await this.orderRepo.update(currentOrder.id, {
             status: orderStatus,
             binanceOrderId: `${orderId}`,
+            filledPrice: currentOrder.filledPrice,
+            filledQuantity: currentOrder.filledQuantity,
           });
           botLogger.info(
             `[${currentOrder.pair}] [${currentOrder.binanceOrderId}]: Market Sell order is ${orderStatus}. Current Sell order is ${currentOrder.status}`,
