@@ -840,14 +840,12 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         await this.cancelOrder(order);
         order.status = 'CANCELED';
       }
-      if (order.side === buyOrderSide) {
-        if (order.status === 'FILLED') {
+      if (order.filledQuantity > 0) {
+        if (order.side === buyOrderSide) {
           filledBuyVolume = filledBuyVolume.plus(
             new BigNumber(order.filledPrice).multipliedBy(order.filledQuantity),
           );
-        }
-      } else {
-        if (order.status === 'FILLED' || order.status === 'PARTIALLY_FILLED') {
+        } else {
           filledSellVolume = filledSellVolume.plus(
             new BigNumber(order.filledPrice).multipliedBy(
               new BigNumber(order.filledQuantity),
