@@ -120,7 +120,7 @@ export class BotManagerInstances implements IBotManagerInstances {
   }
 
   // @Cron('*/20 * * * * *')
-  @Cron(CronExpression.EVERY_5_SECONDS)
+  @Cron(CronExpression.EVERY_10_SECONDS)
   async handleCron() {
     this.botInstances.forEach(async (bot) => {
       this.logger.log('Called every 10 seconds', 'BotId#' + bot.botConfig.id);
