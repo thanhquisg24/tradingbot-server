@@ -269,6 +269,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     return this.dealRepo.findOne({
       where: {
         id,
+        status: DEAL_STATUS.ACTIVE,
       },
     });
   }
@@ -491,8 +492,8 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         this.logLabel,
       );
       if (
-        exchangeSellOrder.status === 'PARTIALLY_FILLED' ||
-        exchangeSellOrder.status === 'NEW'
+        existingSellOrder.status === 'PARTIALLY_FILLED' ||
+        existingSellOrder.status === 'NEW'
       ) {
         await this.cancelOrder(existingSellOrder);
         existingSellOrder.status = 'CANCELED';
@@ -503,6 +504,11 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         this.logLabel,
       );
     }
+    botLogger.warn(
+      '🚀 ~ file: bot-trading.ts:501 ~ BaseBotTrading ~ handleCancelNewSellOrderFirst ~ save:' +
+        JSON.stringify(existingSellOrder),
+      this.logLabel,
+    );
     const sellOrderEntity = await this.orderRepo.save(existingSellOrder);
     return sellOrderEntity;
   }
@@ -564,6 +570,9 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
           deal: {
             status: DEAL_STATUS.ACTIVE,
           },
+          status: Raw(
+            (status) => `${status} in ('CREATED','NEW','PARTIALLY_FILLED')`,
+          ),
         },
       });
       if (!currentOrder) {
@@ -761,10 +770,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             this.logLabel,
           );
         }
-        if (
-          orderStatus === 'FILLED' &&
-          (_prevStatus === 'NEW' || _prevStatus === 'PARTIALLY_FILLED')
-        ) {
+        if (orderStatus === 'FILLED') {
           // currentOrder.status = orderStatus;
           // currentOrder.binanceOrderId = `${orderId}`;
           // await this.orderRepo.save(currentOrder);

@@ -56,7 +56,16 @@ step--- LR is order of Bot1 (long) on Round n ,SR is order of Bot2 (short) on Ro
             -place new 2 order close position (SR1#1 line is higher than (+(%avg_devation_long_position x 2)) avg_position_price  ,SR1#2 line is less than (+%price+1% by avg_devation_long_position) current filled price)
 1.Round 1 
     -if #1 line is higher is filled 
+        Bot1 (long)
             -close long position
+        Bot2 (short)    
+            -reduce vol equal close long profit
+            -place a dca euqal original volumn
+            -cancled all order 
+            -place a new TP line = target profit bot config
+            -emit a stop limit order signal to long bot
+            
+
         
 
 
