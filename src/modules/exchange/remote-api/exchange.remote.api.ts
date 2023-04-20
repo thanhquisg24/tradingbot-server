@@ -13,7 +13,7 @@ export class BinanceUSDMApi extends AbstractExchangeAPI {
   constructor(apiKey: string, apiSerect: string, isDemo: boolean) {
     super();
     this.exchange_remote = new ccxt.binanceusdm({
-      rateLimit: 1000, // unified exchange property
+      // rateLimit: 1000, // unified exchange property
       enableRateLimit: true,
       apiKey,
       secret: apiSerect,
