@@ -30,7 +30,7 @@ export class DCABot extends BaseBotTrading {
       if (binanceStl) {
         stlOrder.status = OrderStatus.NEW;
         stlOrder.binanceOrderId = `${binanceStl.orderId}`;
-        stlOrder.placeCount = stlOrder.placeCount + 1;
+        stlOrder.placedCount = stlOrder.placedCount + 1;
         await this.sendMsgTelegram(
           `[${stlOrder.pair}] [${stlOrder.binanceOrderId}]: Place new Stop Loss Order. Price: ${stlOrder.price}, Amount: ${stlOrder.quantity}`,
         );

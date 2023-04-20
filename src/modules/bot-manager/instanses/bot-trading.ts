@@ -368,7 +368,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             if (baseOrderEntity) {
               baseOrderEntity.status = OrderStatus.NEW;
               baseOrderEntity.binanceOrderId = `${binanceMarketBaseOrder.orderId}`;
-              baseOrderEntity.placeCount = baseOrderEntity.placeCount + 1;
+              baseOrderEntity.placedCount = baseOrderEntity.placedCount + 1;
             }
           }
 
@@ -388,7 +388,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             if (binanceLimitBaseOrder) {
               baseOrderEntity.status = OrderStatus.NEW;
               baseOrderEntity.binanceOrderId = `${binanceLimitBaseOrder.orderId}`;
-              baseOrderEntity.placeCount = baseOrderEntity.placeCount + 1;
+              baseOrderEntity.placedCount = baseOrderEntity.placedCount + 1;
             }
           }
           break;
@@ -647,7 +647,8 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
                   closeMarketOrder.volume = Number(exOrder.cumQuote);
                   closeMarketOrder.quantity = Number(exOrder.executedQty);
                   closeMarketOrder.filledQuantity = closeMarketOrder.quantity;
-                  closeMarketOrder.placeCount = closeMarketOrder.placeCount + 1;
+                  closeMarketOrder.placedCount =
+                    closeMarketOrder.placedCount + 1;
                   await this.orderRepo.save(closeMarketOrder);
                   await this.closeDeal(currentOrder.deal.id);
                 }
@@ -661,7 +662,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
               if (bSellOrder) {
                 newSellOrder.status = OrderStatus.NEW;
                 newSellOrder.binanceOrderId = `${bSellOrder.orderId}`;
-                newSellOrder.placeCount = newSellOrder.placeCount + 1;
+                newSellOrder.placedCount = newSellOrder.placedCount + 1;
                 await this.sendMsgTelegram(
                   `[${newSellOrder.pair}] [${newSellOrder.binanceOrderId}]: Place new Take Profit Order. Price: ${newSellOrder.price}, Amount: ${newSellOrder.quantity}`,
                 );
@@ -688,7 +689,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
                 if (binanceSafety) {
                   nextsafety.status = OrderStatus.NEW;
                   nextsafety.binanceOrderId = `${binanceSafety.orderId}`;
-                  nextsafety.placeCount = nextsafety.placeCount + 1;
+                  nextsafety.placedCount = nextsafety.placedCount + 1;
                   await this.sendMsgTelegram(
                     `[${nextsafety.pair}] [${nextsafety.binanceOrderId}]: Place new Safety Order. Price: ${nextsafety.price}, Amount: ${nextsafety.quantity}`,
                   );
@@ -791,7 +792,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       if (binanceOrder) {
         order.status = OrderStatus.NEW;
         order.binanceOrderId = `${binanceOrder.orderId}`;
-        order.placeCount = order.placeCount + 1;
+        order.placedCount = order.placedCount + 1;
         await this.sendMsgTelegram(
           `[${order.pair}] [${order.binanceOrderId}]: Place a Retry Order. Price: ${order.price}, Amount: ${order.quantity}`,
         );
@@ -900,7 +901,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             closeMarketOrder.volume = Number(exOrder.cumQuote);
             closeMarketOrder.quantity = Number(exOrder.executedQty);
             closeMarketOrder.filledQuantity = closeMarketOrder.quantity;
-            closeMarketOrder.placeCount = closeMarketOrder.placeCount + 1;
+            closeMarketOrder.placedCount = closeMarketOrder.placedCount + 1;
             await this.orderRepo.save(closeMarketOrder);
             await this.closeDeal(dealId);
           } else {

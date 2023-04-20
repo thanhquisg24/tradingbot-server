@@ -180,8 +180,8 @@ export class OrderEntity {
   @Column({ name: 'retry_count', type: 'int', default: 0 })
   retryCount: number;
 
-  @Column({ name: 'place_count', type: 'int', default: 0 })
-  placeCount: number;
+  @Column({ name: 'placed_count', type: 'int', default: 0 })
+  placedCount: number;
 
   @ManyToOne(() => DealEntity)
   @JoinColumn({ name: 'deal_id', referencedColumnName: 'id' })
