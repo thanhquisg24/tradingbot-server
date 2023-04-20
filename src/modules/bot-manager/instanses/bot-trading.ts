@@ -88,7 +88,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     this.logLabel = { label: `Bot#${config.id} ${config.name}` };
   }
 
-  private async sendMsgTelegram(msg: string): Promise<void> {
+  protected async sendMsgTelegram(msg: string): Promise<void> {
     botLogger.info(msg, this.logLabel);
     if (this.botConfig.exchange.user.telegramChatId) {
       await this.telegramService.sendMessageToUser(
@@ -117,7 +117,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     return countActiveDealByPair === 0;
   }
 
-  private async placeBinanceOrder(
+  protected async placeBinanceOrder(
     order: OrderEntity | null,
   ): Promise<BinanceOrder | undefined> {
     try {
@@ -513,6 +513,10 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     const sellOrderEntity = await this.orderRepo.save(existingSellOrder);
     return sellOrderEntity;
   }
+  abstract handleLastSO(
+    deal: DealEntity,
+    currentOrder: OrderEntity,
+  ): Promise<void>;
   private async isInterruptWhenSellFilled(
     existingSellOrder: OrderEntity,
     currentBuyOrder: OrderEntity,
@@ -703,24 +707,8 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
               //placing stoploss
               const isLastSO =
                 currentOrder.sequence >= deal.maxSafetyTradesCount;
-              if (isLastSO && deal.useStopLoss) {
-                const stlOrder = createStopLossOrder(deal, currentOrder);
-                const binanceStl = await this.placeBinanceOrder(stlOrder);
-                if (binanceStl) {
-                  stlOrder.status = OrderStatus.NEW;
-                  stlOrder.binanceOrderId = `${binanceStl.orderId}`;
-                  stlOrder.placeCount = stlOrder.placeCount + 1;
-                  await this.sendMsgTelegram(
-                    `[${stlOrder.pair}] [${stlOrder.binanceOrderId}]: Place new Stop Loss Order. Price: ${stlOrder.price}, Amount: ${stlOrder.quantity}`,
-                  );
-                } else {
-                  stlOrder.status = 'PLACING';
-                  stlOrder.retryCount = stlOrder.retryCount + 1;
-                  await this.sendMsgTelegram(
-                    `[${stlOrder.pair}]:Error on placing a new Stop Loss Order. Price: ${stlOrder.price}, Amount: ${stlOrder.quantity}`,
-                  );
-                }
-                await this.orderRepo.save(stlOrder);
+              if (isLastSO) {
+                await this.handleLastSO(deal, currentOrder);
               }
               //end placing next stoploss
             }
