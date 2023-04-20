@@ -33,7 +33,6 @@ import {
   createCloseMarketOrder,
   createMarketBaseOrder,
   createNextTPOrder,
-  createStopLossOrder,
   getOrderSide,
 } from './bot-utils-calc';
 import { botLogger } from 'src/common/bot-logger';

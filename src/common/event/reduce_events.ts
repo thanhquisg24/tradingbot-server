@@ -1,4 +1,4 @@
-export enum REDUCE_EVENTS {
+export enum REDUCE_EV_TYPES {
   PREPARE_ROUND = 'PREPARE_ROUND',
   BEGIN_ROUND = 'BEGIN_ROUND',
   END_ROUND = 'END_ROUND',
@@ -22,7 +22,7 @@ interface IReducePreparePayload extends ICommonReduce {
 
 export type ReducePrepareEvent = IReduceEvent<
   IReducePreparePayload,
-  REDUCE_EVENTS.PREPARE_ROUND
+  REDUCE_EV_TYPES.PREPARE_ROUND
 >;
 
 interface IReduceBeginPayload extends ICommonReduce {
@@ -35,7 +35,7 @@ interface IReduceBeginPayload extends ICommonReduce {
 }
 export type ReduceBeginEvent = IReduceEvent<
   IReduceBeginPayload,
-  REDUCE_EVENTS.BEGIN_ROUND
+  REDUCE_EV_TYPES.BEGIN_ROUND
 >;
 
 interface IReduceEndPayload extends ICommonReduce {
@@ -45,10 +45,13 @@ interface IReduceEndPayload extends ICommonReduce {
 }
 export type ReduceEndEvent = IReduceEvent<
   IReduceEndPayload,
-  REDUCE_EVENTS.END_ROUND
+  REDUCE_EV_TYPES.END_ROUND
 >;
 
 export type CombineReduceEventTypes =
   | ReducePrepareEvent
   | ReduceBeginEvent
   | ReduceEndEvent;
+
+export type BotEventData = CombineReduceEventTypes;
+export const BOT_EVENT_KEY = 'BOT_EVENT_KEY';

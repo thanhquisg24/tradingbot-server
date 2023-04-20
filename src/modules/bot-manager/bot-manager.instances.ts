@@ -3,7 +3,10 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { COMMON_STATUS } from 'src/common/constants';
-import { OnTVEventPayload, TV_DEAL_EVENT } from 'src/common/event/tv_events';
+import {
+  OnTVEventPayload,
+  TV_DEAL_EVENT_KEY,
+} from 'src/common/event/tv_events';
 import { Repository } from 'typeorm';
 import { DealEntity } from '../entities/deal.entity';
 import { OrderEntity } from '../entities/order.entity';
@@ -13,7 +16,8 @@ import { BotManagerService } from './bot-manager.service';
 import { CloseDealAtMarketPrice } from './dto/close-deal-market-price.payload';
 import { BotFactory } from './instanses/bot-factory';
 import { BaseBotTrading } from './instanses/bot-trading';
-import { OnEvent } from '@nestjs/event-emitter';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
+import { BOT_EVENT_KEY, BotEventData } from 'src/common/event/reduce_events';
 
 export interface IBotManagerInstances {
   botInstances: Map<string, BaseBotTrading>;
@@ -24,6 +28,7 @@ export class BotManagerInstances implements IBotManagerInstances {
   botInstances: Map<string, BaseBotTrading>;
 
   constructor(
+    private eventEmitter: EventEmitter2,
     private readonly botManagerService: BotManagerService,
 
     @InjectRepository(DealEntity)
@@ -64,6 +69,7 @@ export class BotManagerInstances implements IBotManagerInstances {
         this.dealRepo,
         this.orderRepo,
         this.telegramService,
+        this.sendBotEvent,
       );
       const isStartSuccess = await newBot.start();
       if (isStartSuccess) {
@@ -107,7 +113,11 @@ export class BotManagerInstances implements IBotManagerInstances {
     return 'bot not found';
   }
 
-  @OnEvent(TV_DEAL_EVENT)
+  sendBotEvent(eventPayload: BotEventData) {
+    this.eventEmitter.emit(BOT_EVENT_KEY, eventPayload);
+  }
+
+  @OnEvent(TV_DEAL_EVENT_KEY)
   async handleTvEvent(payload: OnTVEventPayload) {
     this.logger.log(
       `receive msg from tradingview ${JSON.stringify(payload)}`,

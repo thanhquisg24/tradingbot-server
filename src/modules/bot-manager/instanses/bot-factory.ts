@@ -8,6 +8,7 @@ import { TelegramService } from 'src/modules/telegram/telegram.service';
 import { Repository } from 'typeorm';
 import { DCABot } from './bot-dca';
 import { BaseBotTrading } from './bot-trading';
+import { CombineReduceEventTypes } from 'src/common/event/reduce_events';
 
 export class BotFactory {
   static createBot(
@@ -15,12 +16,13 @@ export class BotFactory {
     dealRepo: Repository<DealEntity>,
     orderRepo: Repository<OrderEntity>,
     telegramService: TelegramService,
+    sendBotEvent: (eventPayload: CombineReduceEventTypes) => void,
   ) {
     switch (config.botType) {
       case BOT_TRADING_TYPE.DCA:
+        return new DCABot(config, dealRepo, orderRepo, telegramService);
       case BOT_TRADING_TYPE.REDUCE:
-        const newBot = new DCABot(config, dealRepo, orderRepo, telegramService);
-        return newBot;
+        return new DCABot(config, dealRepo, orderRepo, telegramService);
       default:
         throw new Error('Can not find exchange name :' + config.botType);
     }

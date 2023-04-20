@@ -13,4 +13,4 @@ export interface ITVPayload {
 
 export type OnTVEventPayload = ITVPayload;
 
-export const TV_DEAL_EVENT = 'TV_DEAL_EVENT';
+export const TV_DEAL_EVENT_KEY = 'TV_DEAL_EVENT_KEY';

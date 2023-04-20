@@ -1,7 +1,7 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ApiTags } from '@nestjs/swagger';
-import { TV_DEAL_EVENT } from 'src/common/event/tv_events';
+import { TV_DEAL_EVENT_KEY } from 'src/common/event/tv_events';
 import { TVPayload } from './dto/deal-tv.payload';
 
 @ApiTags('Tv Webhook APIs')
@@ -11,6 +11,6 @@ export class TvWebhookController {
 
   @Post()
   handleTVSignal(@Body() payload: TVPayload) {
-    this.eventEmitter.emit(TV_DEAL_EVENT, payload);
+    this.eventEmitter.emit(TV_DEAL_EVENT_KEY, payload);
   }
 }
