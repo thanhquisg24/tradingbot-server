@@ -71,6 +71,35 @@ export class DealEntity {
   @Column({ length: 16 })
   pair: string;
 
+  @Column({ name: 'preference_reduce_deal_id', type: 'int', nullable: true })
+  preReduceDealId: number;
+
+  @Column({
+    name: 'current_avg_price',
+    type: 'decimal',
+    precision: 20,
+    scale: 10,
+    nullable: true,
+    default: 0,
+  })
+  curAvgPrice: number;
+
+  @Column({
+    name: 'current_quantity',
+    type: 'decimal',
+    precision: 20,
+    scale: 10,
+    nullable: true,
+    default: 0,
+  })
+  curQuantity: number;
+
+  @Column({ name: 'current_reduce_count', type: 'int', default: 0 })
+  curReduceCount: number;
+
+  @Column({ name: 'max_reduce_count', type: 'int', default: 0 })
+  maxReduceCount: number;
+
   @Column({
     name: 'base_order_size',
     type: 'decimal',
@@ -115,6 +144,7 @@ export class DealEntity {
     type: 'decimal',
     precision: 5,
     scale: 2,
+    default: 1,
   })
   targetProfitPercentage: number;
 
@@ -133,10 +163,10 @@ export class DealEntity {
   })
   targetStopLossPercentage: number;
 
-  @Column({ name: 'max_safety_trades_count', type: 'int' })
+  @Column({ name: 'max_safety_trades_count', type: 'int', default: 0 })
   maxSafetyTradesCount: number;
 
-  @Column({ name: 'max_active_safety_trades_count', type: 'int' })
+  @Column({ name: 'max_active_safety_trades_count', type: 'int', default: 0 })
   maxActiveSafetyTradesCount: number;
 
   @Column({
@@ -144,6 +174,7 @@ export class DealEntity {
     type: 'decimal',
     precision: 5,
     scale: 2,
+    default: 1,
   })
   priceDeviationPercentage: number;
 
@@ -152,6 +183,7 @@ export class DealEntity {
     type: 'decimal',
     precision: 5,
     scale: 2,
+    default: 1,
   })
   safetyOrderVolumeScale: number;
 
@@ -160,6 +192,7 @@ export class DealEntity {
     type: 'decimal',
     precision: 5,
     scale: 2,
+    default: 1,
   })
   safetyOrderStepScale: number;
 }

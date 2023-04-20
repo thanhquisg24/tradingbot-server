@@ -47,7 +47,10 @@ export function createOrderEntity(buyOrder: BuyOrder, deal: DealEntity) {
 export enum CLIENT_ORDER_TYPE {
   BASE = 'BASE',
   SAFETY = 'SAFETY',
-  REDUCE = 'REDUCE',
+  REDUCE_BEGIN = 'REDUCE_BIGIN',
+  REDUCE_END = 'REDUCE_END',
+  COVER_CUT_QTY = 'COVER_CUT_QTY',
+  COVER_ADD_QTY = 'COVER_ADD_QTY',
   TAKE_PROFIT = 'TAKE_PROFIT',
   STOP_LOSS = 'STOP_LOSS',
   CLOSE_AT_MARKET = 'CLOSE_AT_MARKET',

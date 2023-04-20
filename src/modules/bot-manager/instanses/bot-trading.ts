@@ -129,30 +129,31 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
 
       switch (order.clientOrderType) {
         case CLIENT_ORDER_TYPE.BASE:
-          if (this.botConfig.startOrderType !== 'LIMIT') {
+          if (this.botConfig.startOrderType !== OrderType.LIMIT) {
             ex_orderType = OrderType.MARKET;
-            params = { ...params };
           }
           break;
         case CLIENT_ORDER_TYPE.SAFETY:
+        case CLIENT_ORDER_TYPE.TAKE_PROFIT:
+        case CLIENT_ORDER_TYPE.REDUCE_END:
           ex_orderType = OrderType.LIMIT;
           break;
+
+        case CLIENT_ORDER_TYPE.REDUCE_BEGIN:
         case CLIENT_ORDER_TYPE.STOP_LOSS:
-        case CLIENT_ORDER_TYPE.REDUCE:
           ex_orderType = OrderType.STOP;
           params = { ...params, stopPrice: order.price };
           break;
-        case CLIENT_ORDER_TYPE.TAKE_PROFIT:
-          ex_orderType = 'LIMIT';
-          break;
+        case CLIENT_ORDER_TYPE.COVER_ADD_QTY:
+        case CLIENT_ORDER_TYPE.COVER_CUT_QTY:
         case CLIENT_ORDER_TYPE.CLOSE_AT_MARKET:
-          ex_orderType = 'MARKET';
+          ex_orderType = OrderType.MARKET;
           break;
         default:
           ex_orderType = OrderType.LIMIT;
           break;
       }
-      if (ex_orderType === 'MARKET') {
+      if (ex_orderType === OrderType.MARKET) {
         params = { ...params, newOrderRespType: 'RESULT' };
       }
       botLogger.info(
@@ -570,9 +571,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
           deal: {
             status: DEAL_STATUS.ACTIVE,
           },
-          status: Raw(
-            (status) => `${status} in ('CREATED','NEW','PARTIALLY_FILLED')`,
-          ),
+          status: Raw((status) => `${status} in ('NEW','PARTIALLY_FILLED')`),
         },
       });
       if (!currentOrder) {
@@ -645,6 +644,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
                   closeMarketOrder.volume = Number(exOrder.cumQuote);
                   closeMarketOrder.quantity = Number(exOrder.executedQty);
                   closeMarketOrder.filledQuantity = closeMarketOrder.quantity;
+                  closeMarketOrder.placeCount = closeMarketOrder.placeCount + 1;
                   await this.orderRepo.save(closeMarketOrder);
                   await this.closeDeal(currentOrder.deal.id);
                 }
@@ -915,6 +915,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             closeMarketOrder.volume = Number(exOrder.cumQuote);
             closeMarketOrder.quantity = Number(exOrder.executedQty);
             closeMarketOrder.filledQuantity = closeMarketOrder.quantity;
+            closeMarketOrder.placeCount = closeMarketOrder.placeCount + 1;
             await this.orderRepo.save(closeMarketOrder);
             await this.closeDeal(dealId);
           } else {

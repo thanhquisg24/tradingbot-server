@@ -4,12 +4,14 @@ export enum REDUCE_EVENTS {
   END_ROUND = 'END_ROUND',
 }
 
+interface ICommonReduce {
+  toBotId: number;
+}
 interface IReduceEvent<P, T extends string = string> {
   type: T;
   payload: P;
 }
-interface IReducePreparePayload {
-  toBotId: number;
+interface IReducePreparePayload extends ICommonReduce {
   fromDealId: number;
   pair: number;
   current_quantity: number;
@@ -23,8 +25,7 @@ export type ReducePrepareEvent = IReduceEvent<
   REDUCE_EVENTS.PREPARE_ROUND
 >;
 
-interface IReduceBeginPayload {
-  toBotId: number;
+interface IReduceBeginPayload extends ICommonReduce {
   toDealId: number;
   pair: number;
   current_quantity: number;
@@ -37,13 +38,17 @@ export type ReduceBeginEvent = IReduceEvent<
   REDUCE_EVENTS.BEGIN_ROUND
 >;
 
-interface IReduceEndPayload {
-  toBotId: number;
+interface IReduceEndPayload extends ICommonReduce {
   toDealId: number;
   pair: number;
   fromProfit: number;
 }
 export type ReduceEndEvent = IReduceEvent<
-  IReduceBeginPayload,
+  IReduceEndPayload,
   REDUCE_EVENTS.END_ROUND
 >;
+
+export type CombineReduceEventTypes =
+  | ReducePrepareEvent
+  | ReduceBeginEvent
+  | ReduceEndEvent;
