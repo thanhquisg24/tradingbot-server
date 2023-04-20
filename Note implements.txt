@@ -45,7 +45,7 @@ Note implements
 ***Reduce strategy
 step--- LR is order of Bot1 (long) on Round n ,SR is order of Bot2 (short) on Round n
 0.base (long)
-    if order SO1 FILLED
+    if order LAST SO FILLED
         Bot1 (long)
             -emit event open a new deal with reduce mode to Bot2 (short)(preference reduce# botId,ref_reduce_deal_id)
             -Cancel all TP order 
