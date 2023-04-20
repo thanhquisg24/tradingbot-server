@@ -72,7 +72,7 @@ export class DealEntity {
   pair: string;
 
   @Column({ name: 'preference_reduce_deal_id', type: 'int', nullable: true })
-  preReduceDealId: number;
+  refReduceDealId: number;
 
   @Column({
     name: 'current_avg_price',

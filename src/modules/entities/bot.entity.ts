@@ -165,6 +165,9 @@ export class BotTradingEntity {
   })
   safetyOrderStepScale: number;
 
+  @Column({ name: 'max_reduce_count', type: 'int', default: 0 })
+  maxReduceCount: number;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 }
