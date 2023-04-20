@@ -118,7 +118,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
   }
 
   private async placeBinanceOrder(
-    order: OrderEntity,
+    order: OrderEntity | null,
   ): Promise<BinanceOrder | undefined> {
     try {
       let params: any = {
@@ -195,7 +195,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         `[${order.pair}][${order.id}]Failed to place order  ${err.message}`,
         this.logLabel,
       );
-      throw new Error(err);
+      return null;
     }
   }
 
@@ -384,14 +384,20 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             const binanceLimitBaseOrder = await this.placeBinanceOrder(
               baseOrderEntity,
             );
-            baseOrderEntity.status = OrderStatus.NEW;
-            baseOrderEntity.binanceOrderId = `${binanceLimitBaseOrder.orderId}`;
-            baseOrderEntity.placeCount = baseOrderEntity.placeCount + 1;
+            if (binanceLimitBaseOrder) {
+              baseOrderEntity.status = OrderStatus.NEW;
+              baseOrderEntity.binanceOrderId = `${binanceLimitBaseOrder.orderId}`;
+              baseOrderEntity.placeCount = baseOrderEntity.placeCount + 1;
+            }
           }
           break;
       }
 
-      if (newDealEntity !== null && baseOrderEntity !== null) {
+      if (
+        newDealEntity !== null &&
+        baseOrderEntity !== null &&
+        baseOrderEntity.status === OrderStatus.NEW
+      ) {
         await this.orderRepo.save(baseOrderEntity);
         await this.dealRepo.update(newDealEntity.id, {
           status: DEAL_STATUS.ACTIVE,
@@ -400,6 +406,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
           `[${baseOrderEntity.pair}] [${baseOrderEntity.binanceOrderId}]: Started a new Base Order. Price: ${baseOrderEntity.price}, Amount: ${baseOrderEntity.quantity}`,
         );
       }
+      throw new Error('placeBinanceOrder() fail!');
     } catch (ex) {
       await this.sendMsgTelegram(
         `[${symbol}]: Placing base Order error!  ${ex.message}`,
@@ -620,16 +627,18 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
                   currentOrder.totalQuantity,
                 );
                 const exOrder = await this.placeBinanceOrder(closeMarketOrder);
-                closeMarketOrder.status = exOrder.status;
-                closeMarketOrder.binanceOrderId = `${exOrder.orderId}`;
-                closeMarketOrder.price = Number(exOrder.avgPrice);
-                closeMarketOrder.averagePrice = closeMarketOrder.price;
-                closeMarketOrder.filledPrice = closeMarketOrder.price;
-                closeMarketOrder.volume = Number(exOrder.cumQuote);
-                closeMarketOrder.quantity = Number(exOrder.executedQty);
-                closeMarketOrder.filledQuantity = closeMarketOrder.quantity;
-                await this.orderRepo.save(closeMarketOrder);
-                await this.closeDeal(currentOrder.deal.id);
+                if (exOrder) {
+                  closeMarketOrder.status = exOrder.status;
+                  closeMarketOrder.binanceOrderId = `${exOrder.orderId}`;
+                  closeMarketOrder.price = Number(exOrder.avgPrice);
+                  closeMarketOrder.averagePrice = closeMarketOrder.price;
+                  closeMarketOrder.filledPrice = closeMarketOrder.price;
+                  closeMarketOrder.volume = Number(exOrder.cumQuote);
+                  closeMarketOrder.quantity = Number(exOrder.executedQty);
+                  closeMarketOrder.filledQuantity = closeMarketOrder.quantity;
+                  await this.orderRepo.save(closeMarketOrder);
+                  await this.closeDeal(currentOrder.deal.id);
+                }
                 return;
               }
 
@@ -891,16 +900,20 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             totalFilledQuantity,
           );
           const exOrder = await this.placeBinanceOrder(closeMarketOrder);
-          closeMarketOrder.status = exOrder.status;
-          closeMarketOrder.binanceOrderId = `${exOrder.orderId}`;
-          closeMarketOrder.price = Number(exOrder.avgPrice);
-          closeMarketOrder.averagePrice = closeMarketOrder.price;
-          closeMarketOrder.filledPrice = closeMarketOrder.price;
-          closeMarketOrder.volume = Number(exOrder.cumQuote);
-          closeMarketOrder.quantity = Number(exOrder.executedQty);
-          closeMarketOrder.filledQuantity = closeMarketOrder.quantity;
-          await this.orderRepo.save(closeMarketOrder);
-          await this.closeDeal(dealId);
+          if (exOrder) {
+            closeMarketOrder.status = exOrder.status;
+            closeMarketOrder.binanceOrderId = `${exOrder.orderId}`;
+            closeMarketOrder.price = Number(exOrder.avgPrice);
+            closeMarketOrder.averagePrice = closeMarketOrder.price;
+            closeMarketOrder.filledPrice = closeMarketOrder.price;
+            closeMarketOrder.volume = Number(exOrder.cumQuote);
+            closeMarketOrder.quantity = Number(exOrder.executedQty);
+            closeMarketOrder.filledQuantity = closeMarketOrder.quantity;
+            await this.orderRepo.save(closeMarketOrder);
+            await this.closeDeal(dealId);
+          } else {
+            throw new Error('closeAtMarketPrice() failed!');
+          }
         }
       } else {
         await this.sendMsgTelegram(`Deal ${dealId} not found`);
