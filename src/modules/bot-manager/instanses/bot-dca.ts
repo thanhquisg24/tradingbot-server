@@ -26,22 +26,16 @@ export class DCABot extends BaseBotTrading {
   ): Promise<void> {
     if (deal.useStopLoss) {
       const stlOrder = createStopLossOrder(deal, currentOrder);
-      const binanceStl = await this.placeBinanceOrder(stlOrder);
+      const binanceStl = await this.placeBinanceOrder(stlOrder, true);
       if (binanceStl) {
         stlOrder.status = OrderStatus.NEW;
         stlOrder.binanceOrderId = `${binanceStl.orderId}`;
         stlOrder.placedCount = stlOrder.placedCount + 1;
+        await this.orderRepo.save(stlOrder);
         await this.sendMsgTelegram(
           `[${stlOrder.pair}] [${stlOrder.binanceOrderId}]: Place new Stop Loss Order. Price: ${stlOrder.price}, Amount: ${stlOrder.quantity}`,
         );
-      } else {
-        stlOrder.status = 'PLACING';
-        stlOrder.retryCount = stlOrder.retryCount + 1;
-        await this.sendMsgTelegram(
-          `[${stlOrder.pair}]:Error on placing a new Stop Loss Order. Price: ${stlOrder.price}, Amount: ${stlOrder.quantity}`,
-        );
       }
-      await this.orderRepo.save(stlOrder);
     }
   }
 

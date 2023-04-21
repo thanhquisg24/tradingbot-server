@@ -118,6 +118,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
 
   protected async placeBinanceOrder(
     order: OrderEntity | null,
+    isRetry?: boolean,
   ): Promise<BinanceOrder | undefined> {
     try {
       let params: any = {
@@ -195,6 +196,18 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         `[${order.pair}][${order.id}]Failed to place order  ${err.message}`,
         this.logLabel,
       );
+      if (isRetry) {
+        order.status = 'PLACING';
+        order.retryCount = order.retryCount + 1;
+        await this.orderRepo.save(order);
+        await this.sendMsgTelegram(
+          `[${order.pair}][${order.id}]:Error on placing ${
+            order.clientOrderType
+          }. Price: ${order.price}, Amount: ${order.quantity} .RetryCount: ${
+            order.retryCount - 1
+          }`,
+        );
+      }
       return null;
     }
   }
@@ -659,24 +672,20 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
               //placing TP line
               let newSellOrder = createNextTPOrder(deal, currentOrder);
               newSellOrder = await this.orderRepo.save(newSellOrder);
-              const bSellOrder = await this.placeBinanceOrder(newSellOrder);
+              const bSellOrder = await this.placeBinanceOrder(
+                newSellOrder,
+                true,
+              );
               if (bSellOrder) {
                 newSellOrder.status = OrderStatus.NEW;
                 newSellOrder.binanceOrderId = `${bSellOrder.orderId}`;
                 newSellOrder.placedCount = newSellOrder.placedCount + 1;
+                await this.orderRepo.save(newSellOrder);
                 await this.sendMsgTelegram(
                   `[${newSellOrder.pair}] [${newSellOrder.binanceOrderId}]: Place new Take Profit Order. Price: ${newSellOrder.price}, Amount: ${newSellOrder.quantity}`,
                 );
-              } else {
-                newSellOrder.status = 'PLACING';
-                newSellOrder.retryCount = newSellOrder.retryCount + 1;
-                await this.sendMsgTelegram(
-                  `[${newSellOrder.pair}]:Error on placing a new Take Profit Order!. Price: ${newSellOrder.price}, Amount: ${newSellOrder.quantity}`,
-                );
               }
-              await this.orderRepo.save(newSellOrder);
               //end placing TP line
-
               //placing next safety
               const nextsafety = deal.orders.find(
                 (o) =>
@@ -686,22 +695,19 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
               );
 
               if (nextsafety) {
-                const binanceSafety = await this.placeBinanceOrder(nextsafety);
+                const binanceSafety = await this.placeBinanceOrder(
+                  nextsafety,
+                  true,
+                );
                 if (binanceSafety) {
                   nextsafety.status = OrderStatus.NEW;
                   nextsafety.binanceOrderId = `${binanceSafety.orderId}`;
                   nextsafety.placedCount = nextsafety.placedCount + 1;
+                  await this.orderRepo.save(nextsafety);
                   await this.sendMsgTelegram(
                     `[${nextsafety.pair}] [${nextsafety.binanceOrderId}]: Place new Safety Order. Price: ${nextsafety.price}, Amount: ${nextsafety.quantity}`,
                   );
-                } else {
-                  nextsafety.status = 'PLACING';
-                  nextsafety.retryCount = nextsafety.retryCount + 1;
-                  await this.sendMsgTelegram(
-                    `[${nextsafety.pair}]:Error on placing a new  Safety Order. Price: ${nextsafety.price}, Amount: ${nextsafety.quantity}`,
-                  );
                 }
-                await this.orderRepo.save(nextsafety);
               }
               //end placing next safety
 
@@ -789,24 +795,16 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     });
     for (let index = 0; index < ordersOnPlacing.length; index++) {
       const order = ordersOnPlacing[index];
-      const binanceOrder = await this.placeBinanceOrder(order);
+      const binanceOrder = await this.placeBinanceOrder(order, true);
       if (binanceOrder) {
         order.status = OrderStatus.NEW;
         order.binanceOrderId = `${binanceOrder.orderId}`;
         order.placedCount = order.placedCount + 1;
+        await this.orderRepo.save(order);
         await this.sendMsgTelegram(
           `[${order.pair}] [${order.binanceOrderId}]: Place a Retry Order. Price: ${order.price}, Amount: ${order.quantity}`,
         );
-      } else {
-        order.status = 'PLACING';
-        order.retryCount = order.retryCount + 1;
-        await this.sendMsgTelegram(
-          `[${order.pair}]:Error on placing a Retry Order!. Client Order ID#: ${
-            order.id
-          }, RetryCount: ${order.retryCount - 1}`,
-        );
       }
-      await this.orderRepo.save(order);
     }
   }
 
