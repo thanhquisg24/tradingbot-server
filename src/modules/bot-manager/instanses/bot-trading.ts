@@ -420,8 +420,8 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         await this.sendMsgTelegram(
           `[${baseOrderEntity.pair}] [${baseOrderEntity.binanceOrderId}]: Started a new Base Order. Price: ${baseOrderEntity.price}, Amount: ${baseOrderEntity.quantity}`,
         );
+        return;
       }
-      throw new Error('placeBinanceOrder() fail!');
     } catch (ex) {
       await this.sendMsgTelegram(
         `[${symbol}]: Placing base Order error!  ${ex.message}`,
