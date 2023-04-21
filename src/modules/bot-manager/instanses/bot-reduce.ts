@@ -163,6 +163,8 @@ export class ReduceBot extends DCABot {
     deal: DealEntity,
     currentOrder: OrderEntity,
   ): Promise<void> {
+    await this.sendMsgTelegram(`[${deal.pair}] [${deal.id}]: Have Last SO 😱`);
+    const deviationMoveTrigger = deal.priceDeviationPercentage / 2;
     if (deal.useStopLoss) {
       const stlOrder = createStopLossOrder(deal, currentOrder);
       const binanceStl = await this.placeBinanceOrder(stlOrder);

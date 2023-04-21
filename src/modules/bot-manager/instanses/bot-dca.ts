@@ -24,6 +24,7 @@ export class DCABot extends BaseBotTrading {
     deal: DealEntity,
     currentOrder: OrderEntity,
   ): Promise<void> {
+    await this.sendMsgTelegram(`[${deal.pair}] [${deal.id}]: Have Last SO 😱`);
     if (deal.useStopLoss) {
       const stlOrder = createStopLossOrder(deal, currentOrder);
       const binanceStl = await this.placeBinanceOrder(stlOrder, true);
