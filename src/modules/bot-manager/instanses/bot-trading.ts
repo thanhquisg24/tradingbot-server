@@ -297,6 +297,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     deal.safetyOrderVolumeScale = this.botConfig.safetyOrderVolumeScale;
     deal.safetyOrderStepScale = this.botConfig.safetyOrderStepScale;
     deal.useStopLoss = this.botConfig.useStopLoss;
+    deal.maxReduceCount = this.botConfig.maxReduceCount;
     deal.status = DEAL_STATUS.CREATED;
     deal.startAt = new Date();
     deal.orders = [];

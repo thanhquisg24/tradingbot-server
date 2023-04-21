@@ -29,13 +29,19 @@ dotenv.config();
 // import entities from './config/typeorm.entities';
 const ENV = process.env.NODE_ENV;
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
-const logTransportDaily: DailyRotateFile = new DailyRotateFile({
-  filename: 'log/system-%DATE%.log',
-  datePattern: 'YYYY-MM-DD',
-  zippedArchive: true,
-  maxSize: '20m',
-  maxFiles: '14d',
-});
+const logTransportDaily = (
+  name: string,
+  level: 'info' | 'warn' | 'error',
+): DailyRotateFile => {
+  return new DailyRotateFile({
+    level,
+    filename: `log/${name}-%DATE%.log`,
+    datePattern: 'YYYY-MM-DD',
+    zippedArchive: true,
+    maxSize: '20m',
+    maxFiles: '14d',
+  });
+};
 
 @Module({
   imports: [
@@ -58,7 +64,11 @@ const logTransportDaily: DailyRotateFile = new DailyRotateFile({
         winston.format.timestamp(),
         nestWinstonModuleUtilities.format.nestLike(),
       ),
-      transports: [new winston.transports.Console(), logTransportDaily],
+      transports: [
+        new winston.transports.Console(),
+        logTransportDaily('system', 'info'),
+        logTransportDaily('err', 'error'),
+      ],
     }),
     EventEmitterModule.forRoot(),
     // TypeOrmModule.forRoot({
