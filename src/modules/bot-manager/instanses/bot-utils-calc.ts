@@ -60,9 +60,11 @@ export function calcPriceSpread(
 }
 export function calcDaviationBetween(
   direction: STRATEGY_DIRECTION,
-  priceHigher: BigNumber,
-  priceLower: BigNumber,
+  price1: BigNumber,
+  price2: BigNumber,
 ) {
+  const priceHigher: BigNumber = price1.isGreaterThan(price2) ? price1 : price2;
+  const priceLower: BigNumber = price1.isLessThan(price2) ? price1 : price2;
   if (direction === STRATEGY_DIRECTION.LONG) {
     return priceHigher.minus(priceLower).dividedBy(priceHigher);
   }
@@ -260,6 +262,32 @@ export const createCloseMarketOrder = (
   newSellOrder.clientOrderType = CLIENT_ORDER_TYPE.CLOSE_AT_MARKET;
   newSellOrder.pair = deal.pair;
   return newSellOrder;
+};
+
+export const createMarketOrder = (
+  deal: DealEntity,
+  price: number,
+  qty: number,
+  orderAction: ORDER_ACTION_ENUM,
+  clientOrderType: CLIENT_ORDER_TYPE,
+  sequence: number,
+) => {
+  let newOrder = new OrderEntity();
+  newOrder.id = getNewUUid();
+  newOrder.deal = deal;
+  newOrder.side = getOrderSide(deal.strategyDirection, orderAction);
+  newOrder.status = 'CREATED';
+  newOrder.price = price;
+  newOrder.quantity = qty;
+  newOrder.volume = price * qty;
+  newOrder.averagePrice = price;
+  newOrder.sequence = sequence;
+  newOrder.botId = deal.botId;
+  newOrder.exchangeId = deal.exchangeId;
+  newOrder.userId = deal.userId;
+  newOrder.clientOrderType = clientOrderType;
+  newOrder.pair = deal.pair;
+  return newOrder;
 };
 
 export const createNextTPOrder = (

@@ -39,6 +39,7 @@ import { botLogger } from 'src/common/bot-logger';
 import { TVActionType, OnTVEventPayload } from 'src/common/event/tv_events';
 import { wrapExReq } from 'src/modules/exchange/remote-api/exchange.helper';
 import { Order as CCXTOrder } from 'ccxt';
+import { CombineReduceEventTypes } from 'src/common/event/reduce_events';
 
 interface IBaseBotTrading {
   isWatchingPosition: boolean;
@@ -314,9 +315,9 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     deal.status = DEAL_STATUS.CREATED;
     deal.startAt = new Date();
     deal.orders = [];
-    await this.dealRepo.save(deal);
+    const savedDeal = await this.dealRepo.save(deal);
     for (const buyOrder of buyOrders) {
-      const order = createOrderEntity(buyOrder, deal);
+      const order = createOrderEntity(buyOrder, savedDeal);
       if (
         baseClientOrderId &&
         order.clientOrderType === CLIENT_ORDER_TYPE.BASE
@@ -967,4 +968,5 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
   }
 
   abstract processActivePosition(activeDeals: DealEntity[]);
+  abstract processBotEventAction(payload: CombineReduceEventTypes);
 }

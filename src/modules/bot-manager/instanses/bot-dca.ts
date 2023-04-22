@@ -9,6 +9,7 @@ import { BotTradingEntity } from 'src/modules/entities/bot.entity';
 import { wrapExReq } from 'src/modules/exchange/remote-api/exchange.helper';
 import { botLogger } from 'src/common/bot-logger';
 import { createStopLossOrder } from './bot-utils-calc';
+import { CombineReduceEventTypes } from 'src/common/event/reduce_events';
 
 export class DCABot extends BaseBotTrading {
   constructor(
@@ -18,6 +19,11 @@ export class DCABot extends BaseBotTrading {
     telegramService: TelegramService,
   ) {
     super(config, dealRepo, orderRepo, telegramService);
+  }
+
+  processBotEventAction(payload: CombineReduceEventTypes) {
+    return;
+    // throw new Error('Method not implemented.');
   }
 
   async handleLastSO(

@@ -117,6 +117,18 @@ export class BotManagerInstances implements IBotManagerInstances {
     this.eventEmitter.emit(BOT_EVENT_KEY, eventPayload);
   }
 
+  @OnEvent(BOT_EVENT_KEY)
+  async handleBotEvent(payload: BotEventData) {
+    this.logger.log(
+      `receive BOT_EVENT_KEY ${JSON.stringify(payload)}`,
+      BotManagerInstances.name,
+    );
+    const strId = `${payload.payload.toBotId}`;
+    if (this.botInstances.has(strId)) {
+      await this.botInstances.get(strId).processBotEventAction(payload);
+    }
+  }
+
   @OnEvent(TV_DEAL_EVENT_KEY)
   async handleTvEvent(payload: OnTVEventPayload) {
     this.logger.log(

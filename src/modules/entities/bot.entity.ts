@@ -168,6 +168,9 @@ export class BotTradingEntity {
   @Column({ name: 'max_reduce_count', type: 'int', default: 0 })
   maxReduceCount: number;
 
+  @Column({ name: 'ref_bot_id', type: 'int', nullable: true })
+  refBotId: number;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 }

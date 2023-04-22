@@ -35,23 +35,22 @@ export const createReducePrepareEvent = (
   };
 };
 
-interface IReduceBeginPayload extends ICommonReduce {
+export interface IReduceBeginPayload extends ICommonReduce {
+  fromStrategyDirection: 'LONG' | 'SHORT' | any;
   toDealId: number;
   pair: string;
-  current_quantity: BigNumber;
-  current_price: BigNumber;
-  next_move_deviation: BigNumber;
-  round_count: number;
+  triger_price: BigNumber;
 }
 export type ReduceBeginEvent = IReduceEvent<
   IReduceBeginPayload,
   REDUCE_EV_TYPES.BEGIN_ROUND
 >;
 
-interface IReduceEndPayload extends ICommonReduce {
+export interface IReduceEndPayload extends ICommonReduce {
   toDealId: number;
   pair: string;
-  fromProfit: number;
+  triger_price: BigNumber;
+  fromProfitQty: BigNumber;
 }
 export type ReduceEndEvent = IReduceEvent<
   IReduceEndPayload,
