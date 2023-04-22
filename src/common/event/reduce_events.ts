@@ -1,3 +1,5 @@
+import BigNumber from 'bignumber.js';
+
 export enum REDUCE_EV_TYPES {
   PREPARE_ROUND = 'PREPARE_ROUND',
   BEGIN_ROUND = 'BEGIN_ROUND',
@@ -11,12 +13,12 @@ interface IReduceEvent<P, T extends string = string> {
   type: T;
   payload: P;
 }
-interface IReducePreparePayload extends ICommonReduce {
+export interface IReducePreparePayload extends ICommonReduce {
   fromDealId: number;
-  pair: number;
-  current_quantity: number;
-  current_deviation: number;
-  current_price: number;
+  pair: string;
+  r_quantity: BigNumber;
+  tp_deviation: BigNumber;
+  triger_price: BigNumber;
   round_count: number;
 }
 
@@ -24,13 +26,21 @@ export type ReducePrepareEvent = IReduceEvent<
   IReducePreparePayload,
   REDUCE_EV_TYPES.PREPARE_ROUND
 >;
+export const createReducePrepareEvent = (
+  payload: IReducePreparePayload,
+): ReducePrepareEvent => {
+  return {
+    type: REDUCE_EV_TYPES.PREPARE_ROUND,
+    payload,
+  };
+};
 
 interface IReduceBeginPayload extends ICommonReduce {
   toDealId: number;
-  pair: number;
-  current_quantity: number;
-  current_price: number;
-  next_move_deviation: number;
+  pair: string;
+  current_quantity: BigNumber;
+  current_price: BigNumber;
+  next_move_deviation: BigNumber;
   round_count: number;
 }
 export type ReduceBeginEvent = IReduceEvent<
@@ -40,7 +50,7 @@ export type ReduceBeginEvent = IReduceEvent<
 
 interface IReduceEndPayload extends ICommonReduce {
   toDealId: number;
-  pair: number;
+  pair: string;
   fromProfit: number;
 }
 export type ReduceEndEvent = IReduceEvent<

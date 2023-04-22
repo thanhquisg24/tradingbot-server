@@ -2,6 +2,10 @@ import BigNumber from 'bignumber.js';
 import { OrderSide } from 'binance-api-node';
 import { Exchange } from 'ccxt';
 import { last } from 'lodash';
+import {
+  IReducePreparePayload,
+  createReducePrepareEvent,
+} from 'src/common/event/reduce_events';
 import { getNewUUid } from 'src/common/utils/hash-util';
 import {
   BotTradingEntity,
@@ -54,7 +58,16 @@ export function calcPriceSpread(
   }
   return _price.multipliedBy(BigNumber(1).minus(_spread));
 }
-
+export function calcDaviationBetween(
+  direction: STRATEGY_DIRECTION,
+  priceHigher: BigNumber,
+  priceLower: BigNumber,
+) {
+  if (direction === STRATEGY_DIRECTION.LONG) {
+    return priceHigher.minus(priceLower).dividedBy(priceHigher);
+  }
+  return priceHigher.minus(priceLower).dividedBy(priceLower);
+}
 export function calcTp(
   direction: STRATEGY_DIRECTION,
   avg_price: BigNumber,
@@ -305,4 +318,58 @@ export const createStopLossOrder = (deal: DealEntity, lastSO: OrderEntity) => {
   newSTLOrder.clientOrderType = CLIENT_ORDER_TYPE.STOP_LOSS;
   newSTLOrder.pair = lastSO.pair;
   return newSTLOrder;
+};
+
+export const calcReducePreparePayload = (
+  data: {
+    fromStrategyDirection: STRATEGY_DIRECTION;
+    fromDealId: number;
+    toBotId: number;
+    pair: string;
+    quantity: number;
+    avgPrice: number;
+    currentPrice: number;
+    percentNextMove: number;
+    round_count: number;
+  },
+  exchange: Exchange,
+) => {
+  const {
+    fromStrategyDirection,
+    fromDealId,
+    toBotId,
+    pair,
+    quantity,
+    avgPrice,
+    currentPrice,
+    percentNextMove,
+    round_count,
+  } = data;
+  const _percentNextMove = new BigNumber(percentNextMove).dividedBy(100);
+  const _avgPrice = new BigNumber(avgPrice);
+  const _currentPrice = new BigNumber(currentPrice);
+  const strTriggerPrice = exchange.priceToPrecision(
+    pair,
+    calcPriceByDeviation(
+      fromStrategyDirection,
+      _currentPrice,
+      _percentNextMove,
+    ),
+  );
+  const _triggerPrice = new BigNumber(strTriggerPrice);
+  const _tpDeviation = calcDaviationBetween(
+    fromStrategyDirection,
+    _avgPrice,
+    _triggerPrice,
+  );
+  const payload: IReducePreparePayload = {
+    fromDealId,
+    pair,
+    r_quantity: new BigNumber(quantity),
+    tp_deviation: _tpDeviation,
+    triger_price: _triggerPrice,
+    round_count: round_count,
+    toBotId,
+  };
+  return createReducePrepareEvent(payload);
 };

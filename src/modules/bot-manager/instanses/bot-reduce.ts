@@ -27,6 +27,7 @@ import {
 } from './bot-utils-calc';
 import { BotEventData } from 'src/common/event/reduce_events';
 import { DCABot } from './bot-dca';
+import BigNumber from 'bignumber.js';
 
 export class ReduceBot extends DCABot {
   private sendBotEvent: (eventPayload: BotEventData) => void;
@@ -164,7 +165,27 @@ export class ReduceBot extends DCABot {
     currentOrder: OrderEntity,
   ): Promise<void> {
     await this.sendMsgTelegram(`[${deal.pair}] [${deal.id}]: Have Last SO 😱`);
-    const deviationMoveTrigger = deal.priceDeviationPercentage / 2;
+
+    let filledBuyVolume = new BigNumber(0);
+    let totalBuyQantity = 0;
+    const buyOrderSide = getOrderSide(
+      deal.strategyDirection,
+      ORDER_ACTION_ENUM.OPEN_POSITION,
+    );
+
+    for (let index = 0; index < deal.orders.length; index++) {
+      const order = deal.orders[index];
+      if (order.filledQuantity > 0) {
+        if (order.side === buyOrderSide) {
+          filledBuyVolume = filledBuyVolume.plus(
+            new BigNumber(order.filledPrice).multipliedBy(order.filledQuantity),
+          );
+          totalBuyQantity += order.filledQuantity;
+        }
+      }
+    }
+    const avgPrice = filledBuyVolume.dividedBy(totalBuyQantity);
+    const percentNextMove = deal.priceDeviationPercentage / 2;
     if (deal.useStopLoss) {
       const stlOrder = createStopLossOrder(deal, currentOrder);
       const binanceStl = await this.placeBinanceOrder(stlOrder);
