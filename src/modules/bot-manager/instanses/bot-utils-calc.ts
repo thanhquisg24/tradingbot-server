@@ -66,9 +66,12 @@ export function calcDaviationBetween(
   const priceHigher: BigNumber = price1.isGreaterThan(price2) ? price1 : price2;
   const priceLower: BigNumber = price1.isLessThan(price2) ? price1 : price2;
   if (direction === STRATEGY_DIRECTION.LONG) {
-    return priceHigher.minus(priceLower).dividedBy(priceHigher);
+    return priceHigher
+      .minus(priceLower)
+      .dividedBy(priceHigher)
+      .decimalPlaces(2);
   }
-  return priceHigher.minus(priceLower).dividedBy(priceLower);
+  return priceHigher.minus(priceLower).dividedBy(priceLower).decimalPlaces(2);
 }
 export function calcTp(
   direction: STRATEGY_DIRECTION,
@@ -375,29 +378,28 @@ export const calcReducePreparePayload = (
     percentNextMove,
     round_count,
   } = data;
+  console.log('🚀 ~ file: bot-utils-calc.ts:381 ~ data:', data);
   const _percentNextMove = new BigNumber(percentNextMove).dividedBy(100);
   const _avgPrice = new BigNumber(avgPrice);
   const _currentPrice = new BigNumber(currentPrice);
-  const strTriggerPrice = exchange.priceToPrecision(
-    pair,
-    calcPriceByDeviation(
-      fromStrategyDirection,
-      _currentPrice,
-      _percentNextMove,
-    ),
+  const triggerPriceCalc = calcPriceByDeviation(
+    fromStrategyDirection,
+    _currentPrice,
+    _percentNextMove,
   );
-  const _triggerPrice = new BigNumber(strTriggerPrice);
+  const strTriggerPrice = exchange.priceToPrecision(pair, triggerPriceCalc);
+  const _triggerPriceExchange = new BigNumber(strTriggerPrice);
   const _tpDeviation = calcDaviationBetween(
     fromStrategyDirection,
     _avgPrice,
-    _triggerPrice,
+    _triggerPriceExchange,
   );
   const payload: IReducePreparePayload = {
     fromDealId,
     pair,
     r_quantity: new BigNumber(quantity),
     tp_deviation: _tpDeviation,
-    triger_price: _triggerPrice,
+    triger_price: _triggerPriceExchange,
     round_count: round_count,
     toBotId,
   };

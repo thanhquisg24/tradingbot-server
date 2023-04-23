@@ -74,7 +74,7 @@ export class ReduceBot extends DCABot {
     return { targetTp, newAvgPrice };
   }
 
-  private sendPrepareEvent(
+  private async sendPrepareEvent(
     deal: DealEntity,
     toBotId: number,
     triggerPrice: number,
@@ -97,9 +97,8 @@ export class ReduceBot extends DCABot {
       this._exchangeRemote.getCcxtExchange(),
     );
     this.sendBotEvent(prepareEvent);
-    botLogger.info(
-      `[${deal.pair}] [${deal.id}]: Prepare Open Cover Deal to bot#${toBotId}`,
-      this.logLabel,
+    await this.sendMsgTelegram(
+      `[${deal.pair}] [${deal.id}]: Send event Prepare Open Deal cover to bot#${toBotId}`,
     );
   }
   private sendReduceEndEvent(
@@ -353,16 +352,21 @@ export class ReduceBot extends DCABot {
         }
       }
     }
-    const avgPrice = filledBuyVolume.dividedBy(totalBuyQantity);
+    const avgPrice = this._exchangeRemote
+      .getCcxtExchange()
+      .priceToPrecision(
+        deal.pair,
+        filledBuyVolume.dividedBy(totalBuyQantity).toNumber(),
+      );
     await this.dealRepo.update(deal.id, {
       curQuantity: totalBuyQantity,
-      curAvgPrice: avgPrice.toNumber(),
+      curAvgPrice: Number(avgPrice),
     });
-    this.sendPrepareEvent(
+    await this.sendPrepareEvent(
       deal,
       this.botConfig.refBotId,
       Number(currentOrder.filledPrice),
-      avgPrice.toNumber(),
+      Number(avgPrice),
       totalBuyQantity,
     );
   }
@@ -376,11 +380,10 @@ export class ReduceBot extends DCABot {
     for (let i = 0; i < deal.orders.length; i++) {
       const order = deal.orders[i];
       //---------------------
-      const isLastSO = order.sequence >= deal.maxSafetyTradesCount;
-      console.log(
-        '🚀 ~ file: bot-reduce.ts:376 ~ ReduceBot ~ processExchangeDeal ~ isLastSO:',
-        isLastSO,
-      );
+      const isLastSO =
+        order.sequence >= deal.maxSafetyTradesCount &&
+        (order.clientOrderType === CLIENT_ORDER_TYPE.SAFETY ||
+          order.clientOrderType === CLIENT_ORDER_TYPE.BASE);
       if (isLastSO) {
         await this.handleLastSO(deal, order);
       }
@@ -689,7 +692,7 @@ export class ReduceBot extends DCABot {
           `[${savedTPOrder.pair}] [${savedTPOrder.binanceOrderId}]: Place new Take Profit Order. Price: ${savedTPOrder.price}, Amount: ${savedTPOrder.quantity}`,
         );
       }
-      this.sendPrepareEvent(
+      await this.sendPrepareEvent(
         currentDeal,
         this.botConfig.refBotId,
         triger_price.toNumber(),

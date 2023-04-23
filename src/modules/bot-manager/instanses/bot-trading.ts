@@ -354,10 +354,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             currentPrice,
             baseOrderSize,
           );
-          console.log(
-            '🚀 ~ file: bot-trading.ts:346 ~ BaseBotTrading ~ prepareBaseOrder:',
-            prepareBaseOrder,
-          );
+
           const binanceMarketBaseOrder = await this.placeBinanceOrder(
             prepareBaseOrder,
           );
@@ -715,7 +712,9 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
 
               //placing stoploss
               const isLastSO =
-                currentOrder.sequence >= deal.maxSafetyTradesCount;
+                currentOrder.sequence >= deal.maxSafetyTradesCount &&
+                (currentOrder.clientOrderType === CLIENT_ORDER_TYPE.SAFETY ||
+                  currentOrder.clientOrderType === CLIENT_ORDER_TYPE.BASE);
               if (isLastSO) {
                 await this.handleLastSO(deal, currentOrder);
               }
@@ -746,11 +745,6 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         }
       } else {
         const _prevStatus = currentOrder.status;
-        console.log(
-          '🚀 ~ file: bot-trading.ts:741 ~ BaseBotTrading ~ _prevStatus:',
-          _prevStatus,
-          orderStatus,
-        );
         if (orderStatus !== 'NEW' && currentOrder.status !== orderStatus) {
           currentOrder.status = orderStatus;
           currentOrder.binanceOrderId = `${orderId}`;
