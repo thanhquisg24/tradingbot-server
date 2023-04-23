@@ -17,7 +17,7 @@ import { BotManagerInstances } from './bot-manager.instances';
 import { BotManagerService } from './bot-manager.service';
 import { CloseDealAtMarketPrice } from './dto/close-deal-market-price.payload';
 import { CreateBotPayload } from './dto/create-bot.payload';
-import { PostCommonPayload } from './dto/post-common';
+import { UpdateBotRefDto } from './dto/update-bot-ref';
 import { BotPairsPayload } from './dto/update-bot.dto';
 
 @ApiTags('Bot Manager APIs')
@@ -84,31 +84,18 @@ export class BotManagerController {
     return this.instanses.getAllRunning();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: number) {
-    return this.instanses.getRunningBotById(id);
-  }
   @Post('/get-bot/:id')
   getBotId(@Param('id') id: number) {
     return this.instanses.getRunningBotById(id);
   }
 
-  @Post('/get-bot-post')
-  getBotIdPost(@Body() payload: PostCommonPayload) {
-    console.log(
-      '🚀 ~ file: bot-manager.controller.ts:99 ~ BotManagerController ~ getBotIdPost ~ payload:',
-      payload,
-    );
-    return this.instanses.getRunningBotById(`${payload.id}`);
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Post('/update-bot-ref/:id')
+  updateBotRef(
+    @Request() req: RequestWithUser,
+    @Body() payload: UpdateBotRefDto,
+  ) {
+    return this.service.updateBotRef(req.user.id, payload);
   }
-
-  // @ApiBody({
-  //   description: 'Bot req body',
-  //   schema: {
-  //     type: 'object',
-  //     properties: {
-  //       id: { type: 'number' },
-  //     },
-  //   },
-  // })
 }

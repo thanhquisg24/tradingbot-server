@@ -1,8 +1,7 @@
-import { PartialType } from '@nestjs/mapped-types';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsPositiveInt } from '@nestjsi/class-validator';
-import { CreateBotDto } from './create-bot.dto';
-export class UpdateBotDto extends PartialType(CreateBotDto) {
+import { CommonBotPayload } from './create-bot.payload';
+export class UpdateBotDto extends CommonBotPayload {
   @ApiProperty({
     required: true,
     description: 'id',

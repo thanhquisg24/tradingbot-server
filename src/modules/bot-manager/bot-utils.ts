@@ -1,7 +1,7 @@
 import { COMMON_STATUS } from 'src/common/constants';
 import { BotTradingEntity } from '../entities/bot.entity';
 import { ExchangeEntity } from '../entities/exchange.entity';
-import { CreateBotPayload } from './dto/create-bot.payload';
+import { CommonBotPayload, CreateBotPayload } from './dto/create-bot.payload';
 import { PairEntity } from '../entities/pair.entity';
 
 export function mappingNewBot(
@@ -9,28 +9,33 @@ export function mappingNewBot(
   exchange: ExchangeEntity,
   pairs: PairEntity[],
 ) {
-  const newBot = new BotTradingEntity();
+  let newBot = new BotTradingEntity();
+  newBot = mappingBot(newBot, payload);
   newBot.botType = payload.botType;
-  newBot.dealStartCondition = payload.dealStartCondition;
+  newBot.strategyDirection = payload.strategyDirection;
   newBot.exchange = exchange;
   newBot.id = null;
-  newBot.baseOrderSize = payload.baseOrderSize;
-  newBot.safetyOrderSize = payload.safetyOrderSize;
-  newBot.maxActiveDeal = payload.maxActiveDeal;
-  newBot.maxActiveSafetyTradesCount = payload.maxActiveSafetyTradesCount;
-  newBot.maxSafetyTradesCount = payload.maxSafetyTradesCount;
-  newBot.name = payload.name;
   newBot.pairs = pairs;
-  newBot.priceDeviationPercentage = payload.priceDeviationPercentage;
-  newBot.safetyOrderStepScale = payload.safetyOrderStepScale;
-  newBot.safetyOrderVolumeScale = payload.safetyOrderVolumeScale;
   newBot.status = COMMON_STATUS.DISABLED;
-  newBot.strategyDirection = payload.strategyDirection;
-  newBot.targetProfitPercentage = payload.targetProfitPercentage;
-  newBot.targetStopLossPercentage = payload.targetStopLossPercentage;
-  newBot.userId = payload.userId;
-  newBot.useStopLoss = payload.useStopLoss;
-  newBot.leverage = payload.leverage;
-
   return newBot;
+}
+export function mappingBot(bot: BotTradingEntity, payload: CommonBotPayload) {
+  bot.dealStartCondition = payload.dealStartCondition;
+  bot.baseOrderSize = payload.baseOrderSize;
+  bot.safetyOrderSize = payload.safetyOrderSize;
+  bot.maxActiveDeal = payload.maxActiveDeal;
+  bot.maxActiveSafetyTradesCount = payload.maxActiveSafetyTradesCount;
+  bot.maxSafetyTradesCount = payload.maxSafetyTradesCount;
+  bot.name = payload.name;
+  bot.priceDeviationPercentage = payload.priceDeviationPercentage;
+  bot.safetyOrderStepScale = payload.safetyOrderStepScale;
+  bot.safetyOrderVolumeScale = payload.safetyOrderVolumeScale;
+  bot.targetProfitPercentage = payload.targetProfitPercentage;
+  bot.targetStopLossPercentage = payload.targetStopLossPercentage;
+  bot.userId = payload.userId;
+  bot.useStopLoss = payload.useStopLoss;
+  bot.leverage = payload.leverage;
+  bot.maxReduceCount = payload.maxReduceCount;
+  bot.refBotId = payload.refBotId;
+  return bot;
 }

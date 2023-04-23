@@ -8,6 +8,7 @@ import { mappingNewBot } from './bot-utils';
 import { CreateBotPayload } from './dto/create-bot.payload';
 import { BotPairsPayload } from './dto/update-bot.dto';
 import { COMMON_STATUS } from 'src/common/constants';
+import { UpdateBotRefDto } from './dto/update-bot-ref';
 
 @Injectable()
 export class BotManagerService {
@@ -45,6 +46,20 @@ export class BotManagerService {
     throw new Error('Not Found Bot #' + pairPayload.id);
   }
 
+  async updateBotRef(userId: number, payload: UpdateBotRefDto) {
+    const entity: BotTradingEntity = await this.repo.findOne({
+      where: {
+        id: payload.id,
+        userId,
+      },
+    });
+    if (entity) {
+      await this.repo.update(entity.id, { refBotId: payload.refBotId });
+      return 'Success';
+    }
+    throw new Error('Not Found Bot #' + payload.id);
+  }
+
   async updateStatus(id: number, status: COMMON_STATUS) {
     return await this.repo.update(id, { status });
   }
@@ -67,6 +82,10 @@ export class BotManagerService {
         id,
       },
     });
+  }
+
+  async saveBot(bot: BotTradingEntity) {
+    return this.repo.save(bot);
   }
 
   async remove(id: number) {

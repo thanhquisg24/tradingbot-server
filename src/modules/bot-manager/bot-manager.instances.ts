@@ -18,6 +18,9 @@ import { BotFactory } from './instanses/bot-factory';
 import { BaseBotTrading } from './instanses/bot-trading';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { BOT_EVENT_KEY, BotEventData } from 'src/common/event/reduce_events';
+import { UpdateBotDto } from './dto/update-bot.dto';
+import { PairService } from '../pair/pair.service';
+import { mappingBot } from './bot-utils';
 
 export interface IBotManagerInstances {
   botInstances: Map<string, BaseBotTrading>;
@@ -30,7 +33,7 @@ export class BotManagerInstances implements IBotManagerInstances {
   constructor(
     private eventEmitter: EventEmitter2,
     private readonly botManagerService: BotManagerService,
-
+    private readonly pairService: PairService,
     @InjectRepository(DealEntity)
     private readonly dealRepo: Repository<DealEntity>,
     @InjectRepository(OrderEntity)
@@ -50,6 +53,18 @@ export class BotManagerInstances implements IBotManagerInstances {
       return this.botInstances.get(strId);
     }
     return null;
+  }
+
+  async updateBotConfig(id: number, dto: UpdateBotDto) {
+    let bot = await this.botManagerService.findOne(id);
+    const pairs = await this.pairService.findByIds(dto.listPair);
+    bot.pairs = pairs;
+    bot = mappingBot(bot, dto);
+    const newConfigBot = await this.botManagerService.saveBot(bot);
+    const strId = `${id}`;
+    if (this.botInstances.has(strId)) {
+      this.botInstances.get(strId).updateConfig(newConfigBot);
+    }
   }
 
   async addRunningBot(id: number, user: UserEntity) {
