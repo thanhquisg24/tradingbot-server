@@ -558,6 +558,10 @@ export class ReduceBot extends DCABot {
         `[${savedOrder.pair}] [${savedOrder.binanceOrderId}]: Place a ${CLIENT_ORDER_TYPE.REDUCE_END} order . Price: ${savedOrder.price}, Amount: ${savedOrder.quantity}`,
       );
     }
+    await this.dealRepo.update(currentDeal.id, {
+      clientDealType: CLIENT_DEAL_TYPE.REDUCE,
+      curReduceCount: currentDeal.curReduceCount + 1,
+    });
   }
 
   private async handleEndRound(payload: IReduceEndPayload) {
