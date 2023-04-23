@@ -45,7 +45,14 @@ export type ReduceBeginEvent = IReduceEvent<
   IReduceBeginPayload,
   REDUCE_EV_TYPES.BEGIN_ROUND
 >;
-
+export const createReduceBeginEvent = (
+  payload: IReduceBeginPayload,
+): ReduceBeginEvent => {
+  return {
+    type: REDUCE_EV_TYPES.BEGIN_ROUND,
+    payload,
+  };
+};
 export interface IReduceEndPayload extends ICommonReduce {
   toDealId: number;
   pair: string;

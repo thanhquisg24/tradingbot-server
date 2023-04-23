@@ -9,6 +9,7 @@ import {
   IReduceEndPayload,
   IReducePreparePayload,
   REDUCE_EV_TYPES,
+  createReduceBeginEvent,
 } from 'src/common/event/reduce_events';
 import { getNewUUid } from 'src/common/utils/hash-util';
 import {
@@ -189,6 +190,20 @@ export class ReduceBot extends DCABot {
             `[${newSellOrder.pair}] [${newSellOrder.binanceOrderId}]: Place new ${newSellOrder.clientOrderType} Order. Price: ${newSellOrder.price}, Amount: ${newSellOrder.quantity}`,
           );
         }
+        //send reduce begin
+        const reduceBeginEvt = createReduceBeginEvent({
+          fromStrategyDirection: deal.strategyDirection,
+          toDealId: deal.refReduceDealId,
+          pair: deal.pair,
+          triger_price: new BigNumber(filledPrice),
+          toBotId: this.botConfig.refBotId,
+        });
+        this.sendBotEvent(reduceBeginEvt);
+        await this.sendMsgTelegram(
+          `[${deal.pair}] [${deal.id}]: Send ${
+            reduceBeginEvt.type
+          } data ${JSON.stringify(reduceBeginEvt)}`,
+        );
         break;
       case CLIENT_ORDER_TYPE.REDUCE_END:
         const trigerPrice = new BigNumber(currentOrder.filledPrice);
