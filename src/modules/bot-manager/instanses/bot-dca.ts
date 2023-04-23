@@ -86,6 +86,10 @@ export class DCABot extends BaseBotTrading {
         try {
           await this.processExchangeDeal(deal);
         } catch (ex) {
+          console.log(
+            '🚀 ~ file: bot-dca.ts:89 ~ DCABot ~ processActivePosition ~ ex:',
+            ex,
+          );
           botLogger.error(
             `[${deal.pair}] [${deal.id}] processExchangeDeal() error ${ex.message}`,
             this.logLabel,

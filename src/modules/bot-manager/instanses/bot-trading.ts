@@ -608,6 +608,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         deal.strategyDirection,
         ORDER_ACTION_ENUM.CLOSE_POSITION,
       );
+
       if (currentOrder.side === _buyOrderSide) {
         switch (orderStatus) {
           case 'NEW':

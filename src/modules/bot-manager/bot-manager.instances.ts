@@ -128,9 +128,13 @@ export class BotManagerInstances implements IBotManagerInstances {
     return 'bot not found';
   }
 
-  sendBotEvent(eventPayload: BotEventData) {
+  sendBotEvent = (eventPayload: BotEventData) => {
+    console.warn(
+      '🚀 ~ file: bot-manager.instances.ts:133 ~ BotManagerInstances ~ sendBotEvent ~ eventPayload:',
+      eventPayload,
+    );
     this.eventEmitter.emit(BOT_EVENT_KEY, eventPayload);
-  }
+  };
 
   @OnEvent(BOT_EVENT_KEY)
   async handleBotEvent(payload: BotEventData) {

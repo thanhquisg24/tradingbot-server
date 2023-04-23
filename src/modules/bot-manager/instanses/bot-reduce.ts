@@ -71,7 +71,7 @@ export class ReduceBot extends DCABot {
       newAvgPrice,
       new BigNumber(targetPercent),
     );
-    return targetTp;
+    return { targetTp, newAvgPrice };
   }
 
   private sendPrepareEvent(
@@ -220,11 +220,15 @@ export class ReduceBot extends DCABot {
         });
         break;
       case CLIENT_ORDER_TYPE.COVER_ADD_QTY:
-        const _avgPrice =
-          currentOrder.filledPrice * currentOrder.filledQuantity +
-          (deal.curQuantity * deal.curAvgPrice) /
-            (deal.curQuantity + currentOrder.filledQuantity);
-        deal.curQuantity = deal.curQuantity + currentOrder.filledQuantity;
+        const totalQty = new BigNumber(deal.curQuantity).plus(
+          currentOrder.filledQuantity,
+        );
+        const totalVol = new BigNumber(currentOrder.filledPrice)
+          .multipliedBy(currentOrder.filledQuantity)
+          .plus(new BigNumber(deal.curAvgPrice).multipliedBy(deal.curQuantity));
+        const _avgPrice = totalVol.dividedBy(totalQty);
+        deal.curQuantity =
+          Number(deal.curQuantity) + Number(currentOrder.filledQuantity);
         await this.dealRepo.update(deal.id, {
           curQuantity: deal.curQuantity,
           curAvgPrice: Number(_exchange.priceToPrecision(deal.pair, _avgPrice)),
@@ -345,7 +349,7 @@ export class ReduceBot extends DCABot {
           filledBuyVolume = filledBuyVolume.plus(
             new BigNumber(order.filledPrice).multipliedBy(order.filledQuantity),
           );
-          totalBuyQantity += order.filledQuantity;
+          totalBuyQantity += Number(order.filledQuantity);
         }
       }
     }
@@ -357,7 +361,7 @@ export class ReduceBot extends DCABot {
     this.sendPrepareEvent(
       deal,
       this.botConfig.refBotId,
-      currentOrder.filledPrice,
+      Number(currentOrder.filledPrice),
       avgPrice.toNumber(),
       totalBuyQantity,
     );
@@ -371,6 +375,16 @@ export class ReduceBot extends DCABot {
     });
     for (let i = 0; i < deal.orders.length; i++) {
       const order = deal.orders[i];
+      //---------------------
+      const isLastSO = order.sequence >= deal.maxSafetyTradesCount;
+      console.log(
+        '🚀 ~ file: bot-reduce.ts:376 ~ ReduceBot ~ processExchangeDeal ~ isLastSO:',
+        isLastSO,
+      );
+      if (isLastSO) {
+        await this.handleLastSO(deal, order);
+      }
+      //---------------------
       if (
         order.status === OrderStatus.NEW ||
         order.status === OrderStatus.PARTIALLY_FILLED
@@ -610,31 +624,33 @@ export class ReduceBot extends DCABot {
       );
       const exOrder2 = await this.placeBinanceOrder(addOrderMarket, true);
       if (exOrder2) {
-        addOrderMarket.status = exOrder2.status;
+        addOrderMarket.status = OrderStatus.NEW;
         addOrderMarket.binanceOrderId = `${exOrder2.orderId}`;
-        addOrderMarket.price = Number(exOrder2.avgPrice);
-        addOrderMarket.filledPrice = addOrderMarket.price;
-        addOrderMarket.filledQuantity = Number(exOrder2.executedQty);
+        // addOrderMarket.price = Number(exOrder2.avgPrice);
+        // addOrderMarket.filledPrice = addOrderMarket.price;
+        // addOrderMarket.filledQuantity = Number(exOrder2.executedQty);
         addOrderMarket.placedCount = addOrderMarket.placedCount + 1;
         await this.orderRepo.save(addOrderMarket);
-
-        const _avgPrice =
-          addOrderMarket.filledPrice * addOrderMarket.filledQuantity +
-          (currentDeal.curQuantity * currentDeal.curAvgPrice) /
-            (currentDeal.curQuantity + addOrderMarket.filledQuantity);
-        currentDeal.curQuantity =
-          currentDeal.curQuantity + addOrderMarket.filledQuantity;
-        await this.dealRepo.update(currentDeal.id, {
-          curQuantity: currentDeal.curQuantity,
-          curAvgPrice: Number(
-            _exchange.priceToPrecision(currentDeal.pair, _avgPrice),
-          ),
-        });
+        await this.sendMsgTelegram(
+          `[${cutOrderMarket.pair}] [${cutOrderMarket.binanceOrderId}]: Place ${addOrderMarket.clientOrderType}. Price: ${cutOrderMarket.price}, Amount: ${cutOrderMarket.quantity}`,
+        );
+        // const _avgPrice =
+        //   addOrderMarket.filledPrice * addOrderMarket.filledQuantity +
+        //   (currentDeal.curQuantity * currentDeal.curAvgPrice) /
+        //     (currentDeal.curQuantity + addOrderMarket.filledQuantity);
+        // currentDeal.curQuantity =
+        //   currentDeal.curQuantity + addOrderMarket.filledQuantity;
+        // await this.dealRepo.update(currentDeal.id, {
+        //   curQuantity: currentDeal.curQuantity,
+        //   curAvgPrice: Number(
+        //     _exchange.priceToPrecision(currentDeal.pair, _avgPrice),
+        //   ),
+        // });
       } //end if
 
       //place a new TP LINE
 
-      const tpPriceTmp = this.simulateTp(
+      const { targetTp, newAvgPrice } = this.simulateTp(
         currentDeal.strategyDirection,
         _avgPrice,
         _qty,
@@ -643,7 +659,7 @@ export class ReduceBot extends DCABot {
         _targetTP,
       );
       const _tpPrice = Number(
-        _exchange.priceToPrecision(currentDeal.pair, tpPriceTmp.toNumber()),
+        _exchange.priceToPrecision(currentDeal.pair, targetTp.toNumber()),
       );
       const newTPOrder = new OrderEntity();
       newTPOrder.id = getNewUUid();
@@ -673,10 +689,21 @@ export class ReduceBot extends DCABot {
           `[${savedTPOrder.pair}] [${savedTPOrder.binanceOrderId}]: Place new Take Profit Order. Price: ${savedTPOrder.price}, Amount: ${savedTPOrder.quantity}`,
         );
       }
+      this.sendPrepareEvent(
+        currentDeal,
+        this.botConfig.refBotId,
+        triger_price.toNumber(),
+        newAvgPrice.toNumber(),
+        _qty.toNumber(),
+      );
     } //end if currentDeal
   }
 
   async processBotEventAction(data: CombineReduceEventTypes) {
+    console.log(
+      '🚀 ~ file: bot-reduce.ts:689 ~ ReduceBot ~ processBotEventAction ~ data:',
+      data,
+    );
     switch (data.type) {
       case REDUCE_EV_TYPES.PREPARE_ROUND:
         await this.handlePrepareRound(data.payload);

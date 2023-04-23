@@ -19,15 +19,13 @@ export class BotManagerService {
     private readonly pairService: PairService,
   ) {}
 
-  async create(entity: BotTradingEntity) {
-    return await this.repo.save(entity);
-  }
-
   async createWithPayload(payload: CreateBotPayload) {
     const exchange = await this.exchangeService.findOne(payload.exchangeId);
     const pairs = await this.pairService.findByIds(payload.listPair);
-    const newBot = mappingNewBot(payload, exchange, pairs);
-    return this.create(newBot);
+    let newBot = mappingNewBot(payload, exchange, pairs);
+    newBot = this.repo.create(newBot);
+    const saveBot = await this.repo.save(newBot);
+    return { id: saveBot.id };
   }
 
   async updateBotPairs(userId: number, pairPayload: BotPairsPayload) {

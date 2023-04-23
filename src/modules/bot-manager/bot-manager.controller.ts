@@ -91,7 +91,7 @@ export class BotManagerController {
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  @Post('/update-bot-ref/:id')
+  @Post('/update-bot-ref')
   updateBotRef(
     @Request() req: RequestWithUser,
     @Body() payload: UpdateBotRefDto,
