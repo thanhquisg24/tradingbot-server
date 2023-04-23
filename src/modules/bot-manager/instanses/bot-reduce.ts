@@ -380,13 +380,13 @@ export class ReduceBot extends DCABot {
     for (let i = 0; i < deal.orders.length; i++) {
       const order = deal.orders[i];
       //---------------------
-      const isLastSO =
-        order.sequence >= deal.maxSafetyTradesCount &&
-        (order.clientOrderType === CLIENT_ORDER_TYPE.SAFETY ||
-          order.clientOrderType === CLIENT_ORDER_TYPE.BASE);
-      if (isLastSO) {
-        await this.handleLastSO(deal, order);
-      }
+      // const isLastSO =
+      //   order.sequence >= deal.maxSafetyTradesCount &&
+      //   (order.clientOrderType === CLIENT_ORDER_TYPE.SAFETY ||
+      //     order.clientOrderType === CLIENT_ORDER_TYPE.BASE);
+      // if (isLastSO) {
+      //   await this.handleLastSO(deal, order);
+      // }
       //---------------------
       if (
         order.status === OrderStatus.NEW ||
