@@ -293,6 +293,7 @@ export const createMarketOrder = (
 export const createNextTPOrder = (
   deal: DealEntity,
   currentOrder: OrderEntity,
+  _clientOrderType?: CLIENT_ORDER_TYPE,
 ) => {
   let newSellOrder = new OrderEntity();
   newSellOrder.id = getNewUUid();
@@ -311,7 +312,8 @@ export const createNextTPOrder = (
   newSellOrder.botId = deal.botId;
   newSellOrder.exchangeId = deal.exchangeId;
   newSellOrder.userId = deal.userId;
-  newSellOrder.clientOrderType = CLIENT_ORDER_TYPE.TAKE_PROFIT;
+  newSellOrder.clientOrderType =
+    _clientOrderType || CLIENT_ORDER_TYPE.TAKE_PROFIT;
   newSellOrder.pair = currentOrder.pair;
   return newSellOrder;
 };

@@ -1,38 +1,7 @@
+import BigNumber from 'bignumber.js';
+import { FuturesOrder as BinanceOrder, OrderStatus } from 'binance-api-node';
 import { sortBy } from 'lodash';
-import {
-  FuturesOrder as BinanceOrder,
-  OrderStatus,
-  OrderType,
-  FuturesOrderType_LT,
-  OrderSide,
-} from 'binance-api-node';
-import {
-  CLIENT_DEAL_TYPE,
-  DEAL_STATUS,
-  DealEntity,
-} from 'src/modules/entities/deal.entity';
-import { TelegramService } from 'src/modules/telegram/telegram.service';
-import {
-  BuyOrder,
-  CLIENT_ORDER_TYPE,
-  OrderEntity,
-} from 'src/modules/entities/order.entity';
-import { Raw, Repository } from 'typeorm';
-import {
-  BotTradingEntity,
-  STRATEGY_DIRECTION,
-} from 'src/modules/entities/bot.entity';
-import { wrapExReq } from 'src/modules/exchange/remote-api/exchange.helper';
 import { botLogger } from 'src/common/bot-logger';
-import {
-  ORDER_ACTION_ENUM,
-  calcDaviationBetween,
-  calcReducePreparePayload,
-  calcTp,
-  createMarketOrder,
-  createStopLossOrder,
-  getOrderSide,
-} from './bot-utils-calc';
 import {
   BotEventData,
   CombineReduceEventTypes,
@@ -41,9 +10,34 @@ import {
   IReducePreparePayload,
   REDUCE_EV_TYPES,
 } from 'src/common/event/reduce_events';
-import { DCABot } from './bot-dca';
-import BigNumber from 'bignumber.js';
 import { getNewUUid } from 'src/common/utils/hash-util';
+import {
+  BotTradingEntity,
+  STRATEGY_DIRECTION,
+} from 'src/modules/entities/bot.entity';
+import {
+  CLIENT_DEAL_TYPE,
+  DEAL_STATUS,
+  DealEntity,
+} from 'src/modules/entities/deal.entity';
+import {
+  BuyOrder,
+  CLIENT_ORDER_TYPE,
+  OrderEntity,
+} from 'src/modules/entities/order.entity';
+import { wrapExReq } from 'src/modules/exchange/remote-api/exchange.helper';
+import { TelegramService } from 'src/modules/telegram/telegram.service';
+import { Raw, Repository } from 'typeorm';
+import { DCABot } from './bot-dca';
+import {
+  ORDER_ACTION_ENUM,
+  calcDaviationBetween,
+  calcReducePreparePayload,
+  calcTp,
+  createMarketOrder,
+  createNextTPOrder,
+  getOrderSide,
+} from './bot-utils-calc';
 
 export class ReduceBot extends DCABot {
   private sendBotEvent: (eventPayload: BotEventData) => void;
@@ -108,6 +102,28 @@ export class ReduceBot extends DCABot {
       this.logLabel,
     );
   }
+  private sendReduceEndEvent(
+    deal: DealEntity,
+    toBotId: number,
+    triger_price: BigNumber,
+    fromProfitQty: BigNumber,
+  ) {
+    const enddata: IReduceEndPayload = {
+      toDealId: deal.refReduceDealId || deal.id,
+      pair: deal.pair,
+      triger_price,
+      fromProfitQty,
+      toBotId,
+    };
+    this.sendBotEvent({
+      type: REDUCE_EV_TYPES.END_ROUND,
+      payload: enddata,
+    });
+    botLogger.info(
+      `[${deal.pair}] [${deal.id}]: Send ${REDUCE_EV_TYPES.END_ROUND} event to bot#${toBotId}`,
+      this.logLabel,
+    );
+  }
 
   private createReduceOrderEntity(
     buyOrder: BuyOrder,
@@ -134,6 +150,93 @@ export class ReduceBot extends DCABot {
     return order;
   }
 
+  private async processFilledReduceOrderState(
+    deal: DealEntity,
+    currentOrder: OrderEntity,
+    executionReportEvt: BinanceOrder,
+  ) {
+    const {
+      orderId,
+      status: orderStatus,
+      price,
+      avgPrice,
+      executedQty,
+    } = executionReportEvt;
+    const _exchange = this._exchangeRemote.getCcxtExchange();
+    const filledPrice = Number(price) > 0 ? price : avgPrice;
+    currentOrder.status = orderStatus;
+    currentOrder.binanceOrderId = `${orderId}`;
+    currentOrder.price = Number(filledPrice);
+    currentOrder.filledPrice = currentOrder.price;
+    currentOrder.filledQuantity = Number(executedQty);
+    currentOrder.placedCount = currentOrder.placedCount + 1;
+    await this.orderRepo.save(currentOrder);
+    switch (currentOrder.clientOrderType) {
+      case CLIENT_ORDER_TYPE.REDUCE_BEGIN:
+        //placing TP line
+        let newSellOrder = createNextTPOrder(
+          deal,
+          currentOrder,
+          CLIENT_ORDER_TYPE.REDUCE_END,
+        );
+        newSellOrder = await this.orderRepo.save(newSellOrder);
+        const bSellOrder = await this.placeBinanceOrder(newSellOrder, true);
+        if (bSellOrder) {
+          newSellOrder.status = OrderStatus.NEW;
+          newSellOrder.binanceOrderId = `${bSellOrder.orderId}`;
+          newSellOrder.placedCount = newSellOrder.placedCount + 1;
+          await this.orderRepo.save(newSellOrder);
+          await this.sendMsgTelegram(
+            `[${newSellOrder.pair}] [${newSellOrder.binanceOrderId}]: Place new ${newSellOrder.clientOrderType} Order. Price: ${newSellOrder.price}, Amount: ${newSellOrder.quantity}`,
+          );
+        }
+        break;
+      case CLIENT_ORDER_TYPE.REDUCE_END:
+        const trigerPrice = new BigNumber(currentOrder.filledPrice);
+        const avgPosPrice = new BigNumber(deal.curAvgPrice);
+        const directionProfit =
+          deal.strategyDirection === STRATEGY_DIRECTION.LONG
+            ? STRATEGY_DIRECTION.SHORT
+            : STRATEGY_DIRECTION.LONG;
+        const percentProfit = calcDaviationBetween(
+          directionProfit,
+          trigerPrice,
+          avgPosPrice,
+        );
+        const orderQty = new BigNumber(currentOrder.filledQuantity);
+        const fromProfitQty = orderQty.multipliedBy(percentProfit);
+        this.sendReduceEndEvent(
+          deal,
+          this.botConfig.refBotId,
+          trigerPrice,
+          fromProfitQty,
+        );
+        await this.closeDeal(deal.id);
+        break;
+      case CLIENT_ORDER_TYPE.COVER_CUT_QTY:
+        deal.curQuantity = deal.curQuantity - currentOrder.filledQuantity;
+        await this.dealRepo.update(deal.id, {
+          curQuantity: deal.curQuantity,
+        });
+        break;
+      case CLIENT_ORDER_TYPE.COVER_ADD_QTY:
+        const _avgPrice =
+          currentOrder.filledPrice * currentOrder.filledQuantity +
+          (deal.curQuantity * deal.curAvgPrice) /
+            (deal.curQuantity + currentOrder.filledQuantity);
+        deal.curQuantity = deal.curQuantity + currentOrder.filledQuantity;
+        await this.dealRepo.update(deal.id, {
+          curQuantity: deal.curQuantity,
+          curAvgPrice: Number(_exchange.priceToPrecision(deal.pair, _avgPrice)),
+        });
+        break;
+      case CLIENT_ORDER_TYPE.TAKE_PROFIT:
+        await this.closeDeal(deal.id);
+        break;
+      default:
+        break;
+    }
+  }
   async processReduceDealUpdate(
     deal: DealEntity,
     executionReportEvt: BinanceOrder,
@@ -163,88 +266,60 @@ export class ReduceBot extends DCABot {
         return;
       }
 
-      const _buyOrderSide = getOrderSide(
-        deal.strategyDirection,
-        ORDER_ACTION_ENUM.OPEN_POSITION,
-      );
-      const _sellOrderSide = getOrderSide(
-        deal.strategyDirection,
-        ORDER_ACTION_ENUM.CLOSE_POSITION,
-      );
-      if (currentOrder.side === _buyOrderSide) {
-        switch (orderStatus) {
-          case 'NEW':
-            if (currentOrder.status === 'CREATED') {
-              currentOrder.binanceOrderId = `${orderId}`;
-              currentOrder.status = OrderStatus.NEW;
-              await this.orderRepo.save(currentOrder);
-              botLogger.info(
-                `[${currentOrder.pair}] [${currentOrder.binanceOrderId}]:${currentOrder.clientOrderType} NEW buy order. Price: ${filledPrice}, Amount: ${currentOrder.quantity}`,
-                this.logLabel,
-              );
-            }
-            break;
-          case 'FILLED':
-            if (
-              currentOrder.status === 'CREATED' ||
-              currentOrder.status === 'NEW' ||
-              currentOrder.status === 'PARTIALLY_FILLED'
-            ) {
-              currentOrder.binanceOrderId = `${orderId}`;
-              currentOrder.status = OrderStatus.FILLED;
-              currentOrder.filledPrice = Number(filledPrice);
-              currentOrder.filledQuantity = Number(executedQty);
-              await this.orderRepo.save(currentOrder);
-              const title = 'REDUCE DEMO';
-              await this.sendMsgTelegram(
-                `[${currentOrder.pair}] [${currentOrder.binanceOrderId}]: ${title} order ${currentOrder.side} has been FILLED. Price: ${filledPrice}, Amount: ${currentOrder.quantity}`,
-              );
-            }
-            break;
-          case 'PARTIALLY_FILLED':
-          case 'CANCELED':
-          case 'REJECTED':
-          case 'EXPIRED':
-            currentOrder.filledQuantity = Number(executedQty);
-            if (currentOrder.status !== orderStatus) {
-              currentOrder.status = orderStatus;
-              await this.orderRepo.save(currentOrder);
-            }
-            botLogger.info(
-              `[${currentOrder.pair}] [${currentOrder.binanceOrderId}]: Buy order is ${orderStatus}. Price: ${price}, Amount: ${currentOrder.quantity}`,
-              this.logLabel,
-            );
-            break;
+      // const _buyOrderSide = getOrderSide(
+      //   deal.strategyDirection,
+      //   ORDER_ACTION_ENUM.OPEN_POSITION,
+      // );
+      // const _sellOrderSide = getOrderSide(
+      //   deal.strategyDirection,
+      //   ORDER_ACTION_ENUM.CLOSE_POSITION,
+      // );
 
-          default:
-            botLogger.error(
-              `Invalid order status : ${orderStatus}`,
+      switch (orderStatus) {
+        case 'NEW':
+          if (currentOrder.status === 'CREATED') {
+            currentOrder.binanceOrderId = `${orderId}`;
+            currentOrder.status = OrderStatus.NEW;
+            await this.orderRepo.save(currentOrder);
+            botLogger.info(
+              `[${currentOrder.pair}] [${currentOrder.binanceOrderId}]:${currentOrder.clientOrderType} NEW order. Price: ${filledPrice}, Amount: ${currentOrder.quantity}`,
               this.logLabel,
             );
-        }
-      } else {
-        if (orderStatus !== 'NEW' && currentOrder.status !== orderStatus) {
-          currentOrder.status = orderStatus;
-          currentOrder.binanceOrderId = `${orderId}`;
-          currentOrder.filledPrice = Number(filledPrice);
+          }
+          break;
+        case 'FILLED':
+          if (
+            currentOrder.status === 'CREATED' ||
+            currentOrder.status === 'NEW' ||
+            currentOrder.status === 'PARTIALLY_FILLED'
+          ) {
+            await this.processFilledReduceOrderState(
+              deal,
+              currentOrder,
+              executionReportEvt,
+            );
+          }
+          break;
+        case 'PARTIALLY_FILLED':
+        case 'CANCELED':
+        case 'REJECTED':
+        case 'EXPIRED':
           currentOrder.filledQuantity = Number(executedQty);
-          await this.orderRepo.update(currentOrder.id, {
-            status: orderStatus,
-            binanceOrderId: `${orderId}`,
-            filledPrice: currentOrder.filledPrice,
-            filledQuantity: currentOrder.filledQuantity,
-          });
+          if (currentOrder.status !== orderStatus) {
+            currentOrder.status = orderStatus;
+            await this.orderRepo.save(currentOrder);
+          }
           botLogger.info(
-            `[${currentOrder.pair}] [${currentOrder.binanceOrderId}]: ${currentOrder.clientOrderType} order is ${orderStatus}. Current Sell order is ${currentOrder.status}`,
+            `[${currentOrder.pair}] [${currentOrder.binanceOrderId}]: ${currentOrder.clientOrderType} order is ${orderStatus}. Price: ${price}, Amount: ${currentOrder.quantity}`,
             this.logLabel,
           );
-        }
-        if (
-          orderStatus === 'FILLED' &&
-          currentOrder.clientOrderType === CLIENT_ORDER_TYPE.REDUCE_END
-        ) {
-          await this.closeDeal(deal.id);
-        }
+          break;
+
+        default:
+          botLogger.error(
+            `Invalid order status : ${orderStatus}`,
+            this.logLabel,
+          );
       }
     } catch (error) {
       throw new Error(error.message);
@@ -517,18 +592,13 @@ export class ReduceBot extends DCABot {
       );
       const exOrder1 = await this.placeBinanceOrder(cutOrderMarket, true);
       if (exOrder1) {
-        cutOrderMarket.status = exOrder1.status;
+        cutOrderMarket.status = OrderStatus.NEW;
         cutOrderMarket.binanceOrderId = `${exOrder1.orderId}`;
-        cutOrderMarket.price = Number(exOrder1.avgPrice);
-        cutOrderMarket.filledPrice = cutOrderMarket.price;
-        cutOrderMarket.filledQuantity = Number(exOrder1.executedQty);
         cutOrderMarket.placedCount = cutOrderMarket.placedCount + 1;
         await this.orderRepo.save(cutOrderMarket);
-        currentDeal.curQuantity =
-          currentDeal.curQuantity - cutOrderMarket.filledQuantity;
-        await this.dealRepo.update(currentDeal.id, {
-          curQuantity: currentDeal.curQuantity,
-        });
+        await this.sendMsgTelegram(
+          `[${cutOrderMarket.pair}] [${cutOrderMarket.binanceOrderId}]: Place ${cutOrderMarket.clientOrderType}. Price: ${cutOrderMarket.price}, Amount: ${cutOrderMarket.quantity}`,
+        );
       } //end if
       const addOrderMarket = createMarketOrder(
         currentDeal,
