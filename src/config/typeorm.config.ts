@@ -26,7 +26,7 @@ export const sqlLogger = winston.createLogger({
     winston.format.timestamp({ format: 'YYYY-MM-DD, HH:mm:ss' }),
     consoleLogFormat,
   ),
-  transports: [new winston.transports.Console(), logTransportDaily],
+  transports: [logTransportDaily],
 });
 
 class DatabaseLogger implements TypeOrmLogger {
