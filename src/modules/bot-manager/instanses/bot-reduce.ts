@@ -711,13 +711,19 @@ export class ReduceBot extends DCABot {
           `[${savedTPOrder.pair}] [${savedTPOrder.binanceOrderId}]: Place new Take Profit Order. Price: ${savedTPOrder.price}, Amount: ${savedTPOrder.quantity}`,
         );
       }
-      await this.sendPrepareEvent(
-        currentDeal,
-        this.botConfig.refBotId,
-        triger_price.toNumber(),
-        newAvgPrice.toNumber(),
-        _qty.toNumber(),
-      );
+      if (currentDeal.curReduceCount + 1 < currentDeal.maxReduceCount) {
+        await this.sendPrepareEvent(
+          currentDeal,
+          this.botConfig.refBotId,
+          triger_price.toNumber(),
+          newAvgPrice.toNumber(),
+          _qty.toNumber(),
+        );
+      } else {
+        await this.sendMsgTelegram(
+          `[${currentDeal.pair}] [${currentDeal.id}]: Have Last Reduce cover 😱`,
+        );
+      }
     } //end if currentDeal
   }
 
