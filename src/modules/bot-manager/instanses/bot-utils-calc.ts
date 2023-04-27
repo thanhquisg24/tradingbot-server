@@ -397,9 +397,9 @@ export const calcReducePreparePayload = (
   const payload: IReducePreparePayload = {
     fromDealId,
     pair,
-    r_quantity: new BigNumber(quantity),
-    tp_deviation: _tpDeviation,
-    triger_price: _triggerPriceExchange,
+    r_quantity: quantity,
+    tp_deviation: _tpDeviation.toNumber(),
+    triger_price: _triggerPriceExchange.toNumber(),
     round_count: round_count,
     toBotId,
   };

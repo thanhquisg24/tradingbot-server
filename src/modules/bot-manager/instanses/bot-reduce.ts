@@ -6,9 +6,11 @@ import {
   BotEventData,
   CombineReduceEventTypes,
   IReduceBeginPayload,
+  IReduceClosedTPPayload,
   IReduceEndPayload,
   IReducePreparePayload,
   REDUCE_EV_TYPES,
+  ReduceClosedTPEvent,
   createReduceBeginEvent,
 } from 'src/common/event/reduce_events';
 import { getNewUUid } from 'src/common/utils/hash-util';
@@ -105,8 +107,8 @@ export class ReduceBot extends DCABot {
   private sendReduceEndEvent(
     deal: DealEntity,
     toBotId: number,
-    triger_price: BigNumber,
-    fromProfitQty: BigNumber,
+    triger_price: string | number,
+    fromProfitQty: string | number,
   ) {
     const enddata: IReduceEndPayload = {
       toDealId: deal.refReduceDealId || deal.id,
@@ -195,7 +197,7 @@ export class ReduceBot extends DCABot {
           fromStrategyDirection: deal.strategyDirection,
           toDealId: deal.refReduceDealId,
           pair: deal.pair,
-          triger_price: new BigNumber(filledPrice),
+          triger_price: filledPrice,
           toBotId: this.botConfig.refBotId,
         });
         this.sendBotEvent(reduceBeginEvt);
@@ -222,8 +224,8 @@ export class ReduceBot extends DCABot {
         this.sendReduceEndEvent(
           deal,
           this.botConfig.refBotId,
-          trigerPrice,
-          fromProfitQty,
+          trigerPrice.toNumber(),
+          fromProfitQty.toNumber(),
         );
         await this.closeDeal(deal.id);
         break;
@@ -250,6 +252,20 @@ export class ReduceBot extends DCABot {
         break;
       case CLIENT_ORDER_TYPE.TAKE_PROFIT:
         await this.closeDeal(deal.id);
+        const reduceCloseEvt: ReduceClosedTPEvent = {
+          type: REDUCE_EV_TYPES.CLOSED_TP,
+          payload: {
+            toBotId: this.botConfig.refBotId,
+            toDealId: deal.id,
+            pair: currentOrder.pair,
+          },
+        };
+        this.sendBotEvent(reduceCloseEvt);
+        await this.sendMsgTelegram(
+          `[${deal.pair}] [${deal.id}]: Send ${
+            reduceCloseEvt.type
+          } data ${JSON.stringify(reduceCloseEvt)}`,
+        );
         break;
       default:
         break;
@@ -376,6 +392,7 @@ export class ReduceBot extends DCABot {
     await this.dealRepo.update(deal.id, {
       curQuantity: totalBuyQantity,
       curAvgPrice: Number(avgPrice),
+      clientDealType: CLIENT_DEAL_TYPE.REDUCE,
     });
     await this.sendPrepareEvent(
       deal,
@@ -454,10 +471,10 @@ export class ReduceBot extends DCABot {
     deal.orders = [];
     deal.clientDealType = CLIENT_DEAL_TYPE.REDUCE;
     deal.refReduceDealId = payload.fromDealId;
-    deal.curAvgPrice = payload.triger_price.toNumber();
-    deal.curQuantity = payload.r_quantity.toNumber();
+    deal.curAvgPrice = Number(payload.triger_price);
+    deal.curQuantity = Number(payload.r_quantity);
     const savedDeal = await this.dealRepo.save(deal);
-    const vol = payload.r_quantity
+    const vol = new BigNumber(payload.r_quantity)
       .multipliedBy(payload.triger_price)
       .toNumber();
     const exitPrice = Number(
@@ -467,8 +484,8 @@ export class ReduceBot extends DCABot {
           deal.pair,
           calcTp(
             deal.strategyDirection,
-            payload.triger_price,
-            payload.tp_deviation,
+            new BigNumber(payload.triger_price),
+            new BigNumber(payload.tp_deviation),
           ).toNumber(),
         ),
     );
@@ -481,10 +498,10 @@ export class ReduceBot extends DCABot {
       sequence: 0,
       deviation: 0,
       volume: vol,
-      price: payload.triger_price.toNumber(),
-      averagePrice: payload.triger_price.toNumber(),
-      quantity: payload.r_quantity.toNumber(),
-      totalQuantity: payload.r_quantity.toNumber(),
+      price: Number(payload.triger_price),
+      averagePrice: Number(payload.triger_price),
+      quantity: Number(payload.r_quantity),
+      totalQuantity: Number(payload.r_quantity),
       totalVolume: vol,
       exitPrice,
     };
@@ -524,7 +541,7 @@ export class ReduceBot extends DCABot {
     const _tpDeviation = calcDaviationBetween(
       payload.fromStrategyDirection,
       new BigNumber(currentDeal.curAvgPrice),
-      payload.triger_price,
+      new BigNumber(payload.triger_price),
     );
     const exitPrice = Number(
       this._exchangeRemote
@@ -580,7 +597,7 @@ export class ReduceBot extends DCABot {
   }
 
   private async handleEndRound(payload: IReduceEndPayload) {
-    const { toBotId, toDealId, pair, fromProfitQty, triger_price } = payload;
+    const { toBotId, toDealId, fromProfitQty, triger_price } = payload;
     const currentDeal = await this.dealRepo.findOneBy([
       {
         id: toDealId,
@@ -604,12 +621,12 @@ export class ReduceBot extends DCABot {
       const _daviation = calcDaviationBetween(
         currentDeal.strategyDirection,
         _avgPrice,
-        triger_price,
+        new BigNumber(triger_price),
       );
       const _drawdownQty = _qty.multipliedBy(_daviation);
       const _percentQty = calcDaviationBetween(
         STRATEGY_DIRECTION.LONG,
-        fromProfitQty,
+        new BigNumber(fromProfitQty),
         _drawdownQty,
       );
       const _qtyToCutOff = Number(
@@ -620,7 +637,7 @@ export class ReduceBot extends DCABot {
       );
       const cutOrderMarket = createMarketOrder(
         currentDeal,
-        triger_price.toNumber(),
+        Number(triger_price),
         _qtyToCutOff,
         ORDER_ACTION_ENUM.CLOSE_POSITION,
         CLIENT_ORDER_TYPE.COVER_CUT_QTY,
@@ -638,7 +655,7 @@ export class ReduceBot extends DCABot {
       } //end if
       const addOrderMarket = createMarketOrder(
         currentDeal,
-        triger_price.toNumber(),
+        Number(triger_price),
         _qtyToCutOff,
         ORDER_ACTION_ENUM.CLOSE_POSITION,
         CLIENT_ORDER_TYPE.COVER_CUT_QTY,
@@ -676,7 +693,7 @@ export class ReduceBot extends DCABot {
         currentDeal.strategyDirection,
         _avgPrice,
         _qty,
-        triger_price,
+        new BigNumber(triger_price),
         _qtyToCutOff,
         _targetTP,
       );
@@ -715,7 +732,7 @@ export class ReduceBot extends DCABot {
         await this.sendPrepareEvent(
           currentDeal,
           this.botConfig.refBotId,
-          triger_price.toNumber(),
+          Number(triger_price),
           newAvgPrice.toNumber(),
           _qty.toNumber(),
         );
@@ -726,7 +743,40 @@ export class ReduceBot extends DCABot {
       }
     } //end if currentDeal
   }
+  private async handleCloseTPRound(payload: IReduceClosedTPPayload) {
+    const { toBotId, toDealId } = payload;
+    const currentDeal = await this.dealRepo.findOneBy([
+      {
+        id: toDealId,
+        status: DEAL_STATUS.ACTIVE,
+        botId: toBotId,
+      },
+      {
+        refReduceDealId: toDealId,
+        status: DEAL_STATUS.ACTIVE,
+        botId: toBotId,
+      },
+    ]);
 
+    if (currentDeal) {
+      const stopOrder = currentDeal.orders.find((e) => {
+        return (
+          e.clientOrderType === CLIENT_ORDER_TYPE.REDUCE_BEGIN &&
+          e.status === 'NEW'
+        );
+      });
+      if (stopOrder) {
+        await this.cancelOrder(stopOrder);
+      }
+      await this.dealRepo.update(currentDeal.id, {
+        status: DEAL_STATUS.CANCELED,
+        endAt: new Date(),
+      });
+      await this.sendMsgTelegram(
+        `[${stopOrder.pair}] [${stopOrder.binanceOrderId}]: Cancel ${CLIENT_ORDER_TYPE.REDUCE_BEGIN} order!`,
+      );
+    } //end if currentDeal
+  }
   async processBotEventAction(data: CombineReduceEventTypes) {
     console.log(
       '🚀 ~ file: bot-reduce.ts:689 ~ ReduceBot ~ processBotEventAction ~ data:',
@@ -741,6 +791,9 @@ export class ReduceBot extends DCABot {
         break;
       case REDUCE_EV_TYPES.END_ROUND:
         await this.handleEndRound(data.payload);
+        break;
+      case REDUCE_EV_TYPES.CLOSED_TP:
+        await this.handleCloseTPRound(data.payload);
         break;
       default:
         break;
