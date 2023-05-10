@@ -170,6 +170,15 @@ export class DealEntity {
   maxActiveSafetyTradesCount: number;
 
   @Column({
+    name: 'reduce_deviation_percentage',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    default: 1,
+  })
+  reduceDeviationPercentage: number;
+
+  @Column({
     name: 'price_deviation_percentage',
     type: 'decimal',
     precision: 5,

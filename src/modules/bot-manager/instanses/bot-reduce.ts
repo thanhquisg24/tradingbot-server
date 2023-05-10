@@ -84,7 +84,8 @@ export class ReduceBot extends DCABot {
     avgPrice: number,
     qty: number,
   ) {
-    const percentNextMove = deal.priceDeviationPercentage / 2;
+    // const percentNextMove = deal.priceDeviationPercentage / 2;
+    const percentNextMove = deal.reduceDeviationPercentage;
     const prepareEvent = calcReducePreparePayload(
       {
         fromStrategyDirection: this.botConfig.strategyDirection,
@@ -461,6 +462,7 @@ export class ReduceBot extends DCABot {
     deal.targetStopLossPercentage = this.botConfig.targetStopLossPercentage;
     deal.maxSafetyTradesCount = this.botConfig.maxSafetyTradesCount;
     deal.maxActiveSafetyTradesCount = this.botConfig.maxActiveSafetyTradesCount;
+    deal.reduceDeviationPercentage = this.botConfig.reduceDeviationPercentage;
     deal.priceDeviationPercentage = this.botConfig.priceDeviationPercentage;
     deal.safetyOrderVolumeScale = this.botConfig.safetyOrderVolumeScale;
     deal.safetyOrderStepScale = this.botConfig.safetyOrderStepScale;
@@ -778,10 +780,6 @@ export class ReduceBot extends DCABot {
     } //end if currentDeal
   }
   async processBotEventAction(data: CombineReduceEventTypes) {
-    console.log(
-      '🚀 ~ file: bot-reduce.ts:689 ~ ReduceBot ~ processBotEventAction ~ data:',
-      data,
-    );
     switch (data.type) {
       case REDUCE_EV_TYPES.PREPARE_ROUND:
         await this.handlePrepareRound(data.payload);

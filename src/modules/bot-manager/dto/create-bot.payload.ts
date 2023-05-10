@@ -187,6 +187,20 @@ export class CommonBotPayload {
   @ApiProperty({
     type: 'number',
     required: true,
+    example: 1.5,
+    default: 1.5,
+    description: 'reduceDeviationPercentage',
+  })
+  @MinMaxPct(
+    0, // number
+    100, // number
+  )
+  reduceDeviationPercentage: number;
+
+  @AutoMap()
+  @ApiProperty({
+    type: 'number',
+    required: true,
     example: 2,
     default: 2,
     description: 'safetyOrderVolumeScale',

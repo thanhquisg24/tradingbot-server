@@ -307,6 +307,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     deal.targetStopLossPercentage = this.botConfig.targetStopLossPercentage;
     deal.maxSafetyTradesCount = this.botConfig.maxSafetyTradesCount;
     deal.maxActiveSafetyTradesCount = this.botConfig.maxActiveSafetyTradesCount;
+    deal.reduceDeviationPercentage = this.botConfig.reduceDeviationPercentage;
     deal.priceDeviationPercentage = this.botConfig.priceDeviationPercentage;
     deal.safetyOrderVolumeScale = this.botConfig.safetyOrderVolumeScale;
     deal.safetyOrderStepScale = this.botConfig.safetyOrderStepScale;

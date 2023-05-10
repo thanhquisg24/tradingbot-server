@@ -28,6 +28,7 @@ export function mappingBot(bot: BotTradingEntity, payload: CommonBotPayload) {
   bot.maxSafetyTradesCount = payload.maxSafetyTradesCount;
   bot.name = payload.name;
   bot.priceDeviationPercentage = payload.priceDeviationPercentage;
+  bot.reduceDeviationPercentage = payload.reduceDeviationPercentage;
   bot.safetyOrderStepScale = payload.safetyOrderStepScale;
   bot.safetyOrderVolumeScale = payload.safetyOrderVolumeScale;
   bot.targetProfitPercentage = payload.targetProfitPercentage;
