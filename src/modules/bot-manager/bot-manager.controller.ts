@@ -69,7 +69,7 @@ export class BotManagerController {
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  @Post('/addRunningBot/:id')
+  @Post('/add-running-bot/:id')
   addRunningBot(@Request() req: RequestWithUser, @Param('id') id: number) {
     return this.instanses.addRunningBot(id, req.user);
   }
@@ -84,11 +84,17 @@ export class BotManagerController {
     return this.instanses.getAllRunning();
   }
 
-  @Post('/get-bot/:id')
+  @Post('/get-running-bot/:id')
   getBotId(@Param('id') id: number) {
     return this.instanses.getRunningBotById(id);
   }
 
+  /**
+   * update reduce bot reference
+   * @param req
+   * @param payload
+   * @returns
+   */
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Post('/update-bot-ref')
@@ -97,5 +103,17 @@ export class BotManagerController {
     @Body() payload: UpdateBotRefDto,
   ) {
     return this.service.updateBotRef(req.user.id, payload);
+  }
+
+  /**
+   *
+   * @param req
+   * @returns
+   */
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Post('/get-all-bot-by-user')
+  getAllBotByUser(@Request() req: RequestWithUser) {
+    return this.service.findByUser(req.user.id);
   }
 }

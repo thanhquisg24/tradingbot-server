@@ -9,6 +9,7 @@ import { CreateBotPayload } from './dto/create-bot.payload';
 import { BotPairsPayload } from './dto/update-bot.dto';
 import { COMMON_STATUS } from 'src/common/constants';
 import { UpdateBotRefDto } from './dto/update-bot-ref';
+import { IBotsAndCount } from './types/bot-types';
 
 @Injectable()
 export class BotManagerService {
@@ -18,6 +19,18 @@ export class BotManagerService {
     private readonly exchangeService: ExchangeService,
     private readonly pairService: PairService,
   ) {}
+
+  async findByUser(userId: number): Promise<IBotsAndCount> {
+    const result = await this.repo.findAndCount({
+      where: {
+        userId,
+      },
+    });
+    return {
+      count: result[1],
+      bots: result[0],
+    };
+  }
 
   async createWithPayload(payload: CreateBotPayload) {
     const exchange = await this.exchangeService.findOne(payload.exchangeId);
