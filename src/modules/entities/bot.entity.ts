@@ -12,6 +12,7 @@ import {
 import { COMMON_STATUS } from 'src/common/constants';
 import { ExchangeEntity } from './exchange.entity';
 import { PairEntity } from './pair.entity';
+import { AutoMap } from '@automapper/classes';
 
 export enum BOT_TRADING_TYPE {
   DCA = 'DCA',
@@ -28,12 +29,15 @@ export enum DEAL_START_TYPE {
 
 @Entity({ name: 'bot_trading' })
 export class BotTradingEntity {
+  @AutoMap()
   @PrimaryGeneratedColumn()
   id: number;
 
+  @AutoMap()
   @Column({ name: 'name', length: 255, nullable: false })
   name: string;
 
+  @AutoMap()
   @Column({
     name: 'bot_type',
     type: 'enum',
@@ -42,6 +46,7 @@ export class BotTradingEntity {
   })
   botType: BOT_TRADING_TYPE;
 
+  @AutoMap()
   @Column({
     name: 'direction',
     type: 'enum',
@@ -50,9 +55,11 @@ export class BotTradingEntity {
   })
   strategyDirection: STRATEGY_DIRECTION;
 
+  @AutoMap()
   @Column({ name: 'user_id', type: 'int', nullable: false })
   userId: number;
 
+  @AutoMap()
   @Column({
     type: 'enum',
     enum: COMMON_STATUS,
@@ -60,21 +67,26 @@ export class BotTradingEntity {
   })
   status: COMMON_STATUS;
 
+  @AutoMap()
   @ManyToOne(() => ExchangeEntity)
   @JoinColumn({ name: 'exchange_id', referencedColumnName: 'id' })
   exchange: ExchangeEntity;
 
+  @AutoMap()
   @ManyToMany(() => PairEntity)
   @JoinTable()
   pairs: PairEntity[];
 
   // LIMIT or MARKET
+  @AutoMap()
   @Column({ name: 'start_order_type', length: 64, default: 'MARKET' })
   startOrderType: 'LIMIT' | 'MARKET';
 
+  @AutoMap()
   @Column({ name: 'leverage', type: 'int', nullable: false, default: 8 })
   leverage: number;
 
+  @AutoMap()
   @Column({
     name: 'allow_deals_same_pair',
     type: 'boolean',
@@ -83,6 +95,7 @@ export class BotTradingEntity {
   allowDealSamePair: boolean;
 
   // ASAP
+  @AutoMap()
   @Column({
     name: 'deal_start_condition',
     type: 'enum',
@@ -91,6 +104,7 @@ export class BotTradingEntity {
   })
   dealStartCondition: DEAL_START_TYPE;
 
+  @AutoMap()
   @Column({
     name: 'base_order_size',
     type: 'decimal',
@@ -100,6 +114,7 @@ export class BotTradingEntity {
   })
   baseOrderSize: number;
 
+  @AutoMap()
   @Column({
     name: 'safety_order_size',
     type: 'decimal',
@@ -109,6 +124,7 @@ export class BotTradingEntity {
   })
   safetyOrderSize: number;
 
+  @AutoMap()
   @Column({
     name: 'target_profit_percentage',
     type: 'decimal',
@@ -117,6 +133,7 @@ export class BotTradingEntity {
   })
   targetProfitPercentage: number;
 
+  @AutoMap()
   @Column({
     name: 'target_stoploss_percentage',
     type: 'decimal',
@@ -125,6 +142,7 @@ export class BotTradingEntity {
   })
   targetStopLossPercentage: number;
 
+  @AutoMap()
   @Column({
     name: 'use_stop_loss',
     type: 'boolean',
@@ -132,15 +150,19 @@ export class BotTradingEntity {
   })
   useStopLoss: boolean;
 
+  @AutoMap()
   @Column({ name: 'max_active_deal', type: 'int' })
   maxActiveDeal: number;
 
+  @AutoMap()
   @Column({ name: 'max_safety_trades_count', type: 'int' })
   maxSafetyTradesCount: number;
 
+  @AutoMap()
   @Column({ name: 'max_active_safety_trades_count', type: 'int' })
   maxActiveSafetyTradesCount: number;
 
+  @AutoMap()
   @Column({
     name: 'reduce_deviation_percentage',
     type: 'decimal',
@@ -150,6 +172,7 @@ export class BotTradingEntity {
   })
   reduceDeviationPercentage: number;
 
+  @AutoMap()
   @Column({
     name: 'price_deviation_percentage',
     type: 'decimal',
@@ -158,6 +181,7 @@ export class BotTradingEntity {
   })
   priceDeviationPercentage: number;
 
+  @AutoMap()
   @Column({
     name: 'safety_order_volume_scale',
     type: 'decimal',
@@ -166,6 +190,7 @@ export class BotTradingEntity {
   })
   safetyOrderVolumeScale: number;
 
+  @AutoMap()
   @Column({
     name: 'safety_order_step_scale',
     type: 'decimal',
@@ -174,12 +199,15 @@ export class BotTradingEntity {
   })
   safetyOrderStepScale: number;
 
+  @AutoMap()
   @Column({ name: 'max_reduce_count', type: 'int', default: 0 })
   maxReduceCount: number;
 
+  @AutoMap()
   @Column({ name: 'ref_bot_id', type: 'int', nullable: true })
   refBotId: number;
 
+  @AutoMap()
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 }

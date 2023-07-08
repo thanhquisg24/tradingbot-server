@@ -8,6 +8,7 @@ import {
 
 import { ROLE, USER_STATUS } from 'src/common/constants';
 import { ExchangeEntity } from './exchange.entity';
+import { Exclude } from '@nestjs/class-transformer';
 
 @Entity({ name: 'user' })
 export class UserEntity {
@@ -18,6 +19,7 @@ export class UserEntity {
   email: string;
 
   @Column({ length: 255, nullable: false })
+  @Exclude()
   password: string;
 
   @Column({ name: 'telegram_chat_id', length: 255, nullable: true })

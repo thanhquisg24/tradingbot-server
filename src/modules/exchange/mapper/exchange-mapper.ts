@@ -5,7 +5,7 @@ import { CreateExchangePayload } from '../dto/create-exchange.payload';
 import { CreateExchangeDto } from '../dto/create-exchange.dto';
 
 @Injectable()
-export class ExchangePayloadToDto extends AutomapperProfile {
+export class ExchangeMapperProfile extends AutomapperProfile {
   constructor(@InjectMapper() mapper: Mapper) {
     super(mapper);
   }

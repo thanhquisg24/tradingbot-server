@@ -19,11 +19,17 @@ import { CloseDealAtMarketPrice } from './dto/close-deal-market-price.payload';
 import { CreateBotPayload } from './dto/create-bot.payload';
 import { UpdateBotRefDto } from './dto/update-bot-ref';
 import { BotPairsPayload } from './dto/update-bot.dto';
+import { IBotsAndCount } from './dto/bot-fetch/bot-and-count';
+import { Mapper } from '@automapper/core';
+import { InjectMapper } from '@automapper/nestjs';
+import { BotTradingEntity } from '../entities/bot.entity';
+import { BotTradingBaseDTO } from '../entity-to-dto/bot-dto';
 
 @ApiTags('Bot Manager APIs')
 @Controller('api/v1/bot-manager')
 export class BotManagerController {
   constructor(
+    @InjectMapper() private readonly mapper: Mapper,
     private readonly instanses: BotManagerInstances,
     private readonly service: BotManagerService,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
@@ -113,7 +119,18 @@ export class BotManagerController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Post('/get-all-bot-by-user')
-  getAllBotByUser(@Request() req: RequestWithUser) {
-    return this.service.findByUser(req.user.id);
+  async getAllBotByUser(
+    @Request() req: RequestWithUser,
+  ): Promise<IBotsAndCount> {
+    const data = await this.service.findByUser(req.user.id);
+    const botsDtos = this.mapper.mapArray(
+      data.bots,
+      BotTradingEntity,
+      BotTradingBaseDTO,
+    );
+    return {
+      count: data.count,
+      bots: botsDtos,
+    };
   }
 }

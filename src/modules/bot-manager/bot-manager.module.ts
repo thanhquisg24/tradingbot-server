@@ -9,6 +9,7 @@ import { BotManagerController } from './bot-manager.controller';
 import { BotManagerInstances } from './bot-manager.instances';
 import { BotManagerService } from './bot-manager.service';
 import { TvWebhookController } from './tv-webhook/tv-webhook.controller';
+import { BotMapperProfile } from './mapper/bot-mapper-profile';
 
 @Module({
   imports: [
@@ -19,7 +20,7 @@ import { TvWebhookController } from './tv-webhook/tv-webhook.controller';
     PairModule,
   ],
   controllers: [BotManagerController, TvWebhookController],
-  providers: [BotManagerInstances, BotManagerService],
+  providers: [BotManagerInstances, BotManagerService, BotMapperProfile],
   exports: [BotManagerInstances, BotManagerService],
 })
 export class BotManagerModule {}
