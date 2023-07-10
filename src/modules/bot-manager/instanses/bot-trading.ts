@@ -1,20 +1,18 @@
-import BigNumber from 'bignumber.js';
+import {
+  AbstractExchangeAPI,
+  ExchangeFactory,
+} from 'src/modules/exchange/remote-api/exchange.remote.api';
 import {
   FuturesOrder as BinanceOrder,
-  OrderStatus,
-  OrderType,
   FuturesOrderType_LT,
   OrderSide,
+  OrderStatus,
+  OrderType,
 } from 'binance-api-node';
 import {
   BotTradingEntity,
   DEAL_START_TYPE,
 } from 'src/modules/entities/bot.entity';
-import {
-  CLIENT_DEAL_TYPE,
-  DEAL_STATUS,
-  DealEntity,
-} from 'src/modules/entities/deal.entity';
 import {
   BuyOrder,
   CLIENT_ORDER_TYPE,
@@ -22,11 +20,10 @@ import {
   createOrderEntity,
 } from 'src/modules/entities/order.entity';
 import {
-  AbstractExchangeAPI,
-  ExchangeFactory,
-} from 'src/modules/exchange/remote-api/exchange.remote.api';
-import { TelegramService } from 'src/modules/telegram/telegram.service';
-import { Raw, Repository } from 'typeorm';
+  CLIENT_DEAL_TYPE,
+  DEAL_STATUS,
+  DealEntity,
+} from 'src/modules/entities/deal.entity';
 import {
   ORDER_ACTION_ENUM,
   calculateBuyDCAOrders,
@@ -35,11 +32,15 @@ import {
   createNextTPOrder,
   getOrderSide,
 } from './bot-utils-calc';
-import { botLogger } from 'src/common/bot-logger';
-import { TVActionType, OnTVEventPayload } from 'src/common/event/tv_events';
-import { wrapExReq } from 'src/modules/exchange/remote-api/exchange.helper';
+import { OnTVEventPayload, TVActionType } from 'src/common/event/tv_events';
+import { Raw, Repository } from 'typeorm';
+
+import BigNumber from 'bignumber.js';
 import { Order as CCXTOrder } from 'ccxt';
 import { CombineReduceEventTypes } from 'src/common/event/reduce_events';
+import { TelegramService } from 'src/modules/telegram/telegram.service';
+import { botLogger } from 'src/common/bot-logger';
+import { wrapExReq } from 'src/modules/exchange/remote-api/exchange.helper';
 
 interface IBaseBotTrading {
   isWatchingPosition: boolean;
@@ -704,6 +705,9 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
                   nextsafety.binanceOrderId = `${binanceSafety.orderId}`;
                   nextsafety.placedCount = nextsafety.placedCount + 1;
                   await this.orderRepo.save(nextsafety);
+                  await this.dealRepo.update(deal.id, {
+                    curSafetyTradesCount: nextsafety.sequence,
+                  });
                   await this.sendMsgTelegram(
                     `[${nextsafety.pair}] [${nextsafety.binanceOrderId}]: Place new Safety Order. Price: ${nextsafety.price}, Amount: ${nextsafety.quantity}`,
                   );
@@ -745,7 +749,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             );
         }
       } else {
-        const _prevStatus = currentOrder.status;
+        // const _prevStatus = currentOrder.status;
         if (orderStatus !== 'NEW' && currentOrder.status !== orderStatus) {
           currentOrder.status = orderStatus;
           currentOrder.binanceOrderId = `${orderId}`;

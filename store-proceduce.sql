@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS public.deal_history
     deal_start_condition deal_entity_deal_start_condition_enum NOT NULL DEFAULT 'ASAP'::deal_entity_deal_start_condition_enum,
     target_profit_percentage numeric(5,2) NOT NULL DEFAULT '1'::numeric,
     target_stoploss_percentage numeric(5,2) NOT NULL,
+    current_safety_trades_count integer NOT NULL DEFAULT 0,
     max_safety_trades_count integer NOT NULL DEFAULT 0,
     max_active_safety_trades_count integer NOT NULL DEFAULT 0,
     price_deviation_percentage numeric(5,2) NOT NULL DEFAULT '1'::numeric,

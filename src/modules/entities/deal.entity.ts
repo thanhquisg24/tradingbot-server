@@ -1,13 +1,14 @@
-import { FuturesOrderType_LT, OrderType } from 'binance-api-node';
 import {
-  Entity,
   Column,
-  PrimaryGeneratedColumn,
-  OneToMany,
   CreateDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
-import { OrderEntity } from './order.entity';
 import { DEAL_START_TYPE, STRATEGY_DIRECTION } from './bot.entity';
+import { FuturesOrderType_LT, OrderType } from 'binance-api-node';
+
+import { OrderEntity } from './order.entity';
 
 export enum DEAL_STATUS {
   'CREATED' = 'CREATED',
@@ -162,6 +163,9 @@ export class DealEntity {
     scale: 2,
   })
   targetStopLossPercentage: number;
+
+  @Column({ name: 'current_safety_trades_count', type: 'int', default: 0 })
+  curSafetyTradesCount: number;
 
   @Column({ name: 'max_safety_trades_count', type: 'int', default: 0 })
   maxSafetyTradesCount: number;
