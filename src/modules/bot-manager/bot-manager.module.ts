@@ -2,7 +2,6 @@ import { AutomapperModule } from '@automapper/nestjs';
 import { BotManagerController } from './bot-manager.controller';
 import { BotManagerInstances } from './bot-manager.instances';
 import { BotManagerService } from './bot-manager.service';
-import { BotMapperProfile } from './mapper/bot-mapper-profile';
 import { DTOMapperModule } from '../entity-to-dto/dto-mapper.module';
 import { ExchangeModule } from '../exchange/exchange.module';
 import { Module } from '@nestjs/common';

@@ -8,6 +8,7 @@ import {
 import { DEAL_START_TYPE, STRATEGY_DIRECTION } from './bot.entity';
 import { FuturesOrderType_LT, OrderType } from 'binance-api-node';
 
+import { AutoMap } from '@automapper/classes';
 import { OrderEntity } from './order.entity';
 
 export enum DEAL_STATUS {
@@ -23,18 +24,23 @@ export enum CLIENT_DEAL_TYPE {
 
 @Entity()
 export class DealEntity {
+  @AutoMap()
   @PrimaryGeneratedColumn()
   id: number;
 
+  @AutoMap()
   @Column({ name: 'user_id', type: 'int', nullable: true })
   userId: number;
 
+  @AutoMap()
   @Column({ name: 'bot_id', type: 'int', nullable: true })
   botId: number;
 
+  @AutoMap()
   @Column({ name: 'exchange_id', type: 'int', nullable: true })
   exchangeId: number;
 
+  @AutoMap()
   @Column({
     name: 'client_deal_type',
     type: 'enum',
@@ -43,9 +49,11 @@ export class DealEntity {
   })
   clientDealType: CLIENT_DEAL_TYPE;
 
+  // @AutoMap()
   @OneToMany(() => OrderEntity, (order) => order.deal, { eager: true })
   orders: OrderEntity[];
 
+  @AutoMap()
   @Column({
     name: 'status',
     type: 'enum',
@@ -54,12 +62,15 @@ export class DealEntity {
   })
   status: DEAL_STATUS;
 
+  @AutoMap()
   @CreateDateColumn({ name: 'start_at', type: 'timestamptz' })
   startAt: Date;
 
+  @AutoMap()
   @Column({ name: 'end_at', type: 'timestamptz', nullable: true })
   endAt: Date;
 
+  @AutoMap()
   @Column({
     name: 'profit',
     type: 'decimal',
@@ -69,12 +80,15 @@ export class DealEntity {
   })
   profit: number;
 
+  @AutoMap()
   @Column({ length: 16 })
   pair: string;
 
+  @AutoMap()
   @Column({ name: 'preference_reduce_deal_id', type: 'int', nullable: true })
   refReduceDealId: number;
 
+  @AutoMap()
   @Column({
     name: 'current_avg_price',
     type: 'decimal',
@@ -85,6 +99,7 @@ export class DealEntity {
   })
   curAvgPrice: number;
 
+  @AutoMap()
   @Column({
     name: 'current_quantity',
     type: 'decimal',
@@ -95,12 +110,15 @@ export class DealEntity {
   })
   curQuantity: number;
 
+  @AutoMap()
   @Column({ name: 'current_reduce_count', type: 'int', default: 0 })
   curReduceCount: number;
 
+  @AutoMap()
   @Column({ name: 'max_reduce_count', type: 'int', default: 0 })
   maxReduceCount: number;
 
+  @AutoMap()
   @Column({
     name: 'base_order_size',
     type: 'decimal',
@@ -110,6 +128,7 @@ export class DealEntity {
   })
   baseOrderSize: number;
 
+  @AutoMap()
   @Column({
     name: 'safety_order_size',
     type: 'decimal',
@@ -119,6 +138,7 @@ export class DealEntity {
   })
   safetyOrderSize: number;
 
+  @AutoMap()
   @Column({
     name: 'direction',
     type: 'enum',
@@ -128,10 +148,12 @@ export class DealEntity {
   strategyDirection: STRATEGY_DIRECTION;
 
   // LIMIT or MARKET
+  @AutoMap()
   @Column({ name: 'start_order_type', length: 64 })
   startOrderType: FuturesOrderType_LT;
 
   // ASAP
+  @AutoMap()
   @Column({
     name: 'deal_start_condition',
     type: 'enum',
@@ -140,6 +162,7 @@ export class DealEntity {
   })
   dealStartCondition: DEAL_START_TYPE;
 
+  @AutoMap()
   @Column({
     name: 'target_profit_percentage',
     type: 'decimal',
@@ -149,6 +172,7 @@ export class DealEntity {
   })
   targetProfitPercentage: number;
 
+  @AutoMap()
   @Column({
     name: 'use_stop_loss',
     type: 'boolean',
@@ -156,6 +180,7 @@ export class DealEntity {
   })
   useStopLoss: boolean;
 
+  @AutoMap()
   @Column({
     name: 'target_stoploss_percentage',
     type: 'decimal',
@@ -164,15 +189,19 @@ export class DealEntity {
   })
   targetStopLossPercentage: number;
 
+  @AutoMap()
   @Column({ name: 'current_safety_trades_count', type: 'int', default: 0 })
   curSafetyTradesCount: number;
 
+  @AutoMap()
   @Column({ name: 'max_safety_trades_count', type: 'int', default: 0 })
   maxSafetyTradesCount: number;
 
+  @AutoMap()
   @Column({ name: 'max_active_safety_trades_count', type: 'int', default: 0 })
   maxActiveSafetyTradesCount: number;
 
+  @AutoMap()
   @Column({
     name: 'reduce_deviation_percentage',
     type: 'decimal',
@@ -182,6 +211,7 @@ export class DealEntity {
   })
   reduceDeviationPercentage: number;
 
+  @AutoMap()
   @Column({
     name: 'price_deviation_percentage',
     type: 'decimal',
@@ -191,6 +221,7 @@ export class DealEntity {
   })
   priceDeviationPercentage: number;
 
+  @AutoMap()
   @Column({
     name: 'safety_order_volume_scale',
     type: 'decimal',
@@ -200,6 +231,7 @@ export class DealEntity {
   })
   safetyOrderVolumeScale: number;
 
+  @AutoMap()
   @Column({
     name: 'safety_order_step_scale',
     type: 'decimal',

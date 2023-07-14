@@ -46,4 +46,9 @@ export class DealService {
   remove(id: number) {
     return `This action removes a #${id} deal`;
   }
+  findActiveDealsByBotId(botId: number) {
+    return this.dealRepo.find({
+      where: { status: DEAL_STATUS.ACTIVE, botId },
+    });
+  }
 }

@@ -15,11 +15,18 @@ import { UpdateDealDto } from './dto/update-deal.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RequestWithUser } from '../auth/type';
+import { DealBaseDTO } from '../entity-to-dto/deal-dto';
+import { DealEntity } from '../entities/deal.entity';
+import { InjectMapper } from '@automapper/nestjs';
+import { Mapper } from '@automapper/core';
 
 @ApiTags('Deal APIs')
 @Controller('api/v1/deal')
 export class DealController {
-  constructor(private readonly dealService: DealService) {}
+  constructor(
+    @InjectMapper() private readonly mapper: Mapper,
+    private readonly dealService: DealService,
+  ) {}
 
   @Post()
   create(@Body() createDealDto: CreateDealDto) {
@@ -52,5 +59,16 @@ export class DealController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.dealService.remove(+id);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Post('/get-active-deals-by-bot-id/:botId')
+  async getActiveDealsByBotId(
+    @Param('botId') id: number,
+  ): Promise<DealBaseDTO[]> {
+    const data = await this.dealService.findActiveDealsByBotId(id);
+    const dtos = this.mapper.mapArray(data, DealEntity, DealBaseDTO);
+    return dtos;
   }
 }
