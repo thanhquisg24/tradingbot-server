@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { BotTradingEntity } from '../entities/bot.entity';
+import { Not, Repository } from 'typeorm';
+import { BotTradingEntity, STRATEGY_DIRECTION } from '../entities/bot.entity';
 import { ExchangeService } from '../exchange/exchange.service';
 import { PairService } from '../pair/pair.service';
 import { mappingNewBot } from './bot-utils';
@@ -29,6 +29,18 @@ export class BotManagerService {
       count: result[1],
       bots: result[0],
     };
+  }
+
+  getAvaiableProtectionBotsByUser(
+    userId: number,
+    _strategyDirection: STRATEGY_DIRECTION,
+  ) {
+    return this.repo.find({
+      where: {
+        userId,
+        strategyDirection: Not(_strategyDirection),
+      },
+    });
   }
 
   async createWithPayload(payload: CreateBotPayload) {

@@ -6,6 +6,8 @@ import {
   LoggerService,
   Param,
   Post,
+  Put,
+  Query,
   Request,
   UseGuards,
 } from '@nestjs/common';
@@ -22,10 +24,12 @@ import { BotPairsPayload } from './dto/update-bot.dto';
 import { IBotsAndCount } from './dto/bot-fetch/bot-and-count';
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
-import { BotTradingEntity } from '../entities/bot.entity';
+import { BotTradingEntity, STRATEGY_DIRECTION } from '../entities/bot.entity';
 import { BotTradingBaseDTO } from '../entity-to-dto/bot-dto';
 
 @ApiTags('Bot Manager APIs')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('api/v1/bot-manager')
 export class BotManagerController {
   constructor(
@@ -38,8 +42,6 @@ export class BotManagerController {
 
   // checkUser(req: RequestWithUser,userId:)
 
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
   @Post('/create-new-bot')
   createBot(
     @Request() req: RequestWithUser,
@@ -55,17 +57,13 @@ export class BotManagerController {
     return this.service.createWithPayload(createBotPayload);
   }
 
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
   @Post('/close-deal-at-market-price')
   async closeDealAtMarketPrice(@Body() payload: CloseDealAtMarketPrice) {
     await this.instanses.closeDealAtMarketPrice(payload);
     return 'Action has been sent!';
   }
 
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  @Post('/update-bot-pair')
+  @Put('/update-bot-pair')
   updateBotPairs(
     @Request() req: RequestWithUser,
     @Body() pairPayload: BotPairsPayload,
@@ -73,14 +71,12 @@ export class BotManagerController {
     return this.service.updateBotPairs(req.user.id, pairPayload);
   }
 
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  @Post('/add-running-bot/:id')
+  @Put('/add-running-bot/:id')
   addRunningBot(@Request() req: RequestWithUser, @Param('id') id: number) {
     return this.instanses.addRunningBot(id, req.user);
   }
 
-  @Get('/stopBot/:id')
+  @Put('/stopBot/:id')
   stopBot(@Param('id') id: number) {
     return this.instanses.stopBotIns(id);
   }
@@ -90,7 +86,7 @@ export class BotManagerController {
     return this.instanses.getAllRunning();
   }
 
-  @Post('/get-running-bot/:id')
+  @Get('/get-running-bot/:id')
   getBotId(@Param('id') id: number) {
     return this.instanses.getRunningBotById(id);
   }
@@ -101,9 +97,8 @@ export class BotManagerController {
    * @param payload
    * @returns
    */
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  @Post('/update-bot-ref')
+
+  @Put('/update-bot-ref')
   updateBotRef(
     @Request() req: RequestWithUser,
     @Body() payload: UpdateBotRefDto,
@@ -116,9 +111,8 @@ export class BotManagerController {
    * @param req
    * @returns
    */
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  @Post('/get-all-bot-by-user')
+
+  @Get('/get-all-bot-by-user')
   async getAllBotByUser(
     @Request() req: RequestWithUser,
   ): Promise<IBotsAndCount> {
@@ -132,5 +126,22 @@ export class BotManagerController {
       count: data.count,
       bots: botsDtos,
     };
+  }
+
+  @Get('/get-avai-protection-bots-by-user')
+  async getAvaiableProtectionBotsByUser(
+    @Request() req: RequestWithUser,
+    @Query('direction') strategyDirection: STRATEGY_DIRECTION,
+  ) {
+    const data = await this.service.getAvaiableProtectionBotsByUser(
+      req.user.id,
+      strategyDirection,
+    );
+    const botsDtos = this.mapper.mapArray(
+      data,
+      BotTradingEntity,
+      BotTradingBaseDTO,
+    );
+    return botsDtos;
   }
 }

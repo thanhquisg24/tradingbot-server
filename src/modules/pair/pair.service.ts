@@ -4,6 +4,8 @@ import { UpdatePairDto } from './dto/update-pair.dto';
 import { In, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PairEntity } from '../entities/pair.entity';
+import { ExchangesEnum } from '../entities/exchange.entity';
+import { COMMON_STATUS } from 'src/common/constants';
 
 @Injectable()
 export class PairService {
@@ -11,6 +13,15 @@ export class PairService {
     @InjectRepository(PairEntity)
     private readonly repo: Repository<PairEntity>,
   ) {}
+
+  getAllPairByExchange(fromExchange: ExchangesEnum) {
+    return this.repo.find({
+      where: {
+        fromExchange,
+        status: COMMON_STATUS.ACTIVE,
+      },
+    });
+  }
 
   saveBatch(list: PairEntity[]) {
     return this.repo.save(list);

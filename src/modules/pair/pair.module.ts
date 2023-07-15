@@ -3,10 +3,10 @@ import { PairService } from './pair.service';
 import { PairController } from './pair.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AutomapperModule } from '@automapper/nestjs';
-import { PairEntity } from '../entities/pair.entity';
+import entities from 'src/config/typeorm.entities';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([PairEntity]), AutomapperModule],
+  imports: [TypeOrmModule.forFeature(entities), AutomapperModule],
   controllers: [PairController],
   providers: [PairService],
   exports: [PairService],

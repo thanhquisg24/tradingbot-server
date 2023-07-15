@@ -7,36 +7,10 @@ import {
 
 import { COMMON_STATUS } from 'src/common/constants';
 import { ExchangesEnum } from './exchange.entity';
+import { AutoMap } from '@automapper/classes';
 
 @Entity({ name: 'pair' })
 export class PairEntity {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column({
-    name: 'from_exchange',
-    type: 'enum',
-    enum: ExchangesEnum,
-    default: ExchangesEnum.PAPER,
-  })
-  fromExchange: ExchangesEnum;
-
-  @Column({ name: 'common_pair', length: 255, nullable: false })
-  commonPair: string;
-
-  @Column({ name: 'exchange_pair', length: 255, nullable: false })
-  exchangePair: string;
-
-  @Column({
-    type: 'enum',
-    enum: COMMON_STATUS,
-    default: COMMON_STATUS.ACTIVE,
-  })
-  status: COMMON_STATUS;
-
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
-  createdAt: Date;
-
   constructor(
     _fromExchange: ExchangesEnum,
     _commonPair: string,
@@ -46,4 +20,37 @@ export class PairEntity {
     this.commonPair = _commonPair;
     this.exchangePair = _exchangePair;
   }
+
+  @AutoMap()
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @AutoMap()
+  @Column({
+    name: 'from_exchange',
+    type: 'enum',
+    enum: ExchangesEnum,
+    default: ExchangesEnum.PAPER,
+  })
+  fromExchange: ExchangesEnum;
+
+  @AutoMap()
+  @Column({ name: 'common_pair', length: 255, nullable: false })
+  commonPair: string;
+
+  @AutoMap()
+  @Column({ name: 'exchange_pair', length: 255, nullable: false })
+  exchangePair: string;
+
+  @AutoMap()
+  @Column({
+    type: 'enum',
+    enum: COMMON_STATUS,
+    default: COMMON_STATUS.ACTIVE,
+  })
+  status: COMMON_STATUS;
+
+  @AutoMap()
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  createdAt: Date;
 }
