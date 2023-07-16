@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, UpdateResult } from 'typeorm';
 import { ExchangeEntity, ExchangesEnum } from '../entities/exchange.entity';
 import { CreateExchangeDto } from './dto/create-exchange.dto';
 import { UpdateExchangeDto } from './dto/update-exchange.dto';
@@ -11,6 +11,17 @@ export class ExchangeService {
     @InjectRepository(ExchangeEntity)
     private readonly repo: Repository<ExchangeEntity>,
   ) {}
+
+  getAllExChangeByUser(userId: number) {
+    return this.repo.find({
+      where: {
+        user: {
+          id: userId,
+        },
+      },
+    });
+  }
+
   async create(createTokenDto: CreateExchangeDto) {
     return await this.repo.save(createTokenDto);
   }
@@ -39,11 +50,22 @@ export class ExchangeService {
     });
   }
 
-  async update(id: number, updateTokenDto: UpdateExchangeDto) {
+  async update(
+    id: number,
+    updateTokenDto: UpdateExchangeDto,
+  ): Promise<UpdateResult> {
     return await this.repo.update(id, updateTokenDto);
   }
 
   async remove(id: number) {
     return await this.repo.delete(id);
+  }
+  async removeByUser(id: number, userId: number) {
+    return await this.repo.delete({
+      user: {
+        id: userId,
+      },
+      id,
+    });
   }
 }

@@ -15,8 +15,8 @@ export class ExchangeDTO {
   @AutoMap()
   apiKey: string;
 
-  @AutoMap()
-  apiSecret: string;
+  // @AutoMap()
+  // apiSecret: string;
 
   @AutoMap()
   isTestNet: boolean;
