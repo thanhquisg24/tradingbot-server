@@ -6,9 +6,9 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { DEAL_START_TYPE, STRATEGY_DIRECTION } from './bot.entity';
-import { FuturesOrderType_LT, OrderType } from 'binance-api-node';
 
 import { AutoMap } from '@automapper/classes';
+import { FuturesOrderType_LT } from 'binance-api-node';
 import { OrderEntity } from './order.entity';
 
 export enum DEAL_STATUS {
