@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, UpdateResult } from 'typeorm';
 import { ExchangeEntity, ExchangesEnum } from '../entities/exchange.entity';
 import { CreateExchangeDto } from './dto/create-exchange.dto';
-import { UpdateExchangeDto } from './dto/update-exchange.dto';
+import { IUpdateExchangeDto } from './dto/update-exchange.dto';
 
 @Injectable()
 export class ExchangeService {
@@ -52,7 +52,7 @@ export class ExchangeService {
 
   async update(
     id: number,
-    updateTokenDto: UpdateExchangeDto,
+    updateTokenDto: IUpdateExchangeDto,
   ): Promise<UpdateResult> {
     return await this.repo.update(id, updateTokenDto);
   }

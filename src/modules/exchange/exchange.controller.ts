@@ -24,7 +24,7 @@ import { ExchangeEntity } from '../entities/exchange.entity';
 import { ExchangeDTO } from '../entity-to-dto/exchange-dto';
 import { CreateExchangeDto } from './dto/create-exchange.dto';
 import { CreateExchangePayload } from './dto/create-exchange.payload';
-import { UpdateExchangeDto } from './dto/update-exchange.dto';
+import { IUpdateExchangeDto } from './dto/update-exchange.dto';
 import { ExchangeService } from './exchange.service';
 
 @ApiBearerAuth()
@@ -89,10 +89,10 @@ export class ExchangeController {
     @Param('id') id: string,
     @Body() createExchangePayload: CreateExchangePayload,
   ) {
-    const updateExchangedto = this.mapper.map(
+    const updateExchangedto: IUpdateExchangeDto = this.mapper.map(
       createExchangePayload,
       CreateExchangePayload,
-      UpdateExchangeDto,
+      CreateExchangeDto,
     );
     updateExchangedto.user = req.user;
     updateExchangedto.id = +id;
