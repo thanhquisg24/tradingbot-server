@@ -18,6 +18,7 @@ import { PairDTO } from '../entity-to-dto/pair-dto';
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
 import { PairEntity } from '../entities/pair.entity';
+import { ExchangeService } from '../exchange/exchange.service';
 
 @ApiTags('Pair APIs')
 @ApiBearerAuth()
@@ -27,6 +28,7 @@ export class PairController {
   constructor(
     @InjectMapper() private readonly mapper: Mapper,
     private readonly pairService: PairService,
+    private readonly exchangeService: ExchangeService,
   ) {}
 
   @Post()
@@ -38,6 +40,17 @@ export class PairController {
   async getAllPairByExchange(
     @Param('fromExchange') fromExchange: ExchangesEnum,
   ): Promise<PairDTO[]> {
+    const data = await this.pairService.getAllPairByExchange(fromExchange);
+    const dtos = this.mapper.mapArray(data, PairEntity, PairDTO);
+    return dtos;
+  }
+
+  @Get('by-exchange-id/:exchangeId')
+  async getAllPairByExchangeId(
+    @Param('exchangeId') exchangeId: number,
+  ): Promise<PairDTO[]> {
+    const ex = await this.exchangeService.findOne(exchangeId);
+    const fromExchange: ExchangesEnum = ex.name;
     const data = await this.pairService.getAllPairByExchange(fromExchange);
     const dtos = this.mapper.mapArray(data, PairEntity, PairDTO);
     return dtos;
