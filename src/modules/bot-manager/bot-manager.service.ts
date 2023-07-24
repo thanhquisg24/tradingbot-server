@@ -21,6 +21,7 @@ export class BotManagerService {
 
   async findByUser(userId: number) {
     const result = await this.repo.findAndCount({
+      relations: ['exchange'],
       where: {
         userId,
       },
@@ -36,6 +37,7 @@ export class BotManagerService {
     _strategyDirection: STRATEGY_DIRECTION,
   ) {
     return this.repo.find({
+      relations: ['exchange'],
       where: {
         userId,
         strategyDirection: Not(_strategyDirection),
@@ -49,7 +51,14 @@ export class BotManagerService {
     let newBot = mappingNewBot(payload, exchange, pairs);
     newBot = this.repo.create(newBot);
     const saveBot = await this.repo.save(newBot);
-    return { id: saveBot.id };
+    const saveBotWithExchange = await this.repo.findOne({
+      relations: ['exchange'],
+      where: {
+        id: saveBot.id,
+      },
+    });
+
+    return saveBotWithExchange;
   }
 
   async updateBotPairs(userId: number, pairPayload: BotPairsPayload) {

@@ -9,10 +9,10 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
+import { AutoMap } from '@automapper/classes';
 import { COMMON_STATUS } from 'src/common/constants';
 import { ExchangeEntity } from './exchange.entity';
 import { PairEntity } from './pair.entity';
-import { AutoMap } from '@automapper/classes';
 
 export enum BOT_TRADING_TYPE {
   DCA = 'DCA',
@@ -67,7 +67,7 @@ export class BotTradingEntity {
   })
   status: COMMON_STATUS;
 
-  @AutoMap()
+  @AutoMap(() => ExchangeEntity)
   @ManyToOne(() => ExchangeEntity)
   @JoinColumn({ name: 'exchange_id', referencedColumnName: 'id' })
   exchange: ExchangeEntity;

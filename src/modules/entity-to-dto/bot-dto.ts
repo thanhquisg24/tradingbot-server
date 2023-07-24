@@ -1,9 +1,10 @@
-import { AutoMap } from '@automapper/classes';
 import {
   BOT_TRADING_TYPE,
   DEAL_START_TYPE,
   STRATEGY_DIRECTION,
 } from '../entities/bot.entity';
+
+import { AutoMap } from '@automapper/classes';
 import { COMMON_STATUS } from 'src/common/constants';
 import { ExchangeDTO } from './exchange-dto';
 import { PairDTO } from './pair-dto';
@@ -74,6 +75,9 @@ export class BotTradingBaseDTO {
 
   @AutoMap()
   safetyOrderStepScale: number;
+
+  @AutoMap(() => ExchangeDTO)
+  exchange: ExchangeDTO;
 
   @AutoMap()
   maxReduceCount: number;

@@ -43,7 +43,7 @@ export class BotManagerController {
   // checkUser(req: RequestWithUser,userId:)
 
   @Post('/create-new-bot')
-  createBot(
+  async createBot(
     @Request() req: RequestWithUser,
     @Body() createBotPayload: CreateBotPayload,
   ) {
@@ -54,7 +54,9 @@ export class BotManagerController {
       JSON.stringify(createBotPayload),
       BotManagerController.name,
     );
-    return this.service.createWithPayload(createBotPayload);
+    const data = await this.service.createWithPayload(createBotPayload);
+    const botsDtos = this.mapper.map(data, BotTradingEntity, BotTradingBaseDTO);
+    return botsDtos;
   }
 
   @Post('/close-deal-at-market-price')
