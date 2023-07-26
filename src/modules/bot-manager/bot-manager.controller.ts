@@ -78,7 +78,7 @@ export class BotManagerController {
     return this.instanses.addRunningBot(id, req.user);
   }
 
-  @Put('/stopBot/:id')
+  @Put('/stop-bot/:id')
   stopBot(@Param('id') id: number) {
     return this.instanses.stopBotIns(id);
   }
