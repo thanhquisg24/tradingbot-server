@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
-import { BotTradingEntity, STRATEGY_DIRECTION } from '../entities/bot.entity';
+import {
+  BOT_TRADING_TYPE,
+  BotTradingEntity,
+  STRATEGY_DIRECTION,
+} from '../entities/bot.entity';
 import { ExchangeService } from '../exchange/exchange.service';
 import { PairService } from '../pair/pair.service';
 import { mappingNewBot } from './bot-utils';
@@ -40,6 +44,7 @@ export class BotManagerService {
       relations: ['exchange'],
       where: {
         userId,
+        botType: BOT_TRADING_TYPE.REDUCE,
         strategyDirection: Not(_strategyDirection),
       },
     });
