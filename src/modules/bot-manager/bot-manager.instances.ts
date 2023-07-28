@@ -96,11 +96,11 @@ export class BotManagerInstances implements IBotManagerInstances {
   }
 
   async stopBotIns(id: number) {
+    await this.botManagerService.updateStatus(id, COMMON_STATUS.DISABLED);
     const bot = this.getBotById(id);
     if (bot) {
       await this.botInstances.get(`${id}`).stop();
       this.botInstances.delete(`${id}`);
-      await this.botManagerService.updateStatus(id, COMMON_STATUS.DISABLED);
       return 'stop bot #' + id;
     }
     return 'bot not found';
