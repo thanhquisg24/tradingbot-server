@@ -111,6 +111,7 @@ export class BotManagerService {
       },
     });
   }
+
   async findOneRelations(id: number) {
     return await this.repo.findOne({
       relations: ['exchange', 'pairs'],

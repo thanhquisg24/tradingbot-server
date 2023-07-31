@@ -25,7 +25,10 @@ import { IBotsAndCount } from './dto/bot-fetch/bot-and-count';
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
 import { BotTradingEntity, STRATEGY_DIRECTION } from '../entities/bot.entity';
-import { BotTradingBaseDTO } from '../entity-to-dto/bot-dto';
+import {
+  BotTradingBaseDTO,
+  BotTradingWithPairAndExchangeDTO,
+} from '../entity-to-dto/bot-dto';
 
 @ApiTags('Bot Manager APIs')
 @ApiBearerAuth()
@@ -91,6 +94,17 @@ export class BotManagerController {
   @Get('/get-running-bot/:id')
   getBotId(@Param('id') id: number) {
     return this.instanses.getRunningBotById(id);
+  }
+
+  @Get('/get-bot-by-id/:id')
+  async getBotWithExchangeAndPairs(@Param('id') id: number) {
+    const data = await this.service.findOneRelations(id);
+    const dto = this.mapper.map(
+      data,
+      BotTradingEntity,
+      BotTradingWithPairAndExchangeDTO,
+    );
+    return dto;
   }
 
   /**

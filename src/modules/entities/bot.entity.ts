@@ -72,7 +72,7 @@ export class BotTradingEntity {
   @JoinColumn({ name: 'exchange_id', referencedColumnName: 'id' })
   exchange: ExchangeEntity;
 
-  @AutoMap()
+  @AutoMap(() => [PairEntity])
   @ManyToMany(() => PairEntity)
   @JoinTable()
   pairs: PairEntity[];

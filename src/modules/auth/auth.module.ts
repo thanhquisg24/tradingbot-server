@@ -6,7 +6,6 @@ import { JwtRefreshTokenStrategy } from './strategies/refresh.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
-
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from '../user/user.module';
 import { UserService } from '../user/user.service';
@@ -17,8 +16,8 @@ import entities from 'src/config/typeorm.entities';
     TypeOrmModule.forFeature(entities),
     PassportModule,
     JwtModule.register({
-      secret: 'JWT_SECRET_KEY',
-      signOptions: { expiresIn: '60m' },
+      secret: 'JWT_SECRET_KEY_BOT_12112',
+      signOptions: { expiresIn: '180m' },
     }),
     UserModule,
   ],

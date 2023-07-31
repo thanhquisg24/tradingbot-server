@@ -89,9 +89,9 @@ export class BotTradingBaseDTO {
   createdAt: Date;
 }
 export class BotTradingWithPairAndExchangeDTO extends BotTradingBaseDTO {
-  @AutoMap()
+  @AutoMap(() => [PairDTO])
   pairs: PairDTO[];
 
-  @AutoMap()
+  @AutoMap(() => ExchangeDTO)
   exchange: ExchangeDTO;
 }
