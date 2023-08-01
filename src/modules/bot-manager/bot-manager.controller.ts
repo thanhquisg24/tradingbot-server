@@ -20,7 +20,7 @@ import { BotManagerService } from './bot-manager.service';
 import { CloseDealAtMarketPrice } from './dto/close-deal-market-price.payload';
 import { CreateBotPayload } from './dto/create-bot.payload';
 import { UpdateBotRefDto } from './dto/update-bot-ref';
-import { BotPairsPayload } from './dto/update-bot.dto';
+import { BotPairsPayload, UpdateBotDto } from './dto/update-bot.dto';
 import { IBotsAndCount } from './dto/bot-fetch/bot-and-count';
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
@@ -62,6 +62,26 @@ export class BotManagerController {
     return botsDtos;
   }
 
+  @Put('/update-bot')
+  async updateBot(
+    @Request() req: RequestWithUser,
+    @Body() updateBotPayload: UpdateBotDto,
+  ) {
+    if (req.user.id !== updateBotPayload.userId) {
+      throw new Error('User is not valid !');
+    }
+    this.logger.log(
+      JSON.stringify(updateBotPayload),
+      BotManagerController.name,
+    );
+    const data = await this.instanses.updateBotConfig(
+      updateBotPayload.id,
+      updateBotPayload,
+    );
+    const botsDtos = this.mapper.map(data, BotTradingEntity, BotTradingBaseDTO);
+    return botsDtos;
+  }
+
   @Post('/close-deal-at-market-price')
   async closeDealAtMarketPrice(@Body() payload: CloseDealAtMarketPrice) {
     await this.instanses.closeDealAtMarketPrice(payload);
@@ -98,7 +118,7 @@ export class BotManagerController {
 
   @Get('/get-bot-by-id/:id')
   async getBotWithExchangeAndPairs(@Param('id') id: number) {
-    const data = await this.service.findOneRelations(id);
+    const data = await this.service.findOneRelationsExchangeAndPair(id);
     const dto = this.mapper.map(
       data,
       BotTradingEntity,

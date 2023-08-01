@@ -8,7 +8,6 @@ import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from '../user/user.module';
-import { UserService } from '../user/user.service';
 import entities from 'src/config/typeorm.entities';
 
 @Module({

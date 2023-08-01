@@ -60,11 +60,16 @@ export class BotManagerInstances implements IBotManagerInstances {
     const pairs = await this.pairService.findByIds(dto.listPair);
     bot.pairs = pairs;
     bot = mappingBot(bot, dto);
-    const newConfigBot = await this.botManagerService.saveBot(bot);
+    const updateData = await this.botManagerService.saveBot(bot);
+    const newConfigBot =
+      await this.botManagerService.findOneRelationsExchangeAndPair(
+        updateData.id,
+      );
     const strId = `${id}`;
     if (this.botInstances.has(strId)) {
       this.botInstances.get(strId).updateConfig(newConfigBot);
     }
+    return newConfigBot;
   }
 
   async addRunningBot(id: number, user: UserEntity) {
@@ -76,7 +81,8 @@ export class BotManagerInstances implements IBotManagerInstances {
       user.telegramChatId,
       'add bot running #' + id,
     );
-    const botConfig = await this.botManagerService.findOneRelations(id);
+    const botConfig =
+      await this.botManagerService.findOneRelationsExchangeAndPair(id);
     if (botConfig) {
       botConfig.exchange.user = user;
       const newBot = BotFactory.createBot(
