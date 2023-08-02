@@ -5,6 +5,11 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DealEntity, DEAL_STATUS } from '../entities/deal.entity';
 import { Repository } from 'typeorm';
+import {
+  IPaginationOptions,
+  Pagination,
+  paginate,
+} from 'nestjs-typeorm-paginate';
 
 @Injectable()
 export class DealService {
@@ -46,10 +51,24 @@ export class DealService {
   remove(id: number) {
     return `This action removes a #${id} deal`;
   }
+
   findActiveDealsByBotId(botId: number) {
     return this.dealRepo.find({
       relations: ['orders'],
       where: { status: DEAL_STATUS.ACTIVE, botId },
+    });
+  }
+
+  async paginateActiveDealsByBotId(
+    options: IPaginationOptions,
+    botId: number,
+  ): Promise<Pagination<DealEntity>> {
+    return paginate<DealEntity>(this.dealRepo, options, {
+      relations: ['orders'],
+      where: { status: DEAL_STATUS.ACTIVE, botId },
+      order: {
+        id: 'DESC',
+      },
     });
   }
 

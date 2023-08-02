@@ -8,6 +8,9 @@ import {
   Delete,
   UseGuards,
   Request,
+  Query,
+  DefaultValuePipe,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { DealService } from './deal.service';
 import { CreateDealDto } from './dto/create-deal.dto';
@@ -19,6 +22,7 @@ import { DealBaseDTO, DealWithOrderDTO } from '../entity-to-dto/deal-dto';
 import { DealEntity } from '../entities/deal.entity';
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
+import { IPaginationMeta, Pagination } from 'nestjs-typeorm-paginate';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -68,6 +72,30 @@ export class DealController {
     const data = await this.dealService.findActiveDealsByBotId(id);
     const dtos = this.mapper.mapArray(data, DealEntity, DealWithOrderDTO);
     return dtos;
+  }
+
+  @Get('/pagg-active-deals-by-bot-id/:botId')
+  async paggActiveDealsByBotId(
+    @Param('botId') botId: number,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 20,
+  ): Promise<Pagination<DealWithOrderDTO, IPaginationMeta>> {
+    limit = limit > 100 ? 100 : limit;
+    const paggData = await this.dealService.paginateActiveDealsByBotId(
+      {
+        page,
+        limit,
+        route: `http://bottrading.creo.vn/api/v1/deal/pagg-active-deals-by-bot-id/${botId}`,
+      },
+      botId,
+    );
+    const deals = paggData.items;
+    const dtos = this.mapper.mapArray(deals, DealEntity, DealWithOrderDTO);
+    const paggDto: Pagination<DealWithOrderDTO, IPaginationMeta> = {
+      ...paggData,
+      items: dtos,
+    };
+    return paggDto;
   }
 
   @Get('/count-active-deals-by-bot-id/:botId')
