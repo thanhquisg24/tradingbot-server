@@ -20,6 +20,8 @@ import { DealEntity } from '../entities/deal.entity';
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
 
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @ApiTags('Deal APIs')
 @Controller('api/v1/deal')
 export class DealController {
@@ -33,8 +35,6 @@ export class DealController {
     return this.dealService.create(createDealDto);
   }
 
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
   @Post('/cancel-deal/:id')
   cancelDeal(@Request() req: RequestWithUser, @Param('id') id: number) {
     const userId = req.user.id;
@@ -61,14 +61,18 @@ export class DealController {
     return this.dealService.remove(+id);
   }
 
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  @Post('/get-active-deals-by-bot-id/:botId')
+  @Get('/get-active-deals-by-bot-id/:botId')
   async getActiveDealsByBotId(
     @Param('botId') id: number,
   ): Promise<DealBaseDTO[]> {
     const data = await this.dealService.findActiveDealsByBotId(id);
     const dtos = this.mapper.mapArray(data, DealEntity, DealBaseDTO);
     return dtos;
+  }
+
+  @Get('/count-active-deals-by-bot-id/:botId')
+  async countActiveDealsByBotId(@Param('botId') id: number): Promise<number> {
+    const data = await this.dealService.countActiveDealsByBotId(id);
+    return data;
   }
 }

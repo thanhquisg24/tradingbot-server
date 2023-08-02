@@ -51,4 +51,8 @@ export class DealService {
       where: { status: DEAL_STATUS.ACTIVE, botId },
     });
   }
+
+  countActiveDealsByBotId(botId: number) {
+    return this.dealRepo.countBy({ status: DEAL_STATUS.ACTIVE, botId });
+  }
 }
