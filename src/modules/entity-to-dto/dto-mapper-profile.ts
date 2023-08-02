@@ -9,6 +9,8 @@ import { PairEntity } from '../entities/pair.entity';
 import { PairDTO } from './pair-dto';
 import { ExchangeEntity } from '../entities/exchange.entity';
 import { ExchangeDTO } from './exchange-dto';
+import { OrderBaseDTO } from './order-dto';
+import { OrderEntity } from '../entities/order.entity';
 
 @Injectable()
 export class DTOMapperProfile extends AutomapperProfile {
@@ -20,6 +22,7 @@ export class DTOMapperProfile extends AutomapperProfile {
     return (mapper) => {
       createMap(mapper, BotTradingEntity, BotTradingBaseDTO);
       createMap(mapper, BotTradingEntity, BotTradingWithPairAndExchangeDTO);
+      createMap(mapper, OrderEntity, OrderBaseDTO);
       createMap(mapper, DealEntity, DealBaseDTO);
       createMap(mapper, DealEntity, DealWithOrderDTO);
       createMap(mapper, PairEntity, PairDTO);
