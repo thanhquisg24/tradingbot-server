@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { BotTradingEntity } from '../entities/bot.entity';
 import { BotTradingBaseDTO, BotTradingWithPairAndExchangeDTO } from './bot-dto';
 import { DealEntity } from '../entities/deal.entity';
-import { DealBaseDTO } from './deal-dto';
+import { DealBaseDTO, DealWithOrderDTO } from './deal-dto';
 import { PairEntity } from '../entities/pair.entity';
 import { PairDTO } from './pair-dto';
 import { ExchangeEntity } from '../entities/exchange.entity';
@@ -21,6 +21,7 @@ export class DTOMapperProfile extends AutomapperProfile {
       createMap(mapper, BotTradingEntity, BotTradingBaseDTO);
       createMap(mapper, BotTradingEntity, BotTradingWithPairAndExchangeDTO);
       createMap(mapper, DealEntity, DealBaseDTO);
+      createMap(mapper, DealEntity, DealWithOrderDTO);
       createMap(mapper, PairEntity, PairDTO);
       createMap(mapper, ExchangeEntity, ExchangeDTO);
     };

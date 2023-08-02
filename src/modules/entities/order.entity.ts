@@ -1,4 +1,3 @@
-import { OrderSide, OrderStatus_LT } from 'binance-api-node';
 import {
   Column,
   Entity,
@@ -6,6 +5,9 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { OrderSide, OrderStatus_LT } from 'binance-api-node';
+
+import { AutoMap } from '@automapper/classes';
 import { DealEntity } from './deal.entity';
 
 export interface BuyOrder {
@@ -58,21 +60,27 @@ export enum CLIENT_ORDER_TYPE {
 
 @Entity()
 export class OrderEntity {
+  @AutoMap()
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @AutoMap()
   @Column({ length: 16 })
   pair: string;
 
+  @AutoMap()
   @Column({ name: 'user_id', type: 'int', nullable: true })
   userId: number;
 
+  @AutoMap()
   @Column({ name: 'bot_id', type: 'int', nullable: true })
   botId: number;
 
+  @AutoMap()
   @Column({ name: 'exchange_id', type: 'int', nullable: true })
   exchangeId: number;
 
+  @AutoMap()
   @Column({
     name: 'client_order_type',
     type: 'enum',
@@ -82,9 +90,11 @@ export class OrderEntity {
   clientOrderType: CLIENT_ORDER_TYPE;
   // for buy order: 0 to max_no_of_safety_order
   // for sell order: 1000 + the correspondent buy order
+  @AutoMap()
   @Column({ type: 'int' })
   sequence: number;
 
+  @AutoMap()
   @Column({
     name: 'deviation',
     type: 'decimal',
@@ -95,9 +105,11 @@ export class OrderEntity {
   deviation: number;
 
   // BUY or SELL
+  @AutoMap()
   @Column({ length: 4 })
   side: OrderSide;
 
+  @AutoMap()
   @Column({
     name: 'price',
     type: 'decimal',
@@ -107,6 +119,7 @@ export class OrderEntity {
   })
   price: number;
 
+  @AutoMap()
   @Column({
     name: 'filled_price',
     type: 'decimal',
@@ -116,6 +129,7 @@ export class OrderEntity {
   })
   filledPrice: number;
 
+  @AutoMap()
   @Column({
     name: 'average_price',
     type: 'decimal',
@@ -125,6 +139,7 @@ export class OrderEntity {
   })
   averagePrice: number;
 
+  @AutoMap()
   @Column({
     name: 'exit_price',
     type: 'decimal',
@@ -134,9 +149,11 @@ export class OrderEntity {
   })
   exitPrice: number;
 
+  @AutoMap()
   @Column({ name: 'binance_order_id', length: 255, nullable: true })
   binanceOrderId: string;
 
+  @AutoMap()
   @Column({
     name: 'quantity',
     type: 'decimal',
@@ -146,6 +163,7 @@ export class OrderEntity {
   })
   quantity: number;
 
+  @AutoMap()
   @Column({
     name: 'filled_quantity',
     type: 'decimal',
@@ -156,6 +174,7 @@ export class OrderEntity {
   })
   filledQuantity: number;
 
+  @AutoMap()
   @Column({
     name: 'volume',
     type: 'decimal',
@@ -165,6 +184,7 @@ export class OrderEntity {
   })
   volume: number;
 
+  @AutoMap()
   @Column({
     name: 'total_quantity',
     type: 'decimal',
@@ -174,12 +194,15 @@ export class OrderEntity {
   })
   totalQuantity: number;
 
+  @AutoMap()
   @Column({ length: 64 })
   status: 'CREATED' | 'PLACING' | OrderStatus_LT;
 
+  @AutoMap()
   @Column({ name: 'retry_count', type: 'int', default: 0 })
   retryCount: number;
 
+  @AutoMap()
   @Column({ name: 'placed_count', type: 'int', default: 0 })
   placedCount: number;
 

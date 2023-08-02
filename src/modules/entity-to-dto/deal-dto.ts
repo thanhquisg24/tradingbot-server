@@ -2,6 +2,7 @@ import { CLIENT_DEAL_TYPE, DEAL_STATUS } from '../entities/deal.entity';
 import { DEAL_START_TYPE, STRATEGY_DIRECTION } from '../entities/bot.entity';
 
 import { AutoMap } from '@automapper/classes';
+import { OrderBaseDTO } from './order-dto';
 
 export class DealBaseDTO {
   @AutoMap()
@@ -93,4 +94,9 @@ export class DealBaseDTO {
 
   @AutoMap()
   safetyOrderStepScale: number;
+}
+
+export class DealWithOrderDTO extends DealBaseDTO {
+  @AutoMap(() => [OrderBaseDTO])
+  orders: OrderBaseDTO[];
 }

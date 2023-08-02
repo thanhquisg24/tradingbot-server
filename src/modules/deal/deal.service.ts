@@ -48,6 +48,7 @@ export class DealService {
   }
   findActiveDealsByBotId(botId: number) {
     return this.dealRepo.find({
+      relations: ['orders'],
       where: { status: DEAL_STATUS.ACTIVE, botId },
     });
   }

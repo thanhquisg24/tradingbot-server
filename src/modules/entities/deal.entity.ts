@@ -49,7 +49,7 @@ export class DealEntity {
   })
   clientDealType: CLIENT_DEAL_TYPE;
 
-  // @AutoMap()
+  @AutoMap(() => [OrderEntity])
   @OneToMany(() => OrderEntity, (order) => order.deal, { eager: true })
   orders: OrderEntity[];
 
