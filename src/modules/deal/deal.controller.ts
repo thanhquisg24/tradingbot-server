@@ -18,7 +18,11 @@ import { UpdateDealDto } from './dto/update-deal.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RequestWithUser } from '../auth/type';
-import { DealBaseDTO, DealWithOrderDTO } from '../entity-to-dto/deal-dto';
+import {
+  DealBaseDTO,
+  DealBaseWithBotName,
+  DealWithOrderDTO,
+} from '../entity-to-dto/deal-dto';
 import { DealEntity } from '../entities/deal.entity';
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
@@ -34,7 +38,7 @@ export class DealController {
     private readonly dealService: DealService,
   ) {}
 
-  @Post()
+  @Post('/create')
   create(@Body() createDealDto: CreateDealDto) {
     return this.dealService.create(createDealDto);
   }
@@ -45,22 +49,17 @@ export class DealController {
     return this.dealService.cancelDeal(id, userId);
   }
 
-  @Get()
-  findAll() {
-    return this.dealService.findAll();
-  }
-
-  @Get(':id')
+  @Get('by-id/:id')
   findOne(@Param('id') id: string) {
     return this.dealService.findOne(+id);
   }
 
-  @Patch(':id')
+  @Patch('by-id/:id')
   update(@Param('id') id: string, @Body() updateDealDto: UpdateDealDto) {
     return this.dealService.update(+id, updateDealDto);
   }
 
-  @Delete(':id')
+  @Delete('by-id/:id')
   remove(@Param('id') id: string) {
     return this.dealService.remove(+id);
   }
@@ -74,18 +73,18 @@ export class DealController {
     return dtos;
   }
 
-  @Get('/pagg-active-deals-by-bot-id/:botId')
-  async paggActiveDealsByBotId(
+  @Get('/pagg-deals-by-bot-id/:botId')
+  async paggDealsByBotId(
     @Param('botId') botId: number,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 20,
   ): Promise<Pagination<DealWithOrderDTO, IPaginationMeta>> {
     limit = limit > 100 ? 100 : limit;
-    const paggData = await this.dealService.paginateActiveDealsByBotId(
+    const paggData = await this.dealService.paginateDealsByBotId(
       {
         page,
         limit,
-        route: `http://bottrading.creo.vn/api/v1/deal/pagg-active-deals-by-bot-id/${botId}`,
+        route: `http://bottrading.creo.vn/api/v1/deal/pagg-deals-by-bot-id/${botId}`,
       },
       botId,
     );
@@ -96,6 +95,31 @@ export class DealController {
       items: dtos,
     };
     return paggDto;
+  }
+
+  // Promise<Pagination<DealBaseWithBotName, IPaginationMeta>>
+  @Get('/pagg-builder-deals-by-current-user')
+  async paggBuilderDealsByUserId(
+    @Request() req: RequestWithUser,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 20,
+  ): Promise<any> {
+    limit = limit > 100 ? 100 : limit;
+    const paggData = await this.dealService.paginateBuilderDealsByUserId(
+      {
+        page,
+        limit,
+        route: `http://bottrading.creo.vn/api/v1/deal/pagg-builder-deals-by-current-user`,
+      },
+      req.user.id,
+    );
+
+    return paggData;
+  }
+
+  @Get('/pagg-demo')
+  paggBuilderDemo() {
+    return 'pagg-demo ok ';
   }
 
   @Get('/count-active-deals-by-bot-id/:botId')

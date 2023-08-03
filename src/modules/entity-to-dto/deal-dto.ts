@@ -100,3 +100,7 @@ export class DealWithOrderDTO extends DealBaseDTO {
   @AutoMap(() => [OrderBaseDTO])
   orders: OrderBaseDTO[];
 }
+
+export class DealBaseWithBotName extends DealBaseDTO {
+  botName: string;
+}

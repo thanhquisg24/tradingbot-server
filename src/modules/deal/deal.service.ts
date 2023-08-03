@@ -9,7 +9,9 @@ import {
   IPaginationOptions,
   Pagination,
   paginate,
+  paginateRaw,
 } from 'nestjs-typeorm-paginate';
+import { BotTradingEntity } from '../entities/bot.entity';
 
 @Injectable()
 export class DealService {
@@ -59,17 +61,130 @@ export class DealService {
     });
   }
 
-  async paginateActiveDealsByBotId(
+  async paginateDealsByBotId(
     options: IPaginationOptions,
     botId: number,
   ): Promise<Pagination<DealEntity>> {
     return paginate<DealEntity>(this.dealRepo, options, {
       relations: ['orders'],
-      where: { status: DEAL_STATUS.ACTIVE, botId },
+      where: { botId },
       order: {
         id: 'DESC',
+        status: 'DESC',
       },
     });
+  }
+
+  async paginateBuilderDealsByUserId(
+    options: IPaginationOptions,
+    userId: number,
+  ): Promise<any> {
+    const queryBuilder = this.dealRepo
+      .createQueryBuilder('deal')
+      // .select([
+      //   'deal.id',
+
+      //   'deal.userId',
+
+      //   'deal.botId',
+
+      //   'deal.exchangeId',
+
+      //   'deal.clientDealType',
+
+      //   'deal.status',
+
+      //   'deal.startAt',
+
+      //   'deal.endAt',
+
+      //   'deal.profit',
+
+      //   'deal.pair',
+
+      //   'deal.refReduceDealId',
+
+      //   'deal.curAvgPrice',
+
+      //   'deal.curQuantity',
+
+      //   'deal.curReduceCount',
+
+      //   'deal.maxReduceCount',
+
+      //   'deal.baseOrderSize',
+
+      //   'deal.safetyOrderSize',
+
+      //   'deal.strategyDirection',
+
+      //   'deal.startOrderType',
+
+      //   'deal.dealStartCondition',
+
+      //   'deal.targetProfitPercentage',
+
+      //   'deal.useStopLoss',
+
+      //   'deal.targetStopLossPercentage',
+
+      //   'deal.curSafetyTradesCount',
+
+      //   'deal.maxSafetyTradesCount',
+
+      //   'deal.maxActiveSafetyTradesCount',
+
+      //   'deal.reduceDeviationPercentage',
+
+      //   'deal.priceDeviationPercentage',
+
+      //   'deal.safetyOrderVolumeScale',
+
+      //   'deal.safetyOrderStepScale',
+      // ])
+      .select('deal.id', 'id')
+      .addSelect('deal.userId', 'userId')
+      .addSelect('deal.botId', 'botId')
+      .addSelect('deal.exchangeId', 'exchangeId')
+      .addSelect('deal.clientDealType', 'clientDealType')
+      .addSelect('deal.status', 'status')
+      .addSelect('deal.startAt', 'startAt')
+      .addSelect('deal.endAt', 'endAt')
+      .addSelect('deal.profit', 'profit')
+      .addSelect('deal.pair', 'pair')
+      .addSelect('deal.refReduceDealId', 'refReduceDealId')
+      .addSelect('deal.curAvgPrice', 'curAvgPrice')
+      .addSelect('deal.curQuantity', 'curQuantity')
+      .addSelect('deal.curReduceCount', 'curReduceCount')
+      .addSelect('deal.maxReduceCount', 'maxReduceCount')
+      .addSelect('deal.baseOrderSize', 'baseOrderSize')
+      .addSelect('deal.safetyOrderSize', 'safetyOrderSize')
+      .addSelect('deal.strategyDirection', 'strategyDirection')
+      .addSelect('deal.startOrderType', 'startOrderType')
+      .addSelect('deal.dealStartCondition', 'dealStartCondition')
+      .addSelect('deal.targetProfitPercentage', 'targetProfitPercentage')
+      .addSelect('deal.useStopLoss', 'useStopLoss')
+      .addSelect('deal.targetStopLossPercentage', 'targetStopLossPercentage')
+      .addSelect('deal.curSafetyTradesCount', 'curSafetyTradesCount')
+      .addSelect('deal.maxSafetyTradesCount', 'maxSafetyTradesCount')
+      .addSelect(
+        'deal.maxActiveSafetyTradesCount',
+        'maxActiveSafetyTradesCount',
+      )
+      .addSelect('deal.reduceDeviationPercentage', 'reduceDeviationPercentage')
+      .addSelect('deal.priceDeviationPercentage', 'priceDeviationPercentage')
+      .addSelect('deal.safetyOrderVolumeScale', 'safetyOrderVolumeScale')
+      .addSelect('deal.safetyOrderStepScale', 'safetyOrderStepScale')
+      .addSelect('bot.name', 'botName')
+      .leftJoin(BotTradingEntity, 'bot', 'bot.id = deal.botId')
+      // .from(DealEntity, 'deal')
+      .where('deal.userId = :userId', { userId })
+      .orderBy({
+        'deal.status': 'DESC',
+        'deal.id': 'DESC',
+      });
+    return paginateRaw(queryBuilder, options);
+    // return this.paginateDealsByBotId(options, 2);
   }
 
   countActiveDealsByBotId(botId: number) {
