@@ -119,7 +119,7 @@ export class BotManagerInstances implements IBotManagerInstances {
         .closeAtMarketPrice(payload.dealId, payload.userId);
       return 'success';
     }
-    return 'fail';
+    return `bot ${strId} is not running`;
   }
 
   getAllRunning() {

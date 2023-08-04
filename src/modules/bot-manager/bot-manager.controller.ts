@@ -84,8 +84,8 @@ export class BotManagerController {
 
   @Post('/close-deal-at-market-price')
   async closeDealAtMarketPrice(@Body() payload: CloseDealAtMarketPrice) {
-    await this.instanses.closeDealAtMarketPrice(payload);
-    return 'Action has been sent!';
+    const result = await this.instanses.closeDealAtMarketPrice(payload);
+    return result;
   }
 
   @Put('/update-bot-pair')
