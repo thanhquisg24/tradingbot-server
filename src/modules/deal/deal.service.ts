@@ -12,15 +12,31 @@ import {
   paginateRaw,
 } from 'nestjs-typeorm-paginate';
 import { BotTradingEntity } from '../entities/bot.entity';
+import { OrderEntity } from '../entities/order.entity';
 
 @Injectable()
 export class DealService {
   constructor(
     @InjectRepository(DealEntity)
     private readonly dealRepo: Repository<DealEntity>,
+    @InjectRepository(OrderEntity)
+    private readonly orderRepo: Repository<OrderEntity>,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
   ) {}
+
+  getOrdersByDealId(dealId: number) {
+    return this.orderRepo.find({
+      where: {
+        deal: {
+          id: dealId,
+        },
+      },
+      order: {
+        sequence: 'ASC',
+      },
+    });
+  }
 
   async cancelDeal(id: number, userId: number) {
     try {

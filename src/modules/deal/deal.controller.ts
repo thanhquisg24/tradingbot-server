@@ -27,6 +27,8 @@ import { DealEntity } from '../entities/deal.entity';
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
 import { IPaginationMeta, Pagination } from 'nestjs-typeorm-paginate';
+import { OrderEntity } from '../entities/order.entity';
+import { OrderBaseDTO } from '../entity-to-dto/order-dto';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -126,5 +128,11 @@ export class DealController {
   async countActiveDealsByBotId(@Param('botId') id: number): Promise<number> {
     const data = await this.dealService.countActiveDealsByBotId(id);
     return data;
+  }
+  @Get('/fetch-orders-by-deal/:dealId')
+  async getOrdersByDealId(@Param('dealId') id: number) {
+    const data = await this.dealService.getOrdersByDealId(id);
+    const dtos = this.mapper.mapArray(data, OrderEntity, OrderBaseDTO);
+    return dtos;
   }
 }

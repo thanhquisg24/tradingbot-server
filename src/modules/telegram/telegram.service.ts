@@ -17,11 +17,12 @@ export class TelegramService {
     });
   }
 
-  sendMessageToUser = async (userId: string, message: string) => {
-    try {
-      await this.bot.telegram.sendMessage(userId, message);
-    } catch (ex) {
-      console.log("Can't not send Msg Via telegram Bot:" + ex.message);
-    }
+  sendMessageToUser = (userId: string, message: string): void => {
+    this.bot.telegram
+      .sendMessage(userId, message)
+      .then()
+      .catch((ex) =>
+        console.log("Can't not send Msg Via telegram Bot:" + ex.message),
+      );
   };
 }

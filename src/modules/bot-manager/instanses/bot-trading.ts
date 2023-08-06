@@ -89,10 +89,10 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     this.logLabel = { label: `Bot#${config.id} ${config.name}` };
   }
 
-  protected async sendMsgTelegram(msg: string): Promise<void> {
+  protected sendMsgTelegram(msg: string): void {
     botLogger.info(msg, this.logLabel);
     if (this.botConfig.exchange.user.telegramChatId) {
-      await this.telegramService.sendMessageToUser(
+      this.telegramService.sendMessageToUser(
         this.botConfig.exchange.user.telegramChatId,
         `[${this.logLabel.label}] ${msg}`,
       );
@@ -202,7 +202,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         order.status = 'PLACING';
         order.retryCount = order.retryCount + 1;
         await this.orderRepo.save(order);
-        await this.sendMsgTelegram(
+        this.sendMsgTelegram(
           `[${order.pair}][${order.id}]:Error on placing ${
             order.clientOrderType
           }. Price: ${order.price}, Amount: ${order.quantity} .RetryCount: ${
@@ -257,7 +257,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         this._exchangeRemote = _exchange;
         await this._exchangeRemote.getCcxtExchange().loadMarkets();
         this.isRunning = true;
-        await this.sendMsgTelegram('Bot is Starting #' + this.botConfig.id);
+        this.sendMsgTelegram('Bot is Starting #' + this.botConfig.id);
         // this._exchangeRemote.getCcxtExchange().getSib
         return true;
       }
@@ -270,7 +270,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
   }
 
   async stop() {
-    await this.sendMsgTelegram('Bot is Stopped #' + this.botConfig.id);
+    this.sendMsgTelegram('Bot is Stopped #' + this.botConfig.id);
     this.isRunning = false;
   }
 
@@ -417,13 +417,13 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         await this.dealRepo.update(newDealEntity.id, {
           status: DEAL_STATUS.ACTIVE,
         });
-        await this.sendMsgTelegram(
+        this.sendMsgTelegram(
           `[${baseOrderEntity.pair}] [${baseOrderEntity.binanceOrderId}]: Started a new Base Order. Price: ${baseOrderEntity.price}, Amount: ${baseOrderEntity.quantity}`,
         );
         return;
       }
     } catch (ex) {
-      await this.sendMsgTelegram(
+      this.sendMsgTelegram(
         `[${symbol}]: Placing base Order error!  ${ex.message}`,
       );
       throw ex;
@@ -440,18 +440,18 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         return;
       }
       if (tv.userId !== this.botConfig.userId) {
-        await this.sendMsgTelegram('User is not valid :' + JSON.stringify(tv));
+        this.sendMsgTelegram('User is not valid :' + JSON.stringify(tv));
         return;
       }
       if (tv.botId !== this.botConfig.id) {
-        await this.sendMsgTelegram('Bot is not valid :' + JSON.stringify(tv));
+        this.sendMsgTelegram('Bot is not valid :' + JSON.stringify(tv));
         return;
       }
       const existingPair = this.botConfig.pairs.find(
         (o) => o.commonPair === tv.pair,
       );
       if (!existingPair) {
-        await this.sendMsgTelegram('Pair is not valid :' + JSON.stringify(tv));
+        this.sendMsgTelegram('Pair is not valid :' + JSON.stringify(tv));
         return;
       }
 
@@ -642,7 +642,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
               currentOrder.filledQuantity = Number(executedQty);
               await this.orderRepo.save(currentOrder);
               const title = currentOrder.sequence > 0 ? 'Safety' : 'Base';
-              await this.sendMsgTelegram(
+              this.sendMsgTelegram(
                 `[${currentOrder.pair}] [${currentOrder.binanceOrderId}]: ${title} order ${currentOrder.side} has been FILLED. Price: ${filledPrice}, Amount: ${currentOrder.quantity}`,
               );
               // Cancel existing sell order (if any)
@@ -682,7 +682,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
                 newSellOrder.binanceOrderId = `${bSellOrder.orderId}`;
                 newSellOrder.placedCount = newSellOrder.placedCount + 1;
                 await this.orderRepo.save(newSellOrder);
-                await this.sendMsgTelegram(
+                this.sendMsgTelegram(
                   `[${newSellOrder.pair}] [${newSellOrder.binanceOrderId}]: Place new Take Profit Order. Price: ${newSellOrder.price}, Amount: ${newSellOrder.quantity}`,
                 );
               }
@@ -708,7 +708,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
                   await this.dealRepo.update(deal.id, {
                     curSafetyTradesCount: nextsafety.sequence,
                   });
-                  await this.sendMsgTelegram(
+                  this.sendMsgTelegram(
                     `[${nextsafety.pair}] [${nextsafety.binanceOrderId}]: Place new Safety Order. Price: ${nextsafety.price}, Amount: ${nextsafety.quantity}`,
                   );
                 }
@@ -802,7 +802,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         order.binanceOrderId = `${binanceOrder.orderId}`;
         order.placedCount = order.placedCount + 1;
         await this.orderRepo.save(order);
-        await this.sendMsgTelegram(
+        this.sendMsgTelegram(
           `[${order.pair}] [${order.binanceOrderId}]: Place a Retry Order. Price: ${order.price}, Amount: ${order.quantity}`,
         );
       }
@@ -864,14 +864,14 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     deal.endAt = new Date();
     deal.profit = Number(profit);
     await this.dealRepo.save(deal);
-    await this.sendMsgTelegram(
+    this.sendMsgTelegram(
       `[${deal.pair}]: Deal ${deal.id} closed, profit: ${profit} 💰`,
     );
   }
 
   async closeAtMarketPrice(dealId: number, userId: number): Promise<void> {
     if (userId !== this.botConfig.userId) {
-      await this.sendMsgTelegram(`closeAtMarketPrice error .User Id invalid!`);
+      this.sendMsgTelegram(`closeAtMarketPrice error .User Id invalid!`);
       return;
     }
     try {
@@ -909,10 +909,10 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
           }
         }
       } else {
-        await this.sendMsgTelegram(`Deal ${dealId} not found`);
+        this.sendMsgTelegram(`Deal ${dealId} not found`);
       }
     } catch (error) {
-      await this.sendMsgTelegram(
+      this.sendMsgTelegram(
         `Deal ${dealId} close at market price error! ${error.message}`,
       );
       throw error;

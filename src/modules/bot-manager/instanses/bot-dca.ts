@@ -1,15 +1,15 @@
-import { sortBy } from 'lodash';
-import { DealEntity } from 'src/modules/entities/deal.entity';
 import { BaseBotTrading } from './bot-trading';
-import { OrderStatus } from 'binance-api-node';
-import { TelegramService } from 'src/modules/telegram/telegram.service';
-import { OrderEntity } from 'src/modules/entities/order.entity';
-import { Repository } from 'typeorm';
 import { BotTradingEntity } from 'src/modules/entities/bot.entity';
-import { wrapExReq } from 'src/modules/exchange/remote-api/exchange.helper';
+import { CombineReduceEventTypes } from 'src/common/event/reduce_events';
+import { DealEntity } from 'src/modules/entities/deal.entity';
+import { OrderEntity } from 'src/modules/entities/order.entity';
+import { OrderStatus } from 'binance-api-node';
+import { Repository } from 'typeorm';
+import { TelegramService } from 'src/modules/telegram/telegram.service';
 import { botLogger } from 'src/common/bot-logger';
 import { createStopLossOrder } from './bot-utils-calc';
-import { CombineReduceEventTypes } from 'src/common/event/reduce_events';
+import { sortBy } from 'lodash';
+import { wrapExReq } from 'src/modules/exchange/remote-api/exchange.helper';
 
 export class DCABot extends BaseBotTrading {
   constructor(
@@ -30,7 +30,7 @@ export class DCABot extends BaseBotTrading {
     deal: DealEntity,
     currentOrder: OrderEntity,
   ): Promise<void> {
-    await this.sendMsgTelegram(`[${deal.pair}] [${deal.id}]: Have Last SO 😱`);
+    this.sendMsgTelegram(`[${deal.pair}] [${deal.id}]: Have Last SO 😱`);
     if (deal.useStopLoss) {
       const stlOrder = createStopLossOrder(deal, currentOrder);
       const binanceStl = await this.placeBinanceOrder(stlOrder, true);
@@ -39,7 +39,7 @@ export class DCABot extends BaseBotTrading {
         stlOrder.binanceOrderId = `${binanceStl.orderId}`;
         stlOrder.placedCount = stlOrder.placedCount + 1;
         await this.orderRepo.save(stlOrder);
-        await this.sendMsgTelegram(
+        this.sendMsgTelegram(
           `[${stlOrder.pair}] [${stlOrder.binanceOrderId}]: Place new Stop Loss Order. Price: ${stlOrder.price}, Amount: ${stlOrder.quantity}`,
         );
       }

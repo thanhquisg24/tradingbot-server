@@ -1,7 +1,4 @@
-import BigNumber from 'bignumber.js';
 import { FuturesOrder as BinanceOrder, OrderStatus } from 'binance-api-node';
-import { sortBy } from 'lodash';
-import { botLogger } from 'src/common/bot-logger';
 import {
   BotEventData,
   CombineReduceEventTypes,
@@ -13,25 +10,20 @@ import {
   ReduceClosedTPEvent,
   createReduceBeginEvent,
 } from 'src/common/event/reduce_events';
-import { getNewUUid } from 'src/common/utils/hash-util';
 import {
   BotTradingEntity,
   STRATEGY_DIRECTION,
 } from 'src/modules/entities/bot.entity';
 import {
-  CLIENT_DEAL_TYPE,
-  DEAL_STATUS,
-  DealEntity,
-} from 'src/modules/entities/deal.entity';
-import {
   BuyOrder,
   CLIENT_ORDER_TYPE,
   OrderEntity,
 } from 'src/modules/entities/order.entity';
-import { wrapExReq } from 'src/modules/exchange/remote-api/exchange.helper';
-import { TelegramService } from 'src/modules/telegram/telegram.service';
-import { Raw, Repository } from 'typeorm';
-import { DCABot } from './bot-dca';
+import {
+  CLIENT_DEAL_TYPE,
+  DEAL_STATUS,
+  DealEntity,
+} from 'src/modules/entities/deal.entity';
 import {
   ORDER_ACTION_ENUM,
   calcDaviationBetween,
@@ -41,6 +33,15 @@ import {
   createNextTPOrder,
   getOrderSide,
 } from './bot-utils-calc';
+import { Raw, Repository } from 'typeorm';
+
+import BigNumber from 'bignumber.js';
+import { DCABot } from './bot-dca';
+import { TelegramService } from 'src/modules/telegram/telegram.service';
+import { botLogger } from 'src/common/bot-logger';
+import { getNewUUid } from 'src/common/utils/hash-util';
+import { sortBy } from 'lodash';
+import { wrapExReq } from 'src/modules/exchange/remote-api/exchange.helper';
 
 export class ReduceBot extends DCABot {
   private sendBotEvent: (eventPayload: BotEventData) => void;
@@ -101,7 +102,7 @@ export class ReduceBot extends DCABot {
       this._exchangeRemote.getCcxtExchange(),
     );
     this.sendBotEvent(prepareEvent);
-    await this.sendMsgTelegram(
+    this.sendMsgTelegram(
       `[${deal.pair}] [${deal.id}]: Send event Prepare Open Deal cover to bot#${toBotId}`,
     );
   }
@@ -189,7 +190,7 @@ export class ReduceBot extends DCABot {
           newSellOrder.binanceOrderId = `${bSellOrder.orderId}`;
           newSellOrder.placedCount = newSellOrder.placedCount + 1;
           await this.orderRepo.save(newSellOrder);
-          await this.sendMsgTelegram(
+          this.sendMsgTelegram(
             `[${newSellOrder.pair}] [${newSellOrder.binanceOrderId}]: Place new ${newSellOrder.clientOrderType} Order. Price: ${newSellOrder.price}, Amount: ${newSellOrder.quantity}`,
           );
         }
@@ -202,7 +203,7 @@ export class ReduceBot extends DCABot {
           toBotId: this.botConfig.refBotId,
         });
         this.sendBotEvent(reduceBeginEvt);
-        await this.sendMsgTelegram(
+        this.sendMsgTelegram(
           `[${deal.pair}] [${deal.id}]: Send ${
             reduceBeginEvt.type
           } data ${JSON.stringify(reduceBeginEvt)}`,
@@ -262,7 +263,7 @@ export class ReduceBot extends DCABot {
           },
         };
         this.sendBotEvent(reduceCloseEvt);
-        await this.sendMsgTelegram(
+        this.sendMsgTelegram(
           `[${deal.pair}] [${deal.id}]: Send ${
             reduceCloseEvt.type
           } data ${JSON.stringify(reduceCloseEvt)}`,
@@ -365,7 +366,7 @@ export class ReduceBot extends DCABot {
     deal: DealEntity,
     currentOrder: OrderEntity,
   ): Promise<void> {
-    await this.sendMsgTelegram(`[${deal.pair}] [${deal.id}]: Have Last SO 😱`);
+    this.sendMsgTelegram(`[${deal.pair}] [${deal.id}]: Have Last SO 😱`);
     let filledBuyVolume = new BigNumber(0);
     let totalBuyQantity = 0;
     const buyOrderSide = getOrderSide(
@@ -520,7 +521,7 @@ export class ReduceBot extends DCABot {
       savedOrder.placedCount = savedOrder.placedCount + 1;
       await this.orderRepo.save(savedOrder);
       await this.dealRepo.update(deal.id, { status: DEAL_STATUS.ACTIVE });
-      await this.sendMsgTelegram(
+      this.sendMsgTelegram(
         `[${savedOrder.pair}] [${savedOrder.binanceOrderId}]: Place Deal cover preference from ${deal.refReduceDealId}. Price: ${savedOrder.price}, Amount: ${savedOrder.quantity}`,
       );
     }
@@ -588,7 +589,7 @@ export class ReduceBot extends DCABot {
       savedOrder.binanceOrderId = `${binanceOrder.orderId}`;
       savedOrder.placedCount = savedOrder.placedCount + 1;
       await this.orderRepo.save(savedOrder);
-      await this.sendMsgTelegram(
+      this.sendMsgTelegram(
         `[${savedOrder.pair}] [${savedOrder.binanceOrderId}]: Place a ${CLIENT_ORDER_TYPE.REDUCE_END} order . Price: ${savedOrder.price}, Amount: ${savedOrder.quantity}`,
       );
     }
@@ -651,7 +652,7 @@ export class ReduceBot extends DCABot {
         cutOrderMarket.binanceOrderId = `${exOrder1.orderId}`;
         cutOrderMarket.placedCount = cutOrderMarket.placedCount + 1;
         await this.orderRepo.save(cutOrderMarket);
-        await this.sendMsgTelegram(
+        this.sendMsgTelegram(
           `[${cutOrderMarket.pair}] [${cutOrderMarket.binanceOrderId}]: Place ${cutOrderMarket.clientOrderType}. Price: ${cutOrderMarket.price}, Amount: ${cutOrderMarket.quantity}`,
         );
       } //end if
@@ -660,8 +661,8 @@ export class ReduceBot extends DCABot {
         Number(triger_price),
         _qtyToCutOff,
         ORDER_ACTION_ENUM.CLOSE_POSITION,
-        CLIENT_ORDER_TYPE.COVER_CUT_QTY,
-        currentDeal.orders.length,
+        CLIENT_ORDER_TYPE.COVER_ADD_QTY,
+        currentDeal.orders.length + 1,
       );
       const exOrder2 = await this.placeBinanceOrder(addOrderMarket, true);
       if (exOrder2) {
@@ -672,7 +673,7 @@ export class ReduceBot extends DCABot {
         // addOrderMarket.filledQuantity = Number(exOrder2.executedQty);
         addOrderMarket.placedCount = addOrderMarket.placedCount + 1;
         await this.orderRepo.save(addOrderMarket);
-        await this.sendMsgTelegram(
+        this.sendMsgTelegram(
           `[${cutOrderMarket.pair}] [${cutOrderMarket.binanceOrderId}]: Place ${addOrderMarket.clientOrderType}. Price: ${cutOrderMarket.price}, Amount: ${cutOrderMarket.quantity}`,
         );
         // const _avgPrice =
@@ -726,7 +727,7 @@ export class ReduceBot extends DCABot {
         savedTPOrder.binanceOrderId = `${exTpOrder.orderId}`;
         savedTPOrder.placedCount = savedTPOrder.placedCount + 1;
         await this.orderRepo.save(savedTPOrder);
-        await this.sendMsgTelegram(
+        this.sendMsgTelegram(
           `[${savedTPOrder.pair}] [${savedTPOrder.binanceOrderId}]: Place new Take Profit Order. Price: ${savedTPOrder.price}, Amount: ${savedTPOrder.quantity}`,
         );
       }
@@ -739,7 +740,7 @@ export class ReduceBot extends DCABot {
           _qty.toNumber(),
         );
       } else {
-        await this.sendMsgTelegram(
+        this.sendMsgTelegram(
           `[${currentDeal.pair}] [${currentDeal.id}]: Have Last Reduce cover 😱`,
         );
       }
@@ -774,7 +775,7 @@ export class ReduceBot extends DCABot {
         status: DEAL_STATUS.CANCELED,
         endAt: new Date(),
       });
-      await this.sendMsgTelegram(
+      this.sendMsgTelegram(
         `[${stopOrder.pair}] [${stopOrder.binanceOrderId}]: Cancel ${CLIENT_ORDER_TYPE.REDUCE_BEGIN} order!`,
       );
     } //end if currentDeal
