@@ -40,6 +40,7 @@ import { Order as CCXTOrder } from 'ccxt';
 import { CombineReduceEventTypes } from 'src/common/event/reduce_events';
 import { TelegramService } from 'src/modules/telegram/telegram.service';
 import { botLogger } from 'src/common/bot-logger';
+import { decryptWithAES } from 'src/common/utils/hash-util';
 import { wrapExReq } from 'src/modules/exchange/remote-api/exchange.helper';
 
 interface IBaseBotTrading {
@@ -242,11 +243,12 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
   async start(): Promise<boolean> {
     try {
       const exchangeRow = this.botConfig.exchange;
+      const apiSerectDescrypt = decryptWithAES(exchangeRow.apiSecret);
       const _exchange = ExchangeFactory.createExchange(
         exchangeRow.id,
         exchangeRow.name,
         exchangeRow.apiKey,
-        exchangeRow.apiSecret,
+        apiSerectDescrypt,
         exchangeRow.isTestNet,
       );
       const exInfo = await wrapExReq(
