@@ -11,6 +11,7 @@ import {
   Query,
   DefaultValuePipe,
   ParseIntPipe,
+  Put,
 } from '@nestjs/common';
 import { DealService } from './deal.service';
 import { CreateDealDto } from './dto/create-deal.dto';
@@ -45,7 +46,7 @@ export class DealController {
     return this.dealService.create(createDealDto);
   }
 
-  @Post('/cancel-deal/:id')
+  @Put('/cancel-deal/:id')
   cancelDeal(@Request() req: RequestWithUser, @Param('id') id: number) {
     const userId = req.user.id;
     return this.dealService.cancelDeal(id, userId);

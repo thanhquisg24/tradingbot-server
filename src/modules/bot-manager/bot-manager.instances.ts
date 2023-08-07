@@ -1,4 +1,9 @@
-import { Inject, Injectable, LoggerService } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  LoggerService,
+  NotFoundException,
+} from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -117,9 +122,9 @@ export class BotManagerInstances implements IBotManagerInstances {
       await this.botInstances
         .get(strId)
         .closeAtMarketPrice(payload.dealId, payload.userId);
-      return 'success';
+      return 'Success!';
     }
-    return `bot ${strId} is not running`;
+    throw new NotFoundException(`bot ${strId} is not running`);
   }
 
   getAllRunning() {

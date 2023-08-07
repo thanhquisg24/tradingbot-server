@@ -1,4 +1,5 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
+
 import { CreateUserDto } from './create-user.dto';
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {
@@ -6,4 +7,11 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
     required: true,
   })
   id: number;
+}
+
+export class UserSettingPayload {
+  @ApiProperty({
+    required: true,
+  })
+  telegramChatId: string;
 }

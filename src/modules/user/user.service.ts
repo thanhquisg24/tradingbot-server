@@ -5,11 +5,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { encryptWithAES } from 'src/common/utils/hash-util';
+import { decryptWithAES, encryptWithAES } from 'src/common/utils/hash-util';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateUserDto, UserSettingPayload } from './dto/update-user.dto';
 import { UserEntity } from '../entities/user.entity';
+import { UserChangePassPayload } from './dto/change-user-password.dto';
 
 @Injectable()
 export class UserService {
@@ -30,6 +31,38 @@ export class UserService {
       createUserDtoWithHashPass.password,
     );
     return await this.repo.save(createUserDtoWithHashPass);
+  }
+
+  async changePass(
+    userId: number,
+    userChangePassPayload: UserChangePassPayload,
+  ) {
+    const user = await this.findOne(userId);
+    const decryptCurrentPass = decryptWithAES(user.password);
+    if (decryptCurrentPass !== userChangePassPayload.currentPassword) {
+      throw new BadRequestException('Your current password is incorrect!');
+    }
+    if (
+      userChangePassPayload.newPassword !==
+      userChangePassPayload.newPasswordConfirm
+    ) {
+      throw new BadRequestException(
+        'New password and confirm password are not matched!',
+      );
+    }
+    const newPassEncrypted = encryptWithAES(userChangePassPayload.newPassword);
+    await this.repo.update(userId, { password: newPassEncrypted });
+    return 'Success! Please logout and login again';
+  }
+
+  async updateUserSetting(
+    userId: number,
+    userSettingPayload: UserSettingPayload,
+  ) {
+    await this.repo.update(userId, {
+      telegramChatId: userSettingPayload.telegramChatId,
+    });
+    return 'Success! User setting has been updated.';
   }
 
   async findAll() {

@@ -18,6 +18,8 @@ import { RequestWithUser } from '../auth/type';
 import { encryptWithAES } from 'src/common/utils/hash-util';
 import { HasRoles } from 'src/common/decorators/has-roles.decorator';
 import { RolesGuard } from 'src/common/guards/roles.guard';
+import { UserChangePassPayload } from './dto/change-user-password.dto';
+import { UserSettingPayload } from './dto/update-user.dto';
 
 @Controller('api/v1/user')
 @ApiTags('User APIs')
@@ -27,7 +29,7 @@ export class UserController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @HasRoles(ROLE.ADMIN)
-  @Post()
+  @Post('/create-user')
   async create(@Body() createUserDto: CreateUserDto) {
     const user: UserEntity & CreateUserDto = await this.userService.create(
       createUserDto,
@@ -58,30 +60,40 @@ export class UserController {
     return emailToken;
   }
 
-  // @ApiBearerAuth()
-  // @UseGuards(JwtAuthGuard)
-  // @Get()
-  // findAll() {
-  //   return this.userService.findAll();
-  // }
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Post('/change-user-password')
+  async changeUserPassword(
+    @Request() req: RequestWithUser,
+    @Body() userChangePassPayload: UserChangePassPayload,
+  ) {
+    const result = await this.userService.changePass(
+      req.user.id,
+      userChangePassPayload,
+    );
+    return result;
+  }
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  @Get(':id')
+  @Post('/update-user-setting')
+  async updateUserSetting(
+    @Request() req: RequestWithUser,
+    @Body() userSettingPayload: UserSettingPayload,
+  ) {
+    const result = await this.userService.updateUserSetting(
+      req.user.id,
+      userSettingPayload,
+    );
+    return result;
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Get('/get-user/:id')
   async findOne(@Param('id') id: string) {
     const user = await this.userService.findOne(+id);
     const result = omit(user, ['password']);
     return result;
   }
-
-  // @UseGuards(JwtAuthGuard)
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-  //   return this.userService.update(+id, updateUserDto);
-  // }
-  // @UseGuards(JwtAuthGuard)
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.userService.remove(+id);
-  // }
 }
