@@ -770,14 +770,15 @@ export class ReduceBot extends DCABot {
       });
       if (stopOrder) {
         await this.cancelOrder(stopOrder);
+        this.sendMsgTelegram(
+          `[${stopOrder.pair}] [${stopOrder.binanceOrderId}]: Cancel ${CLIENT_ORDER_TYPE.REDUCE_BEGIN} order!`,
+        );
       }
       await this.dealRepo.update(currentDeal.id, {
         status: DEAL_STATUS.CANCELED,
         endAt: new Date(),
       });
-      this.sendMsgTelegram(
-        `[${stopOrder.pair}] [${stopOrder.binanceOrderId}]: Cancel ${CLIENT_ORDER_TYPE.REDUCE_BEGIN} order!`,
-      );
+
     } //end if currentDeal
   }
   async processBotEventAction(data: CombineReduceEventTypes) {
