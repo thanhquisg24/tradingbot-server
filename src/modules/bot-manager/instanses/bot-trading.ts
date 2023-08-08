@@ -199,6 +199,9 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         `[${order.pair}][${order.id}]Failed to place order  ${err.message}`,
         this.logLabel,
       );
+      this.sendMsgTelegram(
+        `[${order.pair}][${order.id}]Failed to place order  ${err.message}`,
+      );
       if (isRetry) {
         order.status = 'PLACING';
         order.retryCount = order.retryCount + 1;
@@ -884,14 +887,28 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         userId,
       });
       if (activeDeal) {
-        const { totalFilledQuantity } = await this.orderRepo
+        const { totalFilledBuyQuantity } = await this.orderRepo
           .createQueryBuilder('order_entity')
-          .select('SUM(order_entity.quantity)', 'totalFilledQuantity')
+          .select('SUM(order_entity.filled_quantity)', 'totalFilledBuyQuantity')
+          .where('order_entity.deal_id = :deal_id', { deal_id: dealId })
+          .andWhere('order_entity.side = :side', { side: OrderSide.BUY })
           .getRawOne();
-        if (totalFilledQuantity > 0) {
+
+        const { totalFilledSellQuantity } = await this.orderRepo
+          .createQueryBuilder('order_entity')
+          .select(
+            'SUM(order_entity.filled_quantity)',
+            'totalFilledSellQuantity',
+          )
+          .where('order_entity.deal_id = :deal_id', { deal_id: dealId })
+          .andWhere('order_entity.side = :side', { side: OrderSide.SELL })
+          .getRawOne();
+        const filledQty =
+          Number(totalFilledBuyQuantity) - Number(totalFilledSellQuantity);
+        if (filledQty > 0) {
           const closeMarketOrder = createCloseMarketOrder(
             activeDeal,
-            totalFilledQuantity,
+            filledQty,
           );
           const exOrder = await this.placeBinanceOrder(closeMarketOrder);
           if (exOrder) {
@@ -904,6 +921,10 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             closeMarketOrder.quantity = Number(exOrder.executedQty);
             closeMarketOrder.filledQuantity = closeMarketOrder.quantity;
             closeMarketOrder.placedCount = closeMarketOrder.placedCount + 1;
+            console.log(
+              '🚀 ~ file: bot-trading.ts:922 ~ BaseBotTrading ~ closeAtMarketPrice ~ closeMarketOrder:',
+              closeMarketOrder,
+            );
             await this.orderRepo.save(closeMarketOrder);
             await this.closeDeal(dealId);
           } else {

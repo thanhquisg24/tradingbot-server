@@ -1,22 +1,23 @@
-import BigNumber from 'bignumber.js';
-import { OrderSide } from 'binance-api-node';
-import { Exchange } from 'ccxt';
-import { last } from 'lodash';
-import {
-  IReducePreparePayload,
-  createReducePrepareEvent,
-} from 'src/common/event/reduce_events';
-import { getNewUUid } from 'src/common/utils/hash-util';
 import {
   BotTradingEntity,
   STRATEGY_DIRECTION,
 } from 'src/modules/entities/bot.entity';
-import { DealEntity } from 'src/modules/entities/deal.entity';
 import {
   BuyOrder,
   CLIENT_ORDER_TYPE,
   OrderEntity,
 } from 'src/modules/entities/order.entity';
+import {
+  IReducePreparePayload,
+  createReducePrepareEvent,
+} from 'src/common/event/reduce_events';
+
+import BigNumber from 'bignumber.js';
+import { DealEntity } from 'src/modules/entities/deal.entity';
+import { Exchange } from 'ccxt';
+import { OrderSide } from 'binance-api-node';
+import { getNewUUid } from 'src/common/utils/hash-util';
+import { last } from 'lodash';
 
 export enum ORDER_ACTION_ENUM {
   CLOSE_POSITION = 'CLOSE_POSITION',
@@ -240,6 +241,7 @@ export const createMarketBaseOrder = (
   newBaseOrder.userId = 0;
   newBaseOrder.clientOrderType = CLIENT_ORDER_TYPE.BASE;
   newBaseOrder.pair = pair;
+  newBaseOrder.placedCount = 0;
   return newBaseOrder;
 };
 
@@ -264,6 +266,7 @@ export const createCloseMarketOrder = (
   newSellOrder.userId = deal.userId;
   newSellOrder.clientOrderType = CLIENT_ORDER_TYPE.CLOSE_AT_MARKET;
   newSellOrder.pair = deal.pair;
+  newSellOrder.placedCount = 0;
   return newSellOrder;
 };
 
@@ -290,6 +293,7 @@ export const createMarketOrder = (
   newOrder.userId = deal.userId;
   newOrder.clientOrderType = clientOrderType;
   newOrder.pair = deal.pair;
+  newOrder.placedCount = 0;
   return newOrder;
 };
 
@@ -318,6 +322,7 @@ export const createNextTPOrder = (
   newSellOrder.clientOrderType =
     _clientOrderType || CLIENT_ORDER_TYPE.TAKE_PROFIT;
   newSellOrder.pair = currentOrder.pair;
+  newSellOrder.placedCount = 0;
   return newSellOrder;
 };
 
@@ -350,6 +355,7 @@ export const createStopLossOrder = (deal: DealEntity, lastSO: OrderEntity) => {
   newSTLOrder.userId = deal.userId;
   newSTLOrder.clientOrderType = CLIENT_ORDER_TYPE.STOP_LOSS;
   newSTLOrder.pair = lastSO.pair;
+  newSTLOrder.placedCount = 0;
   return newSTLOrder;
 };
 

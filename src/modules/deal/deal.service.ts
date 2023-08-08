@@ -196,7 +196,7 @@ export class DealService {
       // .from(DealEntity, 'deal')
       .where('deal.userId = :userId', { userId })
       .orderBy({
-        'deal.status': 'DESC',
+        // 'deal.status': 'DESC',
         'deal.id': 'DESC',
       });
     return paginateRaw(queryBuilder, options);
