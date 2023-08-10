@@ -759,6 +759,16 @@ export class ReduceBot extends DCABot {
         status: DEAL_STATUS.ACTIVE,
         botId: toBotId,
       },
+      {
+        id: toDealId,
+        status: DEAL_STATUS.CREATED,
+        botId: toBotId,
+      },
+      {
+        refReduceDealId: toDealId,
+        status: DEAL_STATUS.CREATED,
+        botId: toBotId,
+      },
     ]);
 
     if (currentDeal) {
@@ -778,7 +788,6 @@ export class ReduceBot extends DCABot {
         status: DEAL_STATUS.CANCELED,
         endAt: new Date(),
       });
-
     } //end if currentDeal
   }
   async processBotEventAction(data: CombineReduceEventTypes) {

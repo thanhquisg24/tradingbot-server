@@ -287,6 +287,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
 
   getDeal(id: number): Promise<DealEntity | undefined> {
     return this.dealRepo.findOne({
+      relations: ['orders'],
       where: {
         id,
         status: DEAL_STATUS.ACTIVE,
