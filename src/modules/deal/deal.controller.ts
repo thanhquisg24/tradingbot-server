@@ -24,12 +24,13 @@ import {
   DealBaseWithBotName,
   DealWithOrderDTO,
 } from '../entity-to-dto/deal-dto';
-import { DealEntity } from '../entities/deal.entity';
+import { DEAL_STATUS, DealEntity } from '../entities/deal.entity';
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
 import { IPaginationMeta, Pagination } from 'nestjs-typeorm-paginate';
 import { OrderEntity } from '../entities/order.entity';
 import { OrderBaseDTO } from '../entity-to-dto/order-dto';
+import { STRATEGY_DIRECTION } from '../entities/bot.entity';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -106,6 +107,10 @@ export class DealController {
     @Request() req: RequestWithUser,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 20,
+
+    @Query('dealStatus') dealStatus?: string,
+    @Query('direction') direction?: STRATEGY_DIRECTION,
+    @Query('botId') botId?: number,
   ): Promise<any> {
     limit = limit > 100 ? 100 : limit;
     const paggData = await this.dealService.paginateBuilderDealsByUserId(
@@ -115,6 +120,9 @@ export class DealController {
         route: `http://bottrading.creo.vn/api/v1/deal/pagg-builder-deals-by-current-user`,
       },
       req.user.id,
+      dealStatus,
+      direction,
+      botId,
     );
 
     return paggData;

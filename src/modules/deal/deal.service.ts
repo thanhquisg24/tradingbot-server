@@ -11,7 +11,7 @@ import {
   paginate,
   paginateRaw,
 } from 'nestjs-typeorm-paginate';
-import { BotTradingEntity } from '../entities/bot.entity';
+import { BotTradingEntity, STRATEGY_DIRECTION } from '../entities/bot.entity';
 import { OrderEntity } from '../entities/order.entity';
 
 @Injectable()
@@ -94,6 +94,9 @@ export class DealService {
   async paginateBuilderDealsByUserId(
     options: IPaginationOptions,
     userId: number,
+    dealStatus?: string,
+    direction?: STRATEGY_DIRECTION,
+    botId?: number,
   ): Promise<any> {
     const queryBuilder = this.dealRepo
       .createQueryBuilder('deal')
@@ -199,6 +202,21 @@ export class DealService {
         // 'deal.status': 'DESC',
         'deal.id': 'DESC',
       });
+    if (dealStatus) {
+      const dealStatusArray = JSON.parse(dealStatus);
+      queryBuilder.andWhere('deal.status IN (:...dealStatusArray)', {
+        dealStatusArray,
+      });
+    }
+    if (direction) {
+      queryBuilder.andWhere('deal.strategyDirection = :direction', {
+        direction,
+      });
+    }
+    if (botId) {
+      queryBuilder.andWhere('deal.botId = :botId', { botId });
+    }
+
     return paginateRaw(queryBuilder, options);
     // return this.paginateDealsByBotId(options, 2);
   }
