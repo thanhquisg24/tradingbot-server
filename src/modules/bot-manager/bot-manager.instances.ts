@@ -66,11 +66,11 @@ export class BotManagerInstances implements IBotManagerInstances {
     bot.pairs = pairs;
     bot = mappingBot(bot, dto);
     const updateData = await this.botManagerService.saveBot(bot);
-    const newConfigBot =
-      await this.botManagerService.findOneRelationsExchangeAndPair(
-        updateData.id,
-      );
+    const newConfigBot = await this.botManagerService.findOneRelationsPair(
+      updateData.id,
+    );
     const strId = `${id}`;
+
     if (this.botInstances.has(strId)) {
       this.botInstances.get(strId).updateConfig(newConfigBot);
     }

@@ -41,6 +41,7 @@ import { CombineReduceEventTypes } from 'src/common/event/reduce_events';
 import { TelegramService } from 'src/modules/telegram/telegram.service';
 import { botLogger } from 'src/common/bot-logger';
 import { decryptWithAES } from 'src/common/utils/hash-util';
+import { has } from 'lodash';
 import { wrapExReq } from 'src/modules/exchange/remote-api/exchange.helper';
 
 interface IBaseBotTrading {
@@ -92,7 +93,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
 
   protected sendMsgTelegram(msg: string): void {
     botLogger.info(msg, this.logLabel);
-    if (this.botConfig.exchange.user.telegramChatId) {
+    if (has(this.botConfig.exchange.user, 'telegramChatId')) {
       this.telegramService.sendMessageToUser(
         this.botConfig.exchange.user.telegramChatId,
         `[${this.logLabel.label}] ${msg}`,
