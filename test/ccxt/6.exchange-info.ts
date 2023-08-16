@@ -3,22 +3,39 @@
 
 import * as ccxt from 'ccxt';
 
+import fs from 'fs';
+
 const fetchExchangeInfo = async () => {
   const binanceUSDM = new ccxt.binanceusdm({
     enableRateLimit: true,
   });
   binanceUSDM.setSandboxMode(true);
-  await binanceUSDM.loadMarkets();
-  // const ticker = await binanceUSDM.fetchTicker(symbol);
-  // console.log('🚀 ~ file: 0.hello.ts:38 ~ fetchTicker ~ ticker:', ticker);
-  const market = binanceUSDM.market(symbol);
-  console.log('🚀 ~ file: 0.hello.ts:41 ~ fetchTicker ~ market:', market);
+  // const marketload = await binanceUSDM.loadMarkets();
+  // // marketload.
+  // console.log(
+  //   '🚀 ~ file: 6.exchange-info.ts:12 ~ fetchExchangeInfo ~ marketload:',
+  //   marketload['rateLimits'],
+  // );
+  // binanceUSDM.dapi
+  const exinfo = await binanceUSDM.fapiPublicGetExchangeInfo();
   console.log(
-    '🚀 ~ file: 0.hello.ts:41 ~ fetchTicker ~ marketfilters:',
-    market.info.filters,
+    '🚀 ~ file: 6.exchange-info.ts:18 ~ fetchExchangeInfo ~ exinfo:',
+    exinfo,
   );
-  const fun = await binanceUSDM.fetchFundingRate(symbol);
-  console.log('🚀 ~ file: 0.hello.ts:47 ~ fetchTicker ~ fun:', fun);
+  fs.writeFileSync('exchange_info.txt', JSON.stringify(exinfo));
+  // console.log(
+  //   '🚀 ~ file: 6.exchange-info.ts:18 ~ fetchExchangeInfo ~ exinfo:',
+  //   exinfo.info,
+  // );
+  // console.log(
+  //   '🚀 ~ file: 6.exchange-info.ts:18 ~ fetchExchangeInfo ~ exinfo:',
+  //   exinfo.info['rateLimits'],
+  // );
+  // const marketInfo = await binanceUSDM.fetchMarkets();
+  // console.log(
+  //   '🚀 ~ file: 6.exchange-info.ts:12 ~ fetchExchangeInfo ~ marketInfo:',
+  //   marketInfo[0],
+  // );
 
   // return ticker;
 };
