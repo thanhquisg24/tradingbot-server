@@ -9,6 +9,8 @@ import {
   REDUCE_EV_TYPES,
   ReduceClosedTPEvent,
   createReduceBeginEvent,
+  createReduceClosedTPEvent,
+  createReduceEndEvent,
 } from 'src/common/event/reduce_events';
 import {
   BotTradingEntity,
@@ -91,6 +93,7 @@ export class ReduceBot extends DCABot {
       {
         fromStrategyDirection: this.botConfig.strategyDirection,
         fromDealId: deal.id,
+        fromBotId: deal.botId,
         toBotId,
         pair: deal.pair,
         quantity: qty,
@@ -118,11 +121,11 @@ export class ReduceBot extends DCABot {
       triger_price,
       fromProfitQty,
       toBotId,
+      fromBotId: deal.botId,
+      fromDealId: deal.id,
     };
-    this.sendBotEvent({
-      type: REDUCE_EV_TYPES.END_ROUND,
-      payload: enddata,
-    });
+    const eventReduceEnd = createReduceEndEvent(enddata, deal.curReduceCount);
+    this.sendBotEvent(eventReduceEnd);
     botLogger.info(
       `[${deal.pair}] [${deal.id}]: Send ${REDUCE_EV_TYPES.END_ROUND} event to bot#${toBotId}`,
       this.logLabel,
@@ -195,13 +198,18 @@ export class ReduceBot extends DCABot {
           );
         }
         //send reduce begin
-        const reduceBeginEvt = createReduceBeginEvent({
-          fromStrategyDirection: deal.strategyDirection,
-          toDealId: deal.refReduceDealId,
-          pair: deal.pair,
-          triger_price: filledPrice,
-          toBotId: this.botConfig.refBotId,
-        });
+        const reduceBeginEvt = createReduceBeginEvent(
+          {
+            fromStrategyDirection: deal.strategyDirection,
+            toDealId: deal.refReduceDealId,
+            pair: deal.pair,
+            triger_price: filledPrice,
+            toBotId: this.botConfig.refBotId,
+            fromBotId: deal.botId,
+            fromDealId: deal.id,
+          },
+          deal.curReduceCount,
+        );
         this.sendBotEvent(reduceBeginEvt);
         this.sendMsgTelegram(
           `[${deal.pair}] [${deal.id}]: Send ${
@@ -254,14 +262,16 @@ export class ReduceBot extends DCABot {
         break;
       case CLIENT_ORDER_TYPE.TAKE_PROFIT:
         await this.closeDeal(deal.id);
-        const reduceCloseEvt: ReduceClosedTPEvent = {
-          type: REDUCE_EV_TYPES.CLOSED_TP,
-          payload: {
+        const reduceCloseEvt: ReduceClosedTPEvent = createReduceClosedTPEvent(
+          {
             toBotId: this.botConfig.refBotId,
             toDealId: deal.id,
             pair: currentOrder.pair,
+            fromBotId: deal.botId,
+            fromDealId: deal.id,
           },
-        };
+          deal.curReduceCount,
+        );
         this.sendBotEvent(reduceCloseEvt);
         this.sendMsgTelegram(
           `[${deal.pair}] [${deal.id}]: Send ${

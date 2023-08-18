@@ -1,10 +1,11 @@
-import { PairEntity } from '../modules/entities/pair.entity';
 import { BotTradingEntity } from '../modules/entities/bot.entity';
+import { DealEntity } from '../modules/entities/deal.entity';
 import { ExchangeEntity } from '../modules/entities/exchange.entity';
+import { OrderEntity } from '../modules/entities/order.entity';
+import { PairEntity } from '../modules/entities/pair.entity';
+import { ProtectionEventEntity } from '../modules/entities/protection-event.entity';
 import { TokenEntity } from '../modules/entities/token.entity';
 import { UserEntity } from '../modules/entities/user.entity';
-import { OrderEntity } from '../modules/entities/order.entity';
-import { DealEntity } from '../modules/entities/deal.entity';
 
 const entities = [
   UserEntity,
@@ -14,6 +15,7 @@ const entities = [
   PairEntity,
   DealEntity,
   OrderEntity,
+  ProtectionEventEntity,
 ];
 
 export default entities;

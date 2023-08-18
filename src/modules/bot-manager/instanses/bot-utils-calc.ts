@@ -363,6 +363,7 @@ export const calcReducePreparePayload = (
   data: {
     fromStrategyDirection: STRATEGY_DIRECTION;
     fromDealId: number;
+    fromBotId: number;
     toBotId: number;
     pair: string;
     quantity: number;
@@ -382,9 +383,9 @@ export const calcReducePreparePayload = (
     avgPrice,
     currentPrice,
     percentNextMove,
+    fromBotId,
     round_count,
   } = data;
-  console.log('🚀 ~ file: bot-utils-calc.ts:381 ~ data:', data);
   const _percentNextMove = new BigNumber(percentNextMove).dividedBy(100);
   const _avgPrice = new BigNumber(avgPrice);
   const _currentPrice = new BigNumber(currentPrice);
@@ -406,8 +407,10 @@ export const calcReducePreparePayload = (
     r_quantity: quantity,
     tp_deviation: _tpDeviation.toNumber(),
     triger_price: _triggerPriceExchange.toNumber(),
-    round_count: round_count,
+    round_count,
     toBotId,
+    fromBotId,
+    toDealId: 0,
   };
-  return createReducePrepareEvent(payload);
+  return createReducePrepareEvent(payload, round_count);
 };

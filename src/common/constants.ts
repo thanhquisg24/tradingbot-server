@@ -20,3 +20,8 @@ export enum USER_STATUS {
   PENDING = 'P',
   DISABLED = 'D',
 }
+
+export enum EVENT_STATUS {
+  SEND = 'SEND',
+  RECEIVED = 'RECEIVED',
+}

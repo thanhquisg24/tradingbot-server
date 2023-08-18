@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Inject,
   Injectable,
   LoggerService,
@@ -7,7 +8,7 @@ import {
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { COMMON_STATUS } from 'src/common/constants';
+import { COMMON_STATUS, EVENT_STATUS } from 'src/common/constants';
 import {
   OnTVEventPayload,
   TV_DEAL_EVENT_KEY,
@@ -26,6 +27,7 @@ import { BOT_EVENT_KEY, BotEventData } from 'src/common/event/reduce_events';
 import { UpdateBotDto } from './dto/update-bot.dto';
 import { PairService } from '../pair/pair.service';
 import { mappingBot } from './bot-utils';
+import { ProtectionEventService } from '../protection-event/protection-event.service';
 
 export interface IBotManagerInstances {
   botInstances: Map<string, BaseBotTrading>;
@@ -47,6 +49,8 @@ export class BotManagerInstances implements IBotManagerInstances {
     private readonly telegramService: TelegramService,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
+
+    private readonly protectionEventService: ProtectionEventService,
   ) {
     this.botInstances = new Map();
     console.log('🚀 NEW ins BotManagerInstances ~:');
@@ -106,6 +110,19 @@ export class BotManagerInstances implements IBotManagerInstances {
     return 'add bot running #' + id;
   }
 
+  async deleteBot(botId: number) {
+    const bot = this.getBotById(botId);
+    if (bot) {
+      throw new BadRequestException(
+        'please stop bot,already running bot#' + botId,
+      );
+    }
+    await this.botManagerService.deleteBot(botId);
+    await this.dealRepo.delete({
+      botId: botId,
+    });
+  }
+
   async stopBotIns(id: number) {
     await this.botManagerService.updateStatus(id, COMMON_STATUS.DISABLED);
     const bot = this.getBotById(id);
@@ -144,7 +161,9 @@ export class BotManagerInstances implements IBotManagerInstances {
       '🚀 ~ file: bot-manager.instances.ts:133 ~ BotManagerInstances ~ sendBotEvent ~ eventPayload:',
       eventPayload,
     );
-    this.eventEmitter.emit(BOT_EVENT_KEY, eventPayload);
+    this.protectionEventService.createEventFromRaw(eventPayload).then(() => {
+      this.eventEmitter.emit(BOT_EVENT_KEY, eventPayload);
+    });
   };
 
   @OnEvent(BOT_EVENT_KEY)
@@ -156,6 +175,10 @@ export class BotManagerInstances implements IBotManagerInstances {
     const strId = `${payload.payload.toBotId}`;
     if (this.botInstances.has(strId)) {
       await this.botInstances.get(strId).processBotEventAction(payload);
+      await this.protectionEventService.updateEventStatus(
+        payload.eventId,
+        EVENT_STATUS.RECEIVED,
+      );
     }
   }
 

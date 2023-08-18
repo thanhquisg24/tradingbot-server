@@ -6,6 +6,7 @@ import { DTOMapperModule } from '../entity-to-dto/dto-mapper.module';
 import { ExchangeModule } from '../exchange/exchange.module';
 import { Module } from '@nestjs/common';
 import { PairModule } from '../pair/pair.module';
+import { ProtectionEventModule } from '../protection-event/protection-event.module';
 import { TelegramModule } from '../telegram/telegram.module';
 import { TvWebhookController } from './tv-webhook/tv-webhook.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -19,6 +20,7 @@ import entities from 'src/config/typeorm.entities';
     ExchangeModule,
     PairModule,
     DTOMapperModule,
+    ProtectionEventModule,
   ],
   controllers: [BotManagerController, TvWebhookController],
   providers: [BotManagerInstances, BotManagerService],

@@ -23,6 +23,9 @@ export class BotManagerService {
     private readonly pairService: PairService,
   ) {}
 
+  async deleteBot(botId: number) {
+    await this.repo.delete(botId);
+  }
   async findByUser(userId: number) {
     const result = await this.repo.findAndCount({
       relations: ['exchange'],

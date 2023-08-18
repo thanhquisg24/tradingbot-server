@@ -1,3 +1,5 @@
+import { getNewUUid } from '../utils/hash-util';
+
 export enum REDUCE_EV_TYPES {
   PREPARE_ROUND = 'PREPARE_ROUND',
   BEGIN_ROUND = 'BEGIN_ROUND',
@@ -6,9 +8,14 @@ export enum REDUCE_EV_TYPES {
 }
 
 interface ICommonReduce {
-  toBotId: number;
+  fromBotId: number | null;
+  toBotId: number | null;
+  fromDealId: number | null;
+  toDealId: number | null;
 }
 interface IReduceEvent<P, T extends string = string> {
+  eventId: string;
+  round_count: number;
   type: T;
   payload: P;
 }
@@ -27,8 +34,11 @@ export type ReducePrepareEvent = IReduceEvent<
 >;
 export const createReducePrepareEvent = (
   payload: IReducePreparePayload,
+  round_count: number,
 ): ReducePrepareEvent => {
   return {
+    eventId: getNewUUid(),
+    round_count,
     type: REDUCE_EV_TYPES.PREPARE_ROUND,
     payload,
   };
@@ -46,8 +56,11 @@ export type ReduceBeginEvent = IReduceEvent<
 >;
 export const createReduceBeginEvent = (
   payload: IReduceBeginPayload,
+  round_count: number,
 ): ReduceBeginEvent => {
   return {
+    eventId: getNewUUid(),
+    round_count,
     type: REDUCE_EV_TYPES.BEGIN_ROUND,
     payload,
   };
@@ -63,6 +76,18 @@ export type ReduceEndEvent = IReduceEvent<
   REDUCE_EV_TYPES.END_ROUND
 >;
 
+export const createReduceEndEvent = (
+  payload: IReduceEndPayload,
+  round_count: number,
+): ReduceEndEvent => {
+  return {
+    eventId: getNewUUid(),
+    round_count,
+    type: REDUCE_EV_TYPES.END_ROUND,
+    payload,
+  };
+};
+
 export interface IReduceClosedTPPayload extends ICommonReduce {
   toDealId: number;
   pair: string;
@@ -71,6 +96,18 @@ export type ReduceClosedTPEvent = IReduceEvent<
   IReduceClosedTPPayload,
   REDUCE_EV_TYPES.CLOSED_TP
 >;
+
+export const createReduceClosedTPEvent = (
+  payload: IReduceClosedTPPayload,
+  round_count: number,
+): ReduceClosedTPEvent => {
+  return {
+    eventId: getNewUUid(),
+    round_count,
+    type: REDUCE_EV_TYPES.CLOSED_TP,
+    payload,
+  };
+};
 
 export type CombineReduceEventTypes =
   | ReducePrepareEvent

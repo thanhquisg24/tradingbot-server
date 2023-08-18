@@ -1,15 +1,18 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Inject,
   LoggerService,
+  NotFoundException,
   Param,
   Post,
   Put,
   Query,
   Request,
   UseGuards,
+  BadRequestException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -45,13 +48,26 @@ export class BotManagerController {
 
   // checkUser(req: RequestWithUser,userId:)
 
+  @Delete('/delete-bot/:id')
+  async deleteBot(@Request() req: RequestWithUser, @Param('id') botId: number) {
+    const bot = await this.service.findOne(botId);
+    if (bot) {
+      if (req.user.id !== bot.userId) {
+        throw new BadRequestException('User is not valid !');
+      }
+      await this.instanses.deleteBot(botId);
+      return 'success';
+    }
+    throw new NotFoundException('Bot not found');
+  }
+
   @Post('/create-new-bot')
   async createBot(
     @Request() req: RequestWithUser,
     @Body() createBotPayload: CreateBotPayload,
   ) {
     if (req.user.id !== createBotPayload.userId) {
-      throw new Error('User is not valid !');
+      throw new BadRequestException('User is not valid !');
     }
     this.logger.log(
       JSON.stringify(createBotPayload),
@@ -68,7 +84,7 @@ export class BotManagerController {
     @Body() updateBotPayload: UpdateBotDto,
   ) {
     if (req.user.id !== updateBotPayload.userId) {
-      throw new Error('User is not valid !');
+      throw new BadRequestException('User is not valid !');
     }
     this.logger.log(
       JSON.stringify(updateBotPayload),
