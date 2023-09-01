@@ -23,8 +23,19 @@ export class PairService {
     });
   }
 
-  saveBatch(list: PairEntity[]) {
-    return this.repo.save(list);
+  async saveBatch(list: PairEntity[]) {
+    for (let index = 0; index < list.length; index++) {
+      const element = list[index];
+      const p = await this.repo.findOneBy({
+        fromExchange: element.fromExchange,
+        exchangePair: element.exchangePair,
+      });
+      if (p) {
+        await this.repo.update(p.id, { ...element });
+      } else {
+        await this.repo.save(element);
+      }
+    }
   }
 
   create(createPairDto: CreatePairDto) {
