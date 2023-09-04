@@ -10,6 +10,7 @@ import { botLogger } from 'src/common/bot-logger';
 import { createStopLossOrder } from './bot-utils-calc';
 import { sortBy } from 'lodash';
 import { wrapExReq } from 'src/modules/exchange/remote-api/exchange.helper';
+import { ICommonFundingStartDeal } from 'src/common/event/funding_events';
 
 export class DCABot extends BaseBotTrading {
   constructor(
@@ -98,5 +99,8 @@ export class DCABot extends BaseBotTrading {
       }
       this.isWatchingPosition = false;
     }
+  }
+  startFundingDeal(payload: ICommonFundingStartDeal) {
+    return;
   }
 }

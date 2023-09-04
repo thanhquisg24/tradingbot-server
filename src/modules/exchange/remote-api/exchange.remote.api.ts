@@ -10,19 +10,36 @@ export abstract class AbstractExchangeAPI {
 }
 
 export class BinanceUSDMApi extends AbstractExchangeAPI {
-  constructor(apiKey: string, apiSerect: string, isDemo: boolean) {
+  constructor(
+    apiKey: string,
+    apiSerect: string,
+    isDemo: boolean,
+    isPublic?: boolean,
+  ) {
     super();
-    this.exchange_remote = new ccxt.binanceusdm({
-      // rateLimit: 1000, // unified exchange property
-      enableRateLimit: true,
-      apiKey,
-      secret: apiSerect,
-      options: {
-        adjustForTimeDifference: true, // exchange-specific option
-      },
-    });
-    this.exchange_remote.setSandboxMode(isDemo);
-    this.exchange_remote.precisionMode = ccxt.DECIMAL_PLACES;
+    if (isPublic) {
+      this.exchange_remote = new ccxt.binanceusdm({
+        // rateLimit: 1000, // unified exchange property
+        enableRateLimit: true,
+        options: {
+          adjustForTimeDifference: true, // exchange-specific option
+        },
+      });
+      this.exchange_remote.setSandboxMode(isDemo);
+      this.exchange_remote.precisionMode = ccxt.DECIMAL_PLACES;
+    } else {
+      this.exchange_remote = new ccxt.binanceusdm({
+        // rateLimit: 1000, // unified exchange property
+        enableRateLimit: true,
+        apiKey,
+        secret: apiSerect,
+        options: {
+          adjustForTimeDifference: true, // exchange-specific option
+        },
+      });
+      this.exchange_remote.setSandboxMode(isDemo);
+      this.exchange_remote.precisionMode = ccxt.DECIMAL_PLACES;
+    }
   }
 
   async checkExchangeOnlineStatus(): Promise<boolean> {
@@ -48,6 +65,7 @@ export class ExchangeFactory {
     apiKey: string,
     apiSerect: string,
     isDemo: boolean,
+    isPublic?: boolean,
   ) {
     if (ExchangeFactory.exchangeInstances.has(exchangeId)) {
       return ExchangeFactory.exchangeInstances.get(exchangeId);
@@ -55,10 +73,30 @@ export class ExchangeFactory {
     switch (exchangeName) {
       case ExchangesEnum.PAPER:
       case ExchangesEnum.BINANCEUSDM:
-        const _exchange = new BinanceUSDMApi(apiKey, apiSerect, isDemo);
+        const _exchange = new BinanceUSDMApi(
+          apiKey,
+          apiSerect,
+          isDemo,
+          isPublic,
+        );
         ExchangeFactory.exchangeInstances.set(exchangeId, _exchange);
         return _exchange;
     }
     throw new Error('Can not find exchange name :' + exchangeName);
+  }
+  static createPuplicExchange(
+    exchangeId: number,
+    exchangeName: ExchangesEnum,
+    isDemo: boolean,
+  ) {
+    const isPublic = true;
+    return ExchangeFactory.createExchange(
+      exchangeId,
+      exchangeName,
+      '',
+      '',
+      isDemo,
+      isPublic,
+    );
   }
 }

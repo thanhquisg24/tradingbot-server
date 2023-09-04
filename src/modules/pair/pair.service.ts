@@ -33,7 +33,7 @@ export class PairService {
       if (p) {
         await this.repo.update(p.id, { ...element });
       } else {
-        await this.repo.save(element);
+        await this.repo.insert(element);
       }
     }
   }

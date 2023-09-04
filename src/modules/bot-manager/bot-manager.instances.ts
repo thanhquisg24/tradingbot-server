@@ -28,6 +28,11 @@ import { UpdateBotDto } from './dto/update-bot.dto';
 import { PairService } from '../pair/pair.service';
 import { mappingBot } from './bot-utils';
 import { ProtectionEventService } from '../protection-event/protection-event.service';
+import {
+  FUNDING_EVENT_KEY,
+  FundingEvent,
+} from 'src/common/event/funding_events';
+import { BOT_TRADING_TYPE } from '../entities/bot.entity';
 
 export interface IBotManagerInstances {
   botInstances: Map<string, BaseBotTrading>;
@@ -192,6 +197,19 @@ export class BotManagerInstances implements IBotManagerInstances {
     if (this.botInstances.has(strId)) {
       await this.botInstances.get(strId).processTvAction(payload);
     }
+  }
+
+  @OnEvent(FUNDING_EVENT_KEY)
+  async handleFundingEvent(evt: FundingEvent) {
+    this.logger.log(
+      `receive FUNDING_EVENT_KEY ${JSON.stringify(evt)}`,
+      BotManagerInstances.name,
+    );
+    this.botInstances.forEach(async (bot) => {
+      if (bot.botConfig.botType === BOT_TRADING_TYPE.FUD_RATE) {
+        await bot.startFundingDeal(evt.payload);
+      }
+    });
   }
 
   // @Cron('*/20 * * * * *')

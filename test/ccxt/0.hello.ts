@@ -7,12 +7,13 @@ import fs from 'fs';
 const fetchSymbol = async () => {
   const binanceUSDM = new ccxt.binanceusdm({
     enableRateLimit: true,
+    apiKey: '6daad7c6adaef564f0aefe6d444d03319d97f004a700e315df79442641dd9466',
+    secret: 'adb86ea2f7250a8fcd6059336544ee5a5efc047418a7966047da41713d91d705',
   });
   binanceUSDM.setSandboxMode(true);
-  await binanceUSDM.loadMarkets();
-  const symbols = binanceUSDM.symbols;
-  console.log('🚀 ~ file: 0.hello.ts:16 ~ fetchTickers ~ symbols:', symbols);
-  fs.writeFileSync('cctx/binanceUSDM_symbols-2.txt', JSON.stringify(symbols));
+  const acc = await binanceUSDM.fapiPrivateV2GetAccount();
+  console.log('🚀 ~ file: 0.hello.ts:16 ~ fetchTickers ~ symbols:', acc);
+  fs.writeFileSync('./test/acc-info.txt', JSON.stringify(acc));
   //   binanceUSDM.;
   //   const result = await Promise.all(
   //     exchanges.map(async (id: string): Promise<ccxt.Exchange> => {
@@ -48,4 +49,4 @@ const fetchTicker = async (symbol: string) => {
 
   // return ticker;
 };
-fetchTicker('MANA/USDT:USDT');
+fetchSymbol();

@@ -41,8 +41,10 @@ import { CombineReduceEventTypes } from 'src/common/event/reduce_events';
 import { TelegramService } from 'src/modules/telegram/telegram.service';
 import { botLogger } from 'src/common/bot-logger';
 import { decryptWithAES } from 'src/common/utils/hash-util';
-import { has } from 'lodash';
+import { has, findIndex } from 'lodash';
 import { wrapExReq } from 'src/modules/exchange/remote-api/exchange.helper';
+import { ICommonFundingStartDeal } from 'src/common/event/funding_events';
+import { PairEntity } from 'src/modules/entities/pair.entity';
 
 interface IBaseBotTrading {
   isWatchingPosition: boolean;
@@ -100,7 +102,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       );
     }
   }
-  private async checkMaxActiveDeal() {
+  protected async checkMaxActiveDeal() {
     const countActiveDeal = await this.dealRepo.countBy({
       status: DEAL_STATUS.ACTIVE,
       botId: this.botConfig.id,
@@ -108,16 +110,22 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     return countActiveDeal < this.botConfig.maxActiveDeal;
   }
 
-  private async checkValidPair(pair: string) {
-    if (this.botConfig.allowDealSamePair) {
-      return true;
-    }
-    const countActiveDealByPair = await this.dealRepo.countBy({
-      status: DEAL_STATUS.ACTIVE,
-      botId: this.botConfig.id,
-      pair,
+  protected async checkValidPair(pair: string) {
+    const existPair = findIndex(this.botConfig.pairs, (o: PairEntity) => {
+      return o.exchangePair === pair;
     });
-    return countActiveDealByPair === 0;
+    if (existPair > -1) {
+      if (this.botConfig.allowDealSamePair) {
+        return true;
+      }
+      const countActiveDealByPair = await this.dealRepo.countBy({
+        status: DEAL_STATUS.ACTIVE,
+        botId: this.botConfig.id,
+        pair,
+      });
+      return countActiveDealByPair === 0;
+    }
+    return false;
   }
 
   protected async placeBinanceOrder(
@@ -296,8 +304,9 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     });
   }
 
-  private async createDeal(
+  protected async createDeal(
     buyOrders: BuyOrder[],
+    pair: string,
     baseClientOrderId?: string,
   ): Promise<DealEntity> {
     const deal = new DealEntity();
@@ -305,7 +314,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     deal.botId = this.botConfig.id;
     deal.exchangeId = this.botConfig.exchange.id;
     deal.clientDealType = CLIENT_DEAL_TYPE.DCA;
-    deal.pair = buyOrders[0].pair;
+    deal.pair = pair;
     deal.baseOrderSize = this.botConfig.baseOrderSize;
     deal.safetyOrderSize = this.botConfig.safetyOrderSize;
     deal.strategyDirection = this.botConfig.strategyDirection;
@@ -334,11 +343,11 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         order.id = baseClientOrderId;
       }
       const newOrder = await this.orderRepo.save(order);
-      deal.orders.push(newOrder);
+      savedDeal.orders.push(newOrder);
     }
-    return deal;
+    return savedDeal;
   }
-  private createBuyOrder(symbol: string, currentPrice: BigNumber) {
+  protected createBuyOrder(symbol: string, currentPrice: BigNumber) {
     return calculateBuyDCAOrders(
       symbol,
       currentPrice,
@@ -379,6 +388,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
 
             newDealEntity = await this.createDeal(
               buyOrdersMarket,
+              symbol,
               prepareBaseOrder.id,
             );
             baseOrderEntity = newDealEntity.orders.find(
@@ -396,7 +406,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
           break;
         case 'LIMIT':
           const buyOrders = this.createBuyOrder(symbol, currentPrice);
-          newDealEntity = await this.createDeal(buyOrders);
+          newDealEntity = await this.createDeal(buyOrders, symbol);
           baseOrderEntity = newDealEntity.orders.find(
             (o) =>
               o.status === 'CREATED' &&
@@ -894,6 +904,9 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
           .select('SUM(order_entity.filled_quantity)', 'totalFilledBuyQuantity')
           .where('order_entity.deal_id = :deal_id', { deal_id: dealId })
           .andWhere('order_entity.side = :side', { side: OrderSide.BUY })
+          .andWhere('order_entity.status  IN (:...dealStatusArray)', {
+            dealStatusArray: ['PARTIALLY_FILLED', 'FILLED'],
+          })
           .getRawOne();
 
         const { totalFilledSellQuantity } = await this.orderRepo
@@ -904,6 +917,9 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
           )
           .where('order_entity.deal_id = :deal_id', { deal_id: dealId })
           .andWhere('order_entity.side = :side', { side: OrderSide.SELL })
+          .andWhere('order_entity.status  IN (:...dealStatusArray)', {
+            dealStatusArray: ['PARTIALLY_FILLED', 'FILLED'],
+          })
           .getRawOne();
         const filledQty =
           Number(totalFilledBuyQuantity) - Number(totalFilledSellQuantity);
@@ -994,4 +1010,6 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
 
   abstract processActivePosition(activeDeals: DealEntity[]);
   abstract processBotEventAction(payload: CombineReduceEventTypes);
+
+  abstract startFundingDeal(payload: ICommonFundingStartDeal);
 }

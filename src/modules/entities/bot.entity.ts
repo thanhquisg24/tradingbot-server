@@ -17,14 +17,17 @@ import { PairEntity } from './pair.entity';
 export enum BOT_TRADING_TYPE {
   DCA = 'DCA',
   REDUCE = 'REDUCE',
+  FUD_RATE = 'FUD_RATE',
 }
 export enum STRATEGY_DIRECTION {
   LONG = 'LONG',
   SHORT = 'SHORT',
+  BOTH = 'BOTH',
 }
 export enum DEAL_START_TYPE {
   ASAP = 'ASAP',
   TRADINGVIEW = 'tradingview',
+  MANUAL = 'MANUAL',
 }
 
 @Entity({ name: 'bot_trading' })

@@ -20,6 +20,7 @@ export enum DEAL_STATUS {
 export enum CLIENT_DEAL_TYPE {
   'DCA' = 'DCA',
   'REDUCE' = 'REDUCE',
+  'FUD_RATE' = 'FUD_RATE',
 }
 
 @Entity()
