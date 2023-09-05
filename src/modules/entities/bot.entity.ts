@@ -30,6 +30,11 @@ export enum DEAL_START_TYPE {
   MANUAL = 'MANUAL',
 }
 
+export enum MARGIN_MODE {
+  CROSS = 'cross',
+  ISOLATE = 'isolated',
+}
+
 @Entity({ name: 'bot_trading' })
 export class BotTradingEntity {
   @AutoMap()

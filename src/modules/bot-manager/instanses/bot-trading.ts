@@ -3,16 +3,17 @@ import {
   ExchangeFactory,
 } from 'src/modules/exchange/remote-api/exchange.remote.api';
 import {
+  BOT_TRADING_TYPE,
+  BotTradingEntity,
+  DEAL_START_TYPE,
+} from 'src/modules/entities/bot.entity';
+import {
   FuturesOrder as BinanceOrder,
   FuturesOrderType_LT,
   OrderSide,
   OrderStatus,
   OrderType,
 } from 'binance-api-node';
-import {
-  BotTradingEntity,
-  DEAL_START_TYPE,
-} from 'src/modules/entities/bot.entity';
 import {
   BuyOrder,
   CLIENT_ORDER_TYPE,
@@ -177,10 +178,14 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       const quantity = order.quantity;
       const price = order.price;
       const leverage = this.botConfig.leverage;
+      let marginMode = 'cross';
+      if (this.botConfig.botType === BOT_TRADING_TYPE.FUD_RATE) {
+        marginMode = 'isolated';
+      }
       await wrapExReq(
         this._exchangeRemote
           .getCcxtExchange()
-          .setLeverage(leverage, symbol, { marginMode: 'cross' }),
+          .setLeverage(leverage, symbol, { marginMode }),
         botLogger,
       );
 
