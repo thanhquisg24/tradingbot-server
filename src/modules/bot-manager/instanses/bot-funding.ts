@@ -148,10 +148,13 @@ export class FundingBot extends BaseBotTrading {
       const isValidPair = await this.checkValidPair(exchangePair);
       const isValidActiveDealCount = await this.checkMaxActiveDeal();
       //max trading fee = 0.04 %
-      const MINIMUM_FUNDING_RATE_TO_STARTED = 0.005;
+      const MINIMUM_FUNDING_RATE_TO_STARTED = new BigNumber(
+        this.botConfig.minFundingRateStart,
+      ).dividedBy(100);
+      // 0.0015; //0.005;
       const isValidRequiredMinRate =
         Math.abs(payload.fundingData.fundingRate) >=
-        MINIMUM_FUNDING_RATE_TO_STARTED;
+        MINIMUM_FUNDING_RATE_TO_STARTED.toNumber();
       if (isValidActiveDealCount && isValidPair && isValidRequiredMinRate) {
         await this.createAndPlaceFundingDeal(payload);
       } //end if

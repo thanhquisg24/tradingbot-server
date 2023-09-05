@@ -1,4 +1,5 @@
 import { AutomapperModule } from '@automapper/nestjs';
+import { BotFetchFundingService } from './bot-fetch-funding.service';
 import { BotManagerController } from './bot-manager.controller';
 import { BotManagerInstances } from './bot-manager.instances';
 import { BotManagerService } from './bot-manager.service';
@@ -23,7 +24,7 @@ import entities from 'src/config/typeorm.entities';
     ProtectionEventModule,
   ],
   controllers: [BotManagerController, TvWebhookController],
-  providers: [BotManagerInstances, BotManagerService],
+  providers: [BotManagerInstances, BotManagerService, BotFetchFundingService],
   exports: [BotManagerInstances, BotManagerService],
 })
 export class BotManagerModule {}

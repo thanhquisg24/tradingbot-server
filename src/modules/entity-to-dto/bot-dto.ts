@@ -76,6 +76,9 @@ export class BotTradingBaseDTO {
   @AutoMap()
   safetyOrderStepScale: number;
 
+  @AutoMap()
+  minFundingRateStart: number;
+
   @AutoMap(() => ExchangeDTO)
   exchange: ExchangeDTO;
 

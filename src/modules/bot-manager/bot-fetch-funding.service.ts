@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, LoggerService } from '@nestjs/common';
 import { SchedulerRegistry, Timeout } from '@nestjs/schedule';
 import { ExchangeFactory } from '../exchange/remote-api/exchange.remote.api';
 import { ExchangesEnum } from '../entities/exchange.entity';
@@ -10,6 +10,7 @@ import {
 } from 'src/common/event/funding_events';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Exchange } from 'ccxt';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 interface IFundingExchangeItem {
   info: any;
@@ -28,8 +29,8 @@ interface IFundingExchangeItem {
 interface IFundingsExchangeData {
   [symbol: string]: IFundingExchangeItem;
 }
-const MAX_TIME_OUT_CLOSE_MARKET = 500; // 0.5s delay after fundingTime
-const TIME_BEFORE_FUNDING = 2000;
+const MAX_TIME_OUT_CLOSE_MARKET = 100; // 0.5s delay after fundingTime
+const TIME_BEFORE_FUNDING = 5000;
 
 @Injectable()
 export class BotFetchFundingService {
@@ -37,6 +38,8 @@ export class BotFetchFundingService {
     private schedulerRegistry: SchedulerRegistry,
     private readonly pairService: PairService,
     private eventEmitter: EventEmitter2,
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService,
   ) {}
 
   sendFundingDealEvent(payload: ICommonFundingStartDeal) {
@@ -47,6 +50,10 @@ export class BotFetchFundingService {
     ccxtExchange: Exchange,
     fun: IFundingExchangeItem,
   ) {
+    this.logger.log(
+      `Exchange Funding Data : ${JSON.stringify(fun)}`,
+      BotFetchFundingService.name,
+    );
     const minusTime = fun.fundingTimestamp - fun.timestamp;
     let timeScheduleToRefetch = minusTime + 1 - TIME_BEFORE_FUNDING;
     if (minusTime > TIME_BEFORE_FUNDING) {
@@ -93,7 +100,7 @@ export class BotFetchFundingService {
       '',
       '',
       false,
-      true,
+      true, // real exchange
     );
     const ccxtExchange = publicExchange.getCcxtExchange();
 

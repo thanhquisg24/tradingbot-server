@@ -1,15 +1,17 @@
-import { BotEventData } from 'src/common/event/reduce_events';
 import {
   BOT_TRADING_TYPE,
   BotTradingEntity,
 } from 'src/modules/entities/bot.entity';
-import { DealEntity } from 'src/modules/entities/deal.entity';
-import { OrderEntity } from 'src/modules/entities/order.entity';
-import { TelegramService } from 'src/modules/telegram/telegram.service';
-import { Repository } from 'typeorm';
-import { DCABot } from './bot-dca';
-import { ReduceBot } from './bot-reduce';
+
 import { BaseBotTrading } from './bot-trading';
+import { BotEventData } from 'src/common/event/reduce_events';
+import { DCABot } from './bot-dca';
+import { DealEntity } from 'src/modules/entities/deal.entity';
+import { FundingBot } from './bot-funding';
+import { OrderEntity } from 'src/modules/entities/order.entity';
+import { ReduceBot } from './bot-reduce';
+import { Repository } from 'typeorm';
+import { TelegramService } from 'src/modules/telegram/telegram.service';
 
 export class BotFactory {
   static createBot(
@@ -20,6 +22,8 @@ export class BotFactory {
     sendBotEvent: (eventPayload: BotEventData) => void,
   ) {
     switch (config.botType) {
+      case BOT_TRADING_TYPE.FUD_RATE:
+        return new FundingBot(config, dealRepo, orderRepo, telegramService);
       case BOT_TRADING_TYPE.DCA:
         return new DCABot(config, dealRepo, orderRepo, telegramService);
       case BOT_TRADING_TYPE.REDUCE:
@@ -31,7 +35,7 @@ export class BotFactory {
           sendBotEvent,
         );
       default:
-        throw new Error('Can not find exchange name :' + config.botType);
+        throw new Error('Can not create BOT_TRADING_TYPE  :' + config.botType);
     }
   }
 }

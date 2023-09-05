@@ -179,9 +179,9 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       const price = order.price;
       const leverage = this.botConfig.leverage;
       let marginMode = 'cross';
-      if (this.botConfig.botType === BOT_TRADING_TYPE.FUD_RATE) {
-        marginMode = 'isolated';
-      }
+      // if (this.botConfig.botType === BOT_TRADING_TYPE.FUD_RATE) {
+      //   marginMode = 'isolated';
+      // }
       await wrapExReq(
         this._exchangeRemote
           .getCcxtExchange()

@@ -1,7 +1,8 @@
-import { COMMON_STATUS } from 'src/common/constants';
-import { BotTradingEntity } from '../entities/bot.entity';
-import { ExchangeEntity } from '../entities/exchange.entity';
 import { CommonBotPayload, CreateBotPayload } from './dto/create-bot.payload';
+
+import { BotTradingEntity } from '../entities/bot.entity';
+import { COMMON_STATUS } from 'src/common/constants';
+import { ExchangeEntity } from '../entities/exchange.entity';
 import { PairEntity } from '../entities/pair.entity';
 
 export function mappingNewBot(
@@ -20,6 +21,7 @@ export function mappingNewBot(
   return newBot;
 }
 export function mappingBot(bot: BotTradingEntity, payload: CommonBotPayload) {
+  bot.minFundingRateStart = payload.minFundingRateStart;
   bot.dealStartCondition = payload.dealStartCondition;
   bot.baseOrderSize = payload.baseOrderSize;
   bot.safetyOrderSize = payload.safetyOrderSize;

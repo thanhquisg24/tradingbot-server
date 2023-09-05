@@ -208,6 +208,16 @@ export class BotTradingEntity {
   safetyOrderStepScale: number;
 
   @AutoMap()
+  @Column({
+    name: 'min_funding_rate_start',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    default: 0.5,
+  })
+  minFundingRateStart: number;
+
+  @AutoMap()
   @Column({ name: 'max_reduce_count', type: 'int', default: 0 })
   maxReduceCount: number;
 

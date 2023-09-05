@@ -83,7 +83,10 @@ export class BotManagerInstances implements IBotManagerInstances {
     if (this.botInstances.has(strId)) {
       this.botInstances.get(strId).updateConfig(newConfigBot);
     }
-    return newConfigBot;
+    const result = await this.botManagerService.findOneRelationsExchangeAndPair(
+      updateData.id,
+    );
+    return result;
   }
 
   async addRunningBot(id: number, user: UserEntity) {

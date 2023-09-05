@@ -1,5 +1,8 @@
-import { AutoMap } from '@automapper/classes';
-import { ApiProperty } from '@nestjs/swagger';
+import {
+  BOT_TRADING_TYPE,
+  DEAL_START_TYPE,
+  STRATEGY_DIRECTION,
+} from 'src/modules/entities/bot.entity';
 import {
   IntMinMax,
   IsNotBlankString,
@@ -7,11 +10,9 @@ import {
   MinMax,
   MinMaxPct,
 } from '@nestjsi/class-validator';
-import {
-  BOT_TRADING_TYPE,
-  DEAL_START_TYPE,
-  STRATEGY_DIRECTION,
-} from 'src/modules/entities/bot.entity';
+
+import { ApiProperty } from '@nestjs/swagger';
+import { AutoMap } from '@automapper/classes';
 
 export class CommonBotPayload {
   @AutoMap()
@@ -155,7 +156,7 @@ export class CommonBotPayload {
     default: 3,
     description: 'maxSafetyTradesCount',
   })
-  @IntMinMax(1, 1000)
+  @IntMinMax(0, 1000)
   maxSafetyTradesCount: number;
 
   @AutoMap()
@@ -166,7 +167,7 @@ export class CommonBotPayload {
     default: 1,
     description: 'maxActiveSafetyTradesCount',
   })
-  @IntMinMax(1, 1000)
+  @IntMinMax(0, 1000)
   maxActiveSafetyTradesCount: number;
 
   @AutoMap()
@@ -224,6 +225,20 @@ export class CommonBotPayload {
     100, // number
   )
   safetyOrderStepScale: number;
+
+  @AutoMap()
+  @ApiProperty({
+    type: 'number',
+    required: true,
+    example: 0.5,
+    default: 0.5,
+    description: 'minFundingRateStart',
+  })
+  @MinMaxPct(
+    0, // number
+    100, // number
+  )
+  minFundingRateStart: number;
 
   @AutoMap()
   @ApiProperty({

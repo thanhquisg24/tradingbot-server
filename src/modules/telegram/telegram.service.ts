@@ -22,7 +22,9 @@ export class TelegramService {
       .sendMessage(userId, message)
       .then()
       .catch((ex) =>
-        console.log("Can't not send Msg Via telegram Bot:" + ex.message),
+        console.log(
+          `Can't not send Msg Via telegram Bot:${ex.message} ,UserChatId:${userId} , MessagePayload:${message}`,
+        ),
       );
   };
 }
