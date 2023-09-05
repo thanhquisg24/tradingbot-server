@@ -2,26 +2,22 @@ import {
   BotTradingEntity,
   STRATEGY_DIRECTION,
 } from 'src/modules/entities/bot.entity';
-import { Repository } from 'typeorm';
-import { BaseBotTrading } from './bot-trading';
-import { DealEntity } from 'src/modules/entities/deal.entity';
-import { TelegramService } from 'src/modules/telegram/telegram.service';
 import {
   BuyOrder,
   OrderEntity,
   createOrderEntity,
 } from 'src/modules/entities/order.entity';
-import { CombineReduceEventTypes } from 'src/common/event/reduce_events';
-import { ICommonFundingStartDeal } from 'src/common/event/funding_events';
-import { botLogger } from 'src/common/bot-logger';
-import {
-  calcPriceByDeviation,
-  createMarketBaseOrder,
-  createStopLossOrder,
-} from './bot-utils-calc';
+
+import { BaseBotTrading } from './bot-trading';
 import BigNumber from 'bignumber.js';
-import { OrderSide, OrderStatus } from 'binance-api-node';
-import { wrapExReq } from 'src/modules/exchange/remote-api/exchange.helper';
+import { CombineReduceEventTypes } from 'src/common/event/reduce_events';
+import { DealEntity } from 'src/modules/entities/deal.entity';
+import { ICommonFundingStartDeal } from 'src/common/event/funding_events';
+import { OrderSide } from 'binance-api-node';
+import { Repository } from 'typeorm';
+import { TelegramService } from 'src/modules/telegram/telegram.service';
+import { botLogger } from 'src/common/bot-logger';
+import { createMarketBaseOrder } from './bot-utils-calc';
 
 export class FundingBot extends BaseBotTrading {
   constructor(
@@ -46,18 +42,19 @@ export class FundingBot extends BaseBotTrading {
     return;
   }
 
-  async checkAndCloseMarketOrder(stlOrder: OrderEntity) {
-    const binanceUSDM = this._exchangeRemote.getCcxtExchange();
-    const exchangeOrder = await wrapExReq(
-      binanceUSDM.fetchOrder(stlOrder.binanceOrderId, stlOrder.pair),
-      botLogger,
-    );
-    const orderStatus = exchangeOrder.info.status;
-    if (orderStatus === 'FILLED') {
-      await this.closeDeal(stlOrder.deal.id);
-    } else {
-      await this.closeAtMarketPrice(stlOrder.deal.id, this.botConfig.userId);
-    }
+  async checkAndCloseMarketOrder(dealId: number) {
+    await this.closeAtMarketPrice(dealId, this.botConfig.userId);
+    // const binanceUSDM = this._exchangeRemote.getCcxtExchange();
+    // const exchangeOrder = await wrapExReq(
+    //   binanceUSDM.fetchOrder(stlOrder.binanceOrderId, stlOrder.pair),
+    //   botLogger,
+    // );
+    // const orderStatus = exchangeOrder.info.status;
+    // if (orderStatus === 'FILLED') {
+    //   await this.closeDeal(stlOrder.deal.id);
+    // } else {
+    //   await this.closeAtMarketPrice(stlOrder.deal.id, this.botConfig.userId);
+    // }
   }
   async createAndPlaceFundingDeal(payload: ICommonFundingStartDeal) {
     let newDealEntity: DealEntity | null = null;
@@ -106,33 +103,42 @@ export class FundingBot extends BaseBotTrading {
       newBaseOrder.status = 'FILLED';
       newBaseOrder.binanceOrderId = `${binanceMarketBaseOrder.orderId}`;
       newBaseOrder.placedCount = newBaseOrder.placedCount + 1;
-      const resBaseOrder = await this.orderRepo.save(newBaseOrder); //1 base
+      await this.orderRepo.save(newBaseOrder); //1 base
 
-      const createdSTLOrder = createStopLossOrder(newDealEntity, resBaseOrder);
-      if (this.botConfig.useStopLoss === false) {
-        const priceStopCalc = calcPriceByDeviation(
-          strategyDirection,
-          _filledPrice,
-          new BigNumber(Math.abs(payload.fundingData.fundingRate)),
-        );
-        const strTriggerPrice = this._exchangeRemote
-          .getCcxtExchange()
-          .priceToPrecision(symbol, priceStopCalc.toNumber());
-        createdSTLOrder.price = Number(strTriggerPrice);
-      }
-      const binancePlaceStlOrder = await this.placeBinanceOrder(
-        createdSTLOrder,
-      );
-      if (binancePlaceStlOrder) {
-        createdSTLOrder.status = OrderStatus.NEW;
-        createdSTLOrder.binanceOrderId = `${binanceMarketBaseOrder.orderId}`;
-        createdSTLOrder.placedCount = createdSTLOrder.placedCount + 1;
-      }
-      const newStl = await this.orderRepo.save(createdSTLOrder); //2 stl
+      // const createdSTLOrder = createStopLossOrder(newDealEntity, resBaseOrder);
+      // if (this.botConfig.useStopLoss === false) {
+      //   const priceStopCalc = calcPriceByDeviation(
+      //     strategyDirection,
+      //     _filledPrice,
+      //     new BigNumber(Math.abs(payload.fundingData.fundingRate)),
+      //   );
+      //   const strTriggerPrice = this._exchangeRemote
+      //     .getCcxtExchange()
+      //     .priceToPrecision(symbol, priceStopCalc.toNumber());
+      //   createdSTLOrder.price = Number(strTriggerPrice);
+      // }
+      // const binancePlaceStlOrder = await this.placeBinanceOrder(
+      //   createdSTLOrder,
+      // );
+      // if (binancePlaceStlOrder) {
+      //   createdSTLOrder.status = OrderStatus.NEW;
+      //   createdSTLOrder.binanceOrderId = `${binanceMarketBaseOrder.orderId}`;
+      //   createdSTLOrder.placedCount = createdSTLOrder.placedCount + 1;
+      // }
+      // const newStl = await this.orderRepo.save(createdSTLOrder); //2 stl
 
       setTimeout(
-        async () => await this.checkAndCloseMarketOrder(newStl),
+        async () => await this.checkAndCloseMarketOrder(newDealEntity.id),
         payload.closeAtMarketTimeOut,
+      );
+      this.sendMsgTelegram(
+        `[${newBaseOrder.pair}] [${
+          newBaseOrder.binanceOrderId
+        }]: Place a Funding rate Order. Price: ${
+          newBaseOrder.averagePrice
+        }, Amount: ${newBaseOrder.quantity}. Rates: ${
+          payload.fundingData.fundingRate * 100
+        }`,
       );
     }
   }

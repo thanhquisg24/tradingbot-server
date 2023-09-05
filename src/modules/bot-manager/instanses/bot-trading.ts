@@ -34,17 +34,17 @@ import {
 } from './bot-utils-calc';
 import { OnTVEventPayload, TVActionType } from 'src/common/event/tv_events';
 import { Raw, Repository } from 'typeorm';
+import { findIndex, has } from 'lodash';
 
 import BigNumber from 'bignumber.js';
 import { Order as CCXTOrder } from 'ccxt';
 import { CombineReduceEventTypes } from 'src/common/event/reduce_events';
+import { ICommonFundingStartDeal } from 'src/common/event/funding_events';
+import { PairEntity } from 'src/modules/entities/pair.entity';
 import { TelegramService } from 'src/modules/telegram/telegram.service';
 import { botLogger } from 'src/common/bot-logger';
 import { decryptWithAES } from 'src/common/utils/hash-util';
-import { has, findIndex } from 'lodash';
 import { wrapExReq } from 'src/modules/exchange/remote-api/exchange.helper';
-import { ICommonFundingStartDeal } from 'src/common/event/funding_events';
-import { PairEntity } from 'src/modules/entities/pair.entity';
 
 interface IBaseBotTrading {
   isWatchingPosition: boolean;
@@ -939,10 +939,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             closeMarketOrder.quantity = Number(exOrder.executedQty);
             closeMarketOrder.filledQuantity = closeMarketOrder.quantity;
             closeMarketOrder.placedCount = closeMarketOrder.placedCount + 1;
-            console.log(
-              '🚀 ~ file: bot-trading.ts:922 ~ BaseBotTrading ~ closeAtMarketPrice ~ closeMarketOrder:',
-              closeMarketOrder,
-            );
+
             await this.orderRepo.save(closeMarketOrder);
             await this.closeDeal(dealId);
           } else {
