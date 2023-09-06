@@ -6,6 +6,7 @@ import {
   BOT_TRADING_TYPE,
   BotTradingEntity,
   DEAL_START_TYPE,
+  STRATEGY_DIRECTION,
 } from 'src/modules/entities/bot.entity';
 import {
   FuturesOrder as BinanceOrder,
@@ -131,11 +132,18 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
 
   protected async placeBinanceOrder(
     order: OrderEntity | null,
+    _strategyDirection:
+      | null
+      | STRATEGY_DIRECTION.LONG
+      | STRATEGY_DIRECTION.SHORT,
     isRetry?: boolean,
   ): Promise<BinanceOrder | undefined> {
     try {
+      let _positionSide = _strategyDirection
+        ? _strategyDirection
+        : this.botConfig.strategyDirection;
       let params: any = {
-        positionSide: this.botConfig.strategyDirection,
+        positionSide: _positionSide,
         newClientOrderId: order.id,
       };
       let ex_orderType: FuturesOrderType_LT = OrderType.LIMIT;
@@ -312,8 +320,15 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
   protected async createDeal(
     buyOrders: BuyOrder[],
     pair: string,
+    _strategyDirection:
+      | null
+      | STRATEGY_DIRECTION.LONG
+      | STRATEGY_DIRECTION.SHORT,
     baseClientOrderId?: string,
   ): Promise<DealEntity> {
+    let _positionSide = _strategyDirection
+      ? _strategyDirection
+      : this.botConfig.strategyDirection;
     const deal = new DealEntity();
     deal.userId = this.botConfig.userId;
     deal.botId = this.botConfig.id;
@@ -322,7 +337,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     deal.pair = pair;
     deal.baseOrderSize = this.botConfig.baseOrderSize;
     deal.safetyOrderSize = this.botConfig.safetyOrderSize;
-    deal.strategyDirection = this.botConfig.strategyDirection;
+    deal.strategyDirection = _positionSide;
     deal.startOrderType = this.botConfig.startOrderType;
     deal.dealStartCondition = this.botConfig.dealStartCondition;
     deal.targetProfitPercentage = this.botConfig.targetProfitPercentage;
@@ -380,6 +395,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
 
           const binanceMarketBaseOrder = await this.placeBinanceOrder(
             prepareBaseOrder,
+            null,
           );
           if (binanceMarketBaseOrder) {
             const filledPrice =
@@ -394,6 +410,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             newDealEntity = await this.createDeal(
               buyOrdersMarket,
               symbol,
+              null,
               prepareBaseOrder.id,
             );
             baseOrderEntity = newDealEntity.orders.find(
@@ -411,7 +428,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
           break;
         case 'LIMIT':
           const buyOrders = this.createBuyOrder(symbol, currentPrice);
-          newDealEntity = await this.createDeal(buyOrders, symbol);
+          newDealEntity = await this.createDeal(buyOrders, symbol, null);
           baseOrderEntity = newDealEntity.orders.find(
             (o) =>
               o.status === 'CREATED' &&
@@ -420,6 +437,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
           if (baseOrderEntity) {
             const binanceLimitBaseOrder = await this.placeBinanceOrder(
               baseOrderEntity,
+              null,
             );
             if (binanceLimitBaseOrder) {
               baseOrderEntity.status = OrderStatus.NEW;
@@ -674,7 +692,10 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
                   currentOrder.deal,
                   currentOrder.totalQuantity,
                 );
-                const exOrder = await this.placeBinanceOrder(closeMarketOrder);
+                const exOrder = await this.placeBinanceOrder(
+                  closeMarketOrder,
+                  null,
+                );
                 if (exOrder) {
                   closeMarketOrder.status = exOrder.status;
                   closeMarketOrder.binanceOrderId = `${exOrder.orderId}`;
@@ -697,6 +718,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
               newSellOrder = await this.orderRepo.save(newSellOrder);
               const bSellOrder = await this.placeBinanceOrder(
                 newSellOrder,
+                null,
                 true,
               );
               if (bSellOrder) {
@@ -720,6 +742,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
               if (nextsafety) {
                 const binanceSafety = await this.placeBinanceOrder(
                   nextsafety,
+                  null,
                   true,
                 );
                 if (binanceSafety) {
@@ -818,7 +841,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
     });
     for (let index = 0; index < ordersOnPlacing.length; index++) {
       const order = ordersOnPlacing[index];
-      const binanceOrder = await this.placeBinanceOrder(order, true);
+      const binanceOrder = await this.placeBinanceOrder(order, null, true);
       if (binanceOrder) {
         order.status = OrderStatus.NEW;
         order.binanceOrderId = `${binanceOrder.orderId}`;
@@ -927,22 +950,32 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
           })
           .getRawOne();
         const filledQty =
-          Number(totalFilledBuyQuantity) - Number(totalFilledSellQuantity);
+          Number(totalFilledBuyQuantity) - Number(totalFilledSellQuantity || 0);
+        console.log(
+          '🚀 ~ file: bot-trading.ts:945 ~ BaseBotTrading ~ closeAtMarketPrice ~ filledQty:',
+          filledQty,
+          totalFilledBuyQuantity,
+          totalFilledSellQuantity,
+        );
         if (filledQty > 0) {
           const closeMarketOrder = createCloseMarketOrder(
             activeDeal,
             filledQty,
           );
-          const exOrder = await this.placeBinanceOrder(closeMarketOrder);
+          const exOrder = await this.placeBinanceOrder(
+            closeMarketOrder,
+            //@ts-ignore
+            activeDeal.strategyDirection,
+          );
           if (exOrder) {
             closeMarketOrder.status = exOrder.status;
             closeMarketOrder.binanceOrderId = `${exOrder.orderId}`;
             closeMarketOrder.price = Number(exOrder.avgPrice);
             closeMarketOrder.averagePrice = closeMarketOrder.price;
             closeMarketOrder.filledPrice = closeMarketOrder.price;
+            closeMarketOrder.filledQuantity = closeMarketOrder.quantity;
             closeMarketOrder.volume = Number(exOrder.cumQuote);
             closeMarketOrder.quantity = Number(exOrder.executedQty);
-            closeMarketOrder.filledQuantity = closeMarketOrder.quantity;
             closeMarketOrder.placedCount = closeMarketOrder.placedCount + 1;
 
             await this.orderRepo.save(closeMarketOrder);

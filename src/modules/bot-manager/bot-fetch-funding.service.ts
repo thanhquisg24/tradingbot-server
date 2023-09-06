@@ -60,23 +60,27 @@ export class BotFetchFundingService {
       //set schedule to refech funding data before TIME_BEFORE_FUNDING
       timeScheduleToRefetch = minusTime + 1 - TIME_BEFORE_FUNDING;
     } else {
-      // start a funding deal and MAX_TIME_OUT_CLOSE_MARKET for close market deal
-      const payload: ICommonFundingStartDeal = {
-        fundingData: {
-          symbol: fun.symbol,
-          markPrice: fun.markPrice,
-          indexPrice: fun.indexPrice,
-          interestRate: fun.interestRate,
-          estimatedSettlePrice: fun.estimatedSettlePrice,
-          timestamp: fun.timestamp,
-          datetime: fun.datetime,
-          fundingRate: fun.fundingRate,
-          fundingTimestamp: fun.fundingTimestamp,
-          fundingDatetime: fun.fundingDatetime,
-        },
-        closeAtMarketTimeOut: minusTime + MAX_TIME_OUT_CLOSE_MARKET,
-      };
-      this.sendFundingDealEvent(payload);
+      const isValidMinRateSignal = Math.abs(fun.fundingRate) >= 0.0015;
+
+      if (isValidMinRateSignal) {
+        // start a funding deal and MAX_TIME_OUT_CLOSE_MARKET for close market deal
+        const payload: ICommonFundingStartDeal = {
+          fundingData: {
+            symbol: fun.symbol,
+            markPrice: fun.markPrice,
+            indexPrice: fun.indexPrice,
+            interestRate: fun.interestRate,
+            estimatedSettlePrice: fun.estimatedSettlePrice,
+            timestamp: fun.timestamp,
+            datetime: fun.datetime,
+            fundingRate: fun.fundingRate,
+            fundingTimestamp: fun.fundingTimestamp,
+            fundingDatetime: fun.fundingDatetime,
+          },
+          closeAtMarketTimeOut: minusTime + MAX_TIME_OUT_CLOSE_MARKET,
+        };
+        this.sendFundingDealEvent(payload);
+      }
       //set schedule to refech refech next funding data
       timeScheduleToRefetch =
         TIME_BEFORE_FUNDING + MAX_TIME_OUT_CLOSE_MARKET + 1000;
@@ -92,7 +96,7 @@ export class BotFetchFundingService {
     );
   }
 
-  @Timeout('initFundingData', 5000)
+  // @Timeout('initFundingData', 5000)
   async handleInitFundingData() {
     const publicExchange = ExchangeFactory.createExchange(
       0,

@@ -5,6 +5,7 @@ import { BotManagerInstances } from './bot-manager.instances';
 import { BotManagerService } from './bot-manager.service';
 import { DTOMapperModule } from '../entity-to-dto/dto-mapper.module';
 import { ExchangeModule } from '../exchange/exchange.module';
+import { ManualWebhookController } from './manual-webhook/manual-webhook.controller';
 import { Module } from '@nestjs/common';
 import { PairModule } from '../pair/pair.module';
 import { ProtectionEventModule } from '../protection-event/protection-event.module';
@@ -23,7 +24,11 @@ import entities from 'src/config/typeorm.entities';
     DTOMapperModule,
     ProtectionEventModule,
   ],
-  controllers: [BotManagerController, TvWebhookController],
+  controllers: [
+    BotManagerController,
+    TvWebhookController,
+    ManualWebhookController,
+  ],
   providers: [BotManagerInstances, BotManagerService, BotFetchFundingService],
   exports: [BotManagerInstances, BotManagerService],
 })

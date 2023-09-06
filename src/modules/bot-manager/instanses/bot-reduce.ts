@@ -187,7 +187,11 @@ export class ReduceBot extends DCABot {
           CLIENT_ORDER_TYPE.REDUCE_END,
         );
         newSellOrder = await this.orderRepo.save(newSellOrder);
-        const bSellOrder = await this.placeBinanceOrder(newSellOrder, true);
+        const bSellOrder = await this.placeBinanceOrder(
+          newSellOrder,
+          null,
+          true,
+        );
         if (bSellOrder) {
           newSellOrder.status = OrderStatus.NEW;
           newSellOrder.binanceOrderId = `${bSellOrder.orderId}`;
@@ -524,7 +528,7 @@ export class ReduceBot extends DCABot {
       CLIENT_ORDER_TYPE.REDUCE_BEGIN,
     );
     const savedOrder = await this.orderRepo.save(orderEntity);
-    const binanceOrder = await this.placeBinanceOrder(savedOrder, true);
+    const binanceOrder = await this.placeBinanceOrder(savedOrder, null, true);
     if (binanceOrder) {
       savedOrder.status = OrderStatus.NEW;
       savedOrder.binanceOrderId = `${binanceOrder.orderId}`;
@@ -593,7 +597,7 @@ export class ReduceBot extends DCABot {
       CLIENT_ORDER_TYPE.REDUCE_END,
     );
     const savedOrder = await this.orderRepo.save(orderEntity);
-    const binanceOrder = await this.placeBinanceOrder(savedOrder, true);
+    const binanceOrder = await this.placeBinanceOrder(savedOrder, null, true);
     if (binanceOrder) {
       savedOrder.status = OrderStatus.NEW;
       savedOrder.binanceOrderId = `${binanceOrder.orderId}`;
@@ -656,7 +660,7 @@ export class ReduceBot extends DCABot {
         CLIENT_ORDER_TYPE.COVER_CUT_QTY,
         currentDeal.orders.length,
       );
-      const exOrder1 = await this.placeBinanceOrder(cutOrderMarket, true);
+      const exOrder1 = await this.placeBinanceOrder(cutOrderMarket, null, true);
       if (exOrder1) {
         cutOrderMarket.status = OrderStatus.NEW;
         cutOrderMarket.binanceOrderId = `${exOrder1.orderId}`;
@@ -674,7 +678,7 @@ export class ReduceBot extends DCABot {
         CLIENT_ORDER_TYPE.COVER_ADD_QTY,
         currentDeal.orders.length + 1,
       );
-      const exOrder2 = await this.placeBinanceOrder(addOrderMarket, true);
+      const exOrder2 = await this.placeBinanceOrder(addOrderMarket, null, true);
       if (exOrder2) {
         addOrderMarket.status = OrderStatus.NEW;
         addOrderMarket.binanceOrderId = `${exOrder2.orderId}`;
@@ -731,7 +735,7 @@ export class ReduceBot extends DCABot {
       newTPOrder.clientOrderType = CLIENT_ORDER_TYPE.TAKE_PROFIT;
       newTPOrder.pair = currentDeal.pair;
       const savedTPOrder = await this.orderRepo.save(newTPOrder);
-      const exTpOrder = await this.placeBinanceOrder(newTPOrder, true);
+      const exTpOrder = await this.placeBinanceOrder(newTPOrder, null, true);
       if (exTpOrder) {
         savedTPOrder.status = OrderStatus.NEW;
         savedTPOrder.binanceOrderId = `${exTpOrder.orderId}`;

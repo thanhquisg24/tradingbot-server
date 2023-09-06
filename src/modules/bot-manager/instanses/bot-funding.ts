@@ -7,11 +7,11 @@ import {
   OrderEntity,
   createOrderEntity,
 } from 'src/modules/entities/order.entity';
+import { DEAL_STATUS, DealEntity } from 'src/modules/entities/deal.entity';
 
 import { BaseBotTrading } from './bot-trading';
 import BigNumber from 'bignumber.js';
 import { CombineReduceEventTypes } from 'src/common/event/reduce_events';
-import { DealEntity } from 'src/modules/entities/deal.entity';
 import { ICommonFundingStartDeal } from 'src/common/event/funding_events';
 import { OrderSide } from 'binance-api-node';
 import { Repository } from 'typeorm';
@@ -72,9 +72,13 @@ export class FundingBot extends BaseBotTrading {
       currentPrice,
       baseOrderSize,
     );
-
+    console.log(
+      '🚀 ~ file: bot-funding.ts:75 ~ FundingBot ~ createAndPlaceFundingDeal ~ prepareBaseOrder:',
+      JSON.stringify(prepareBaseOrder),
+    );
     const binanceMarketBaseOrder = await this.placeBinanceOrder(
       prepareBaseOrder,
+      strategyDirection,
     );
     if (binanceMarketBaseOrder) {
       const filledPrice =
@@ -98,12 +102,21 @@ export class FundingBot extends BaseBotTrading {
         exitPrice: 0,
       };
 
-      newDealEntity = await this.createDeal([], prepareBaseOrder.id);
+      newDealEntity = await this.createDeal([], symbol, strategyDirection);
       const newBaseOrder = createOrderEntity(b, newDealEntity);
       newBaseOrder.status = 'FILLED';
+      newBaseOrder.price = b.averagePrice;
+      newBaseOrder.averagePrice = b.averagePrice;
+      newBaseOrder.filledPrice = b.averagePrice;
+      newBaseOrder.filledQuantity = b.totalQuantity;
+      newBaseOrder.volume = b.totalVolume;
+      newBaseOrder.quantity = b.totalQuantity;
       newBaseOrder.binanceOrderId = `${binanceMarketBaseOrder.orderId}`;
       newBaseOrder.placedCount = newBaseOrder.placedCount + 1;
       await this.orderRepo.save(newBaseOrder); //1 base
+      await this.dealRepo.update(newDealEntity.id, {
+        status: DEAL_STATUS.ACTIVE,
+      });
 
       // const createdSTLOrder = createStopLossOrder(newDealEntity, resBaseOrder);
       // if (this.botConfig.useStopLoss === false) {
@@ -155,10 +168,20 @@ export class FundingBot extends BaseBotTrading {
       const isValidRequiredMinRate =
         Math.abs(payload.fundingData.fundingRate) >=
         MINIMUM_FUNDING_RATE_TO_STARTED.toNumber();
+      console.log(
+        '🚀 ~ file: bot-funding.ts:166 ~ FundingBot ~ startFundingDeal ~ isValidActiveDealCount:',
+        isValidActiveDealCount,
+        isValidPair,
+        isValidRequiredMinRate,
+      );
       if (isValidActiveDealCount && isValidPair && isValidRequiredMinRate) {
         await this.createAndPlaceFundingDeal(payload);
       } //end if
     } catch (ex) {
+      console.log(
+        '🚀 ~ file: bot-funding.ts:166 ~ FundingBot ~ startFundingDeal ~ ex:',
+        ex,
+      );
       botLogger.error(
         `${payload.fundingData.symbol} startFundingDeal error${ex.message}`,
         this.logLabel,

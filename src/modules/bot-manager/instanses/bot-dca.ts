@@ -2,6 +2,7 @@ import { BaseBotTrading } from './bot-trading';
 import { BotTradingEntity } from 'src/modules/entities/bot.entity';
 import { CombineReduceEventTypes } from 'src/common/event/reduce_events';
 import { DealEntity } from 'src/modules/entities/deal.entity';
+import { ICommonFundingStartDeal } from 'src/common/event/funding_events';
 import { OrderEntity } from 'src/modules/entities/order.entity';
 import { OrderStatus } from 'binance-api-node';
 import { Repository } from 'typeorm';
@@ -10,7 +11,6 @@ import { botLogger } from 'src/common/bot-logger';
 import { createStopLossOrder } from './bot-utils-calc';
 import { sortBy } from 'lodash';
 import { wrapExReq } from 'src/modules/exchange/remote-api/exchange.helper';
-import { ICommonFundingStartDeal } from 'src/common/event/funding_events';
 
 export class DCABot extends BaseBotTrading {
   constructor(
@@ -34,7 +34,7 @@ export class DCABot extends BaseBotTrading {
     this.sendMsgTelegram(`[${deal.pair}] [${deal.id}]: Have Last SO 😱`);
     if (deal.useStopLoss) {
       const stlOrder = createStopLossOrder(deal, currentOrder);
-      const binanceStl = await this.placeBinanceOrder(stlOrder, true);
+      const binanceStl = await this.placeBinanceOrder(stlOrder, null, true);
       if (binanceStl) {
         stlOrder.status = OrderStatus.NEW;
         stlOrder.binanceOrderId = `${binanceStl.orderId}`;

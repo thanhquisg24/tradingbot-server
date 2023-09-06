@@ -43,6 +43,7 @@ export function createOrderEntity(buyOrder: BuyOrder, deal: DealEntity) {
   order.botId = deal.botId;
   order.exchangeId = deal.exchangeId;
   order.userId = deal.userId;
+  order.placedCount = 0;
   return order;
 }
 
