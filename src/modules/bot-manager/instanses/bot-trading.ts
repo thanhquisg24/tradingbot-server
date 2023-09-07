@@ -926,12 +926,20 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         botId: this.botConfig.id,
         userId,
       });
+      const _sideBuy = getOrderSide(
+        activeDeal.strategyDirection,
+        ORDER_ACTION_ENUM.OPEN_POSITION,
+      );
+      const _sideSell = getOrderSide(
+        activeDeal.strategyDirection,
+        ORDER_ACTION_ENUM.CLOSE_POSITION,
+      );
       if (activeDeal) {
         const { totalFilledBuyQuantity } = await this.orderRepo
           .createQueryBuilder('order_entity')
           .select('SUM(order_entity.filled_quantity)', 'totalFilledBuyQuantity')
           .where('order_entity.deal_id = :deal_id', { deal_id: dealId })
-          .andWhere('order_entity.side = :side', { side: OrderSide.BUY })
+          .andWhere('order_entity.side = :side', { side: _sideBuy })
           .andWhere('order_entity.status  IN (:...dealStatusArray)', {
             dealStatusArray: ['PARTIALLY_FILLED', 'FILLED'],
           })
@@ -944,7 +952,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             'totalFilledSellQuantity',
           )
           .where('order_entity.deal_id = :deal_id', { deal_id: dealId })
-          .andWhere('order_entity.side = :side', { side: OrderSide.SELL })
+          .andWhere('order_entity.side = :side', { side: _sideSell })
           .andWhere('order_entity.status  IN (:...dealStatusArray)', {
             dealStatusArray: ['PARTIALLY_FILLED', 'FILLED'],
           })

@@ -8,6 +8,11 @@ import {
   createOrderEntity,
 } from 'src/modules/entities/order.entity';
 import { DEAL_STATUS, DealEntity } from 'src/modules/entities/deal.entity';
+import {
+  ORDER_ACTION_ENUM,
+  createMarketBaseOrder,
+  getOrderSide,
+} from './bot-utils-calc';
 
 import { BaseBotTrading } from './bot-trading';
 import BigNumber from 'bignumber.js';
@@ -17,7 +22,6 @@ import { OrderSide } from 'binance-api-node';
 import { Repository } from 'typeorm';
 import { TelegramService } from 'src/modules/telegram/telegram.service';
 import { botLogger } from 'src/common/bot-logger';
-import { createMarketBaseOrder } from './bot-utils-calc';
 
 export class FundingBot extends BaseBotTrading {
   constructor(
@@ -59,7 +63,7 @@ export class FundingBot extends BaseBotTrading {
   async createAndPlaceFundingDeal(payload: ICommonFundingStartDeal) {
     let newDealEntity: DealEntity | null = null;
     const { baseOrderSize } = this.botConfig;
-    const strategyDirection =
+    const _strategyDirection =
       payload.fundingData.fundingRate > 0
         ? STRATEGY_DIRECTION.SHORT
         : STRATEGY_DIRECTION.LONG;
@@ -67,7 +71,7 @@ export class FundingBot extends BaseBotTrading {
     const currentPrice = new BigNumber(payload.fundingData.indexPrice);
     const prepareBaseOrder = createMarketBaseOrder(
       this._exchangeRemote.getCcxtExchange(),
-      strategyDirection,
+      _strategyDirection,
       symbol,
       currentPrice,
       baseOrderSize,
@@ -78,7 +82,7 @@ export class FundingBot extends BaseBotTrading {
     );
     const binanceMarketBaseOrder = await this.placeBinanceOrder(
       prepareBaseOrder,
-      strategyDirection,
+      _strategyDirection,
     );
     if (binanceMarketBaseOrder) {
       const filledPrice =
@@ -88,8 +92,12 @@ export class FundingBot extends BaseBotTrading {
       const _filledPrice = new BigNumber(filledPrice);
       const _quantity = new BigNumber(binanceMarketBaseOrder.executedQty);
       //buy
+      const _buy_orderSide = getOrderSide(
+        _strategyDirection,
+        ORDER_ACTION_ENUM.OPEN_POSITION,
+      );
       const b: BuyOrder = {
-        side: OrderSide.BUY,
+        side: _buy_orderSide,
         pair: symbol,
         sequence: 0,
         deviation: 0,
@@ -102,7 +110,7 @@ export class FundingBot extends BaseBotTrading {
         exitPrice: 0,
       };
 
-      newDealEntity = await this.createDeal([], symbol, strategyDirection);
+      newDealEntity = await this.createDeal([], symbol, _strategyDirection);
       const newBaseOrder = createOrderEntity(b, newDealEntity);
       newBaseOrder.status = 'FILLED';
       newBaseOrder.price = b.averagePrice;
