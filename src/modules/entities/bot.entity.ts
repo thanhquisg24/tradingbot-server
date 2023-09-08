@@ -56,6 +56,15 @@ export class BotTradingEntity {
 
   @AutoMap()
   @Column({
+    name: 'margin_mode',
+    type: 'enum',
+    enum: MARGIN_MODE,
+    default: MARGIN_MODE.CROSS,
+  })
+  marginMode: MARGIN_MODE;
+
+  @AutoMap()
+  @Column({
     name: 'direction',
     type: 'enum',
     enum: STRATEGY_DIRECTION,
