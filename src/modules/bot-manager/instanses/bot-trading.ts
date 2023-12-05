@@ -3,18 +3,17 @@ import {
   ExchangeFactory,
 } from 'src/modules/exchange/remote-api/exchange.remote.api';
 import {
-  BOT_TRADING_TYPE,
-  BotTradingEntity,
-  DEAL_START_TYPE,
-  STRATEGY_DIRECTION,
-} from 'src/modules/entities/bot.entity';
-import {
   FuturesOrder as BinanceOrder,
   FuturesOrderType_LT,
   OrderSide,
   OrderStatus,
   OrderType,
 } from 'binance-api-node';
+import {
+  BotTradingEntity,
+  DEAL_START_TYPE,
+  STRATEGY_DIRECTION,
+} from 'src/modules/entities/bot.entity';
 import {
   BuyOrder,
   CLIENT_ORDER_TYPE,
