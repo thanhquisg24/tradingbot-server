@@ -1,7 +1,8 @@
-import { AutoMap } from '@automapper/classes';
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotBlankString, IsPositiveInt } from '@nestjsi/class-validator';
 import { ITVPayload, TVActionType } from 'src/common/event/tv_events';
+import { IsNotBlankString, IsPositiveInt } from '@nestjsi/class-validator';
+
+import { ApiProperty } from '@nestjs/swagger';
+import { AutoMap } from '@automapper/classes';
 
 export class TVPayload implements ITVPayload {
   @AutoMap()
@@ -9,7 +10,7 @@ export class TVPayload implements ITVPayload {
   @ApiProperty({
     required: true,
     enum: TVActionType,
-    example: TVActionType.OPEN_DEAL,
+    example: TVActionType.OPEN_ORDER,
     isArray: false,
     description: 'action',
     enumName: 'TVActionType',

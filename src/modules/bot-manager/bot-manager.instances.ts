@@ -58,7 +58,6 @@ export class BotManagerInstances implements IBotManagerInstances {
     private readonly protectionEventService: ProtectionEventService,
   ) {
     this.botInstances = new Map();
-    console.log('🚀 NEW ins BotManagerInstances ~:');
   }
 
   getBotById(id: number) {
@@ -165,10 +164,6 @@ export class BotManagerInstances implements IBotManagerInstances {
   }
 
   sendBotEvent = (eventPayload: BotEventData) => {
-    console.warn(
-      '🚀 ~ file: bot-manager.instances.ts:133 ~ BotManagerInstances ~ sendBotEvent ~ eventPayload:',
-      eventPayload,
-    );
     this.protectionEventService.createEventFromRaw(eventPayload).then(() => {
       this.eventEmitter.emit(BOT_EVENT_KEY, eventPayload);
     });

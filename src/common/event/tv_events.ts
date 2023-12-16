@@ -1,6 +1,6 @@
 export enum TVActionType {
-  OPEN_DEAL = 'OPEN_DEAL',
-  CLOSE_DEAL = 'CLOSE_DEAL',
+  OPEN_ORDER = 'OPEN_ORDER',
+  CLOSE_ORDER = 'CLOSE_ORDER',
 }
 
 export interface ITVPayload {

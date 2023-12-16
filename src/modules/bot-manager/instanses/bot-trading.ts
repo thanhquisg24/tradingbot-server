@@ -495,7 +495,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       }
 
       switch (tv.action) {
-        case TVActionType.OPEN_DEAL:
+        case TVActionType.OPEN_ORDER:
           const isValidPair = await this.checkValidPair(
             existingPair.exchangePair,
           );
@@ -513,7 +513,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
             );
           }
           break;
-        case TVActionType.CLOSE_DEAL:
+        case TVActionType.CLOSE_ORDER:
           break;
         default:
           break;
