@@ -80,6 +80,50 @@ export class SystemController {
     );
   }
 
+  //handle login
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Post('/init-binance-spot-pair')
+  async initBinanceSpotPairs(@Request() req: RequestWithUser) {
+    // return this.systemService.create(createSystemDto);
+    const exchangeRow = await this.exChangeService.findByUserAndExchangeName(
+      req.user.id,
+      ExchangesEnum.BINANCE,
+    );
+    if (exchangeRow) {
+      const _exchange = ExchangeFactory.createExchange(
+        exchangeRow.id,
+        exchangeRow.name,
+        exchangeRow.apiKey,
+        exchangeRow.apiSecret,
+        exchangeRow.isTestNet,
+      );
+      const exInfo = await _exchange.checkExchangeOnlineStatus();
+      if (exInfo) {
+        const ccxtExchange = _exchange.getCcxtExchange();
+        await ccxtExchange.loadMarkets();
+        const symbolsUsdt = ccxtExchange.symbols.filter((e) => {
+          return e.endsWith('/USDT');
+        });
+
+        const pairs: PairEntity[] = symbolsUsdt.reduce(
+          (store: PairEntity[], cur: string) => {
+            const commonPair = cur.replace('/', '');
+            const p = new PairEntity(exchangeRow.name, commonPair, cur);
+            return [...store, p];
+          },
+          [],
+        );
+        await this.pairService.saveBatch(pairs);
+        this.logger.log('init-binance-spot-pair OK!', SystemController.name);
+        return 'init-binance-spot-pair OK!';
+      }
+    }
+    throw new NotFoundException(
+      "Can't not found " + ExchangesEnum.BINANCEUSDM + ' row of current user!',
+    );
+  }
+
   @Post()
   create(@Body() createSystemDto: CreateSystemDto) {
     return this.systemService.create(createSystemDto);

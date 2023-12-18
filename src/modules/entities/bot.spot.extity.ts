@@ -76,16 +76,6 @@ export class BotSpotEntity {
 
   @AutoMap()
   @Column({
-    name: 'safety_order_size',
-    type: 'decimal',
-    precision: 20,
-    scale: 10,
-    nullable: true,
-  })
-  safetyOrderSize: number;
-
-  @AutoMap()
-  @Column({
     name: 'target_profit_percentage',
     type: 'decimal',
     precision: 5,
@@ -115,40 +105,6 @@ export class BotSpotEntity {
   @AutoMap()
   @Column({ name: 'max_active_deal', type: 'int', nullable: true })
   maxActiveDeal: number;
-
-  @AutoMap()
-  @Column({ name: 'max_safety_trades_count', type: 'int', nullable: true })
-  maxSafetyTradesCount: number;
-
-  @AutoMap()
-  @Column({
-    name: 'price_deviation_percentage',
-    type: 'decimal',
-    precision: 5,
-    scale: 2,
-    nullable: true,
-  })
-  priceDeviationPercentage: number;
-
-  @AutoMap()
-  @Column({
-    name: 'safety_order_volume_scale',
-    type: 'decimal',
-    precision: 5,
-    scale: 2,
-    nullable: true,
-  })
-  safetyOrderVolumeScale: number;
-
-  @AutoMap()
-  @Column({
-    name: 'safety_order_step_scale',
-    type: 'decimal',
-    precision: 5,
-    scale: 2,
-    nullable: true,
-  })
-  safetyOrderStepScale: number;
 
   @AutoMap()
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })

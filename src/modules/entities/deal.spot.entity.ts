@@ -121,16 +121,6 @@ export class DealSpotEntity {
 
   @AutoMap()
   @Column({
-    name: 'safety_order_size',
-    type: 'decimal',
-    precision: 20,
-    scale: 10,
-    nullable: true,
-  })
-  safetyOrderSize: number;
-
-  @AutoMap()
-  @Column({
     name: 'side',
     length: 255,
     default: 'buy',
@@ -179,41 +169,4 @@ export class DealSpotEntity {
   })
   targetStopLossPercentage: number;
 
-  @AutoMap()
-  @Column({ name: 'current_safety_trades_count', type: 'int', default: 0 })
-  curSafetyTradesCount: number;
-
-  @AutoMap()
-  @Column({ name: 'max_safety_trades_count', type: 'int', default: 0 })
-  maxSafetyTradesCount: number;
-
-  @AutoMap()
-  @Column({
-    name: 'price_deviation_percentage',
-    type: 'decimal',
-    precision: 5,
-    scale: 2,
-    default: 1,
-  })
-  priceDeviationPercentage: number;
-
-  @AutoMap()
-  @Column({
-    name: 'safety_order_volume_scale',
-    type: 'decimal',
-    precision: 5,
-    scale: 2,
-    default: 1,
-  })
-  safetyOrderVolumeScale: number;
-
-  @AutoMap()
-  @Column({
-    name: 'safety_order_step_scale',
-    type: 'decimal',
-    precision: 5,
-    scale: 2,
-    default: 1,
-  })
-  safetyOrderStepScale: number;
 }

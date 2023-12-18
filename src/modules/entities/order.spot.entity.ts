@@ -8,12 +8,11 @@ import {
 
 import { AutoMap } from '@automapper/classes';
 import { DealSpotEntity } from './deal.spot.entity';
-import { Order } from 'ccxt/js/src/base/Exchange';
 import { OrderSide } from 'ccxt/js/src/base/types';
+import { OrderType_LT } from 'binance-api-node';
 
 export enum CLIENT_ORDER_SPOT_TYPE {
   BASE = 'BASE',
-  SAFETY = 'SAFETY',
   TAKE_PROFIT = 'TAKE_PROFIT',
   STOP_LOSS = 'STOP_LOSS',
   CLOSE_AT_MARKET = 'CLOSE_AT_MARKET',
@@ -89,16 +88,6 @@ export class OrderSpotEntity {
   averagePrice: number;
 
   @AutoMap()
-  @Column({
-    name: 'exit_price',
-    type: 'decimal',
-    precision: 20,
-    scale: 10,
-    nullable: true,
-  })
-  exitPrice: number;
-
-  @AutoMap()
   @Column({ name: 'binance_order_id', length: 255, nullable: true })
   binanceOrderId: string;
 
@@ -144,8 +133,12 @@ export class OrderSpotEntity {
   totalQuantity: number;
 
   @AutoMap()
-  @Column({ length: 64 })
-  status: 'created' | Order['status'];
+  @Column({ name: 'exchange_order_type', length: 255, nullable: true })
+  exchangeOrderType: OrderType_LT;
+
+  @AutoMap()
+  @Column({ length: 64, nullable: true })
+  status: 'created' | 'open' | 'closed' | 'canceled' | 'expired' | 'rejected';
 
   @AutoMap()
   @Column({ name: 'retry_count', type: 'int', default: 0 })

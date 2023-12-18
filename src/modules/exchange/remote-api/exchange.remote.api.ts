@@ -1,4 +1,5 @@
 import ccxt, { Exchange } from 'ccxt';
+
 import { ExchangesEnum } from 'src/modules/entities/exchange.entity';
 
 export abstract class AbstractExchangeAPI {
@@ -48,6 +49,44 @@ export class BinanceUSDMApi extends AbstractExchangeAPI {
   }
 }
 
+export class BinanceSpotApi extends AbstractExchangeAPI {
+  constructor(
+    apiKey: string,
+    apiSerect: string,
+    isDemo: boolean,
+    isPublic?: boolean,
+  ) {
+    super();
+    if (isPublic) {
+      this.exchange_remote = new ccxt.binance({
+        // rateLimit: 1000, // unified exchange property
+        enableRateLimit: true,
+        options: {
+          adjustForTimeDifference: true, // exchange-specific option
+        },
+      });
+      this.exchange_remote.setSandboxMode(isDemo);
+      this.exchange_remote.precisionMode = ccxt.DECIMAL_PLACES;
+    } else {
+      this.exchange_remote = new ccxt.binance({
+        // rateLimit: 1000, // unified exchange property
+        enableRateLimit: true,
+        apiKey,
+        secret: apiSerect,
+        options: {
+          adjustForTimeDifference: true, // exchange-specific option
+        },
+      });
+      this.exchange_remote.setSandboxMode(isDemo);
+      this.exchange_remote.precisionMode = ccxt.DECIMAL_PLACES;
+    }
+  }
+  async checkExchangeOnlineStatus(): Promise<boolean> {
+    const exchangeServerTime = await this.exchange_remote.fetchTime();
+    return exchangeServerTime > 0;
+  }
+}
+
 export class ExchangeFactory {
   static exchangeInstances: Map<number, AbstractExchangeAPI> = new Map();
   // private static getExchangeById(id: number) {
@@ -72,7 +111,7 @@ export class ExchangeFactory {
     }
     switch (exchangeName) {
       case ExchangesEnum.PAPER:
-      case ExchangesEnum.BINANCEUSDM:
+      case ExchangesEnum.BINANCEUSDM: {
         const _exchange = new BinanceUSDMApi(
           apiKey,
           apiSerect,
@@ -81,8 +120,18 @@ export class ExchangeFactory {
         );
         ExchangeFactory.exchangeInstances.set(exchangeId, _exchange);
         return _exchange;
+      }
+      case ExchangesEnum.BINANCE: {
+        const _exchange = new BinanceSpotApi(
+          apiKey,
+          apiSerect,
+          isDemo,
+          isPublic,
+        );
+        ExchangeFactory.exchangeInstances.set(exchangeId, _exchange);
+        return _exchange;
+      }
     }
-    throw new Error('Can not find exchange name :' + exchangeName);
   }
   static createPuplicExchange(
     exchangeId: number,
