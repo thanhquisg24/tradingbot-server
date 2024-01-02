@@ -11,6 +11,8 @@ import { ExchangeEntity } from '../entities/exchange.entity';
 import { ExchangeDTO } from './exchange-dto';
 import { OrderBaseDTO } from './order-dto';
 import { OrderEntity } from '../entities/order.entity';
+import { BotSpotBaseDTO, BotSpotWithExchangeDTO } from './bot-spot-dto';
+import { BotSpotEntity } from '../entities/bot.spot.extity';
 
 @Injectable()
 export class DTOMapperProfile extends AutomapperProfile {
@@ -20,6 +22,8 @@ export class DTOMapperProfile extends AutomapperProfile {
 
   override get profile() {
     return (mapper) => {
+      createMap(mapper, BotSpotEntity, BotSpotBaseDTO);
+      createMap(mapper, BotSpotEntity, BotSpotWithExchangeDTO);
       createMap(mapper, BotTradingEntity, BotTradingBaseDTO);
       createMap(mapper, BotTradingEntity, BotTradingWithPairAndExchangeDTO);
       createMap(mapper, OrderEntity, OrderBaseDTO);

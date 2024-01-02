@@ -138,7 +138,14 @@ export class OrderSpotEntity {
 
   @AutoMap()
   @Column({ length: 64, nullable: true })
-  status: 'created' | 'open' | 'closed' | 'canceled' | 'expired' | 'rejected';
+  status:
+    | 'created'
+    | 'open'
+    | 'closed'
+    | 'canceled'
+    | 'expired'
+    | 'rejected'
+    | 'placing';
 
   @AutoMap()
   @Column({ name: 'retry_count', type: 'int', default: 0 })
