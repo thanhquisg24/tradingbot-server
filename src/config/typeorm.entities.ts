@@ -1,3 +1,4 @@
+import { BotSpotEntity } from 'src/modules/entities/bot.spot.extity';
 import { BotTradingEntity } from '../modules/entities/bot.entity';
 import { DealEntity } from '../modules/entities/deal.entity';
 import { DealSpotEntity } from '../modules/entities/deal.spot.entity';
@@ -14,6 +15,7 @@ const entities = [
   TokenEntity,
   ExchangeEntity,
   BotTradingEntity,
+  BotSpotEntity,
   PairEntity,
   DealEntity,
   OrderEntity,

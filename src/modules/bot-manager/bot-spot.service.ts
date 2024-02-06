@@ -20,7 +20,6 @@ import { IBaseBotSpot } from './instanses/spot/bot-spot-base';
 export class BotSpotService {
   botInstances: Map<string, IBaseBotSpot>;
   constructor(
-    private eventEmitter: EventEmitter2,
     @InjectRepository(BotSpotEntity)
     private readonly repo: Repository<BotSpotEntity>, // private readonly exchangeService: ExchangeService, // private readonly pairService: PairService,
 
