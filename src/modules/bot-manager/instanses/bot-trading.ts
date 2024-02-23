@@ -116,14 +116,14 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
       return o.exchangePair === pair;
     });
     if (existPair > -1) {
-      if (this.botConfig.allowDealSamePair) {
-        return true;
-      }
       const countActiveDealByPair = await this.dealRepo.countBy({
         status: DEAL_STATUS.ACTIVE,
         botId: this.botConfig.id,
         pair,
       });
+      if (this.botConfig.allowDealSamePair) {
+        return countActiveDealByPair < this.botConfig.maxDealSamePairCount;
+      }
       return countActiveDealByPair === 0;
     }
     return false;

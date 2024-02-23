@@ -401,10 +401,18 @@ export const calcReducePreparePayload = (
     _avgPrice,
     _triggerPriceExchange,
   );
+  //re-calc qty [protection order]
+  let r_qty = quantity;
+  if (fromStrategyDirection === STRATEGY_DIRECTION.LONG) {
+    r_qty = r_qty - _tpDeviation.minus(r_qty).toNumber();
+  } else {
+    r_qty = r_qty + _tpDeviation.minus(r_qty).toNumber();
+  }
+  r_qty = exchange.amountToPrecision(pair, r_qty);
   const payload: IReducePreparePayload = {
     fromDealId,
     pair,
-    r_quantity: quantity,
+    r_quantity: r_qty,
     tp_deviation: _tpDeviation.toNumber(),
     triger_price: _triggerPriceExchange.toNumber(),
     round_count,

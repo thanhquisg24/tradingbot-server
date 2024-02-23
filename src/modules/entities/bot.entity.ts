@@ -111,6 +111,10 @@ export class BotTradingEntity {
   })
   allowDealSamePair: boolean;
 
+  @AutoMap()
+  @Column({ name: 'max_deal_same_pair', type: 'int', default: 3 })
+  maxDealSamePairCount: number;
+
   // ASAP
   @AutoMap()
   @Column({
