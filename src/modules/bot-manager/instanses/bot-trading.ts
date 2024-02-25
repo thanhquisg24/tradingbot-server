@@ -158,7 +158,15 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         case CLIENT_ORDER_TYPE.REDUCE_END:
           ex_orderType = OrderType.LIMIT;
           break;
-
+        case CLIENT_ORDER_TYPE.TRAILING_TP: {
+          ex_orderType = OrderType.TRAILING_STOP_MARKET;
+          params = {
+            ...params,
+            activationPrice: order.price,
+            callbackRate: this.botConfig.callBackRate,
+          };
+          break;
+        }
         case CLIENT_ORDER_TYPE.REDUCE_BEGIN:
         case CLIENT_ORDER_TYPE.STOP_LOSS:
           ex_orderType = OrderType.STOP;
@@ -713,7 +721,14 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
               }
 
               //placing TP line
-              let newSellOrder = createNextTPOrder(deal, currentOrder);
+              const _takeProfitType = this.botConfig.useTrailingTP
+                ? CLIENT_ORDER_TYPE.TRAILING_TP
+                : CLIENT_ORDER_TYPE.TAKE_PROFIT;
+              let newSellOrder = createNextTPOrder(
+                deal,
+                currentOrder,
+                _takeProfitType,
+              );
               newSellOrder = await this.orderRepo.save(newSellOrder);
               const bSellOrder = await this.placeBinanceOrder(
                 newSellOrder,

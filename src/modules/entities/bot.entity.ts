@@ -156,6 +156,25 @@ export class BotTradingEntity {
 
   @AutoMap()
   @Column({
+    name: 'use_trailing_take_profit',
+    type: 'boolean',
+    default: false,
+  })
+  useTrailingTP: boolean;
+
+  @AutoMap()
+  @Column({
+    name: 'call_back_rate',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    default: 0.2,
+  })
+  //min 0.1 max 10 , 1 for 1%
+  callBackRate: number;
+
+  @AutoMap()
+  @Column({
     name: 'target_stoploss_percentage',
     type: 'decimal',
     precision: 5,
