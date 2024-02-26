@@ -1,30 +1,36 @@
-import { Injectable } from '@nestjs/common';
-import { InjectBot } from 'nestjs-telegraf';
-import { Telegraf } from 'telegraf';
-import { TelegrafContext } from './context.interface';
+import { Inject, Injectable, LoggerService } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import axios from 'axios';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
-export const TEST_USER_ID = '812358696';
 @Injectable()
 export class TelegramService {
-  constructor(@InjectBot() private bot: Telegraf<TelegrafContext>) {
-    bot.telegram.sendMessage(
-      TEST_USER_ID,
-      `Bot Server started at ${new Date()}`,
-    );
-    bot.catch((err, ctx) => {
-      console.log(`Ooops, encountered an error for ${ctx.updateType}`, err);
-      throw err;
-    });
+  passPhrase: string = '';
+  serverUrl: string = '';
+
+  constructor(
+    private configService: ConfigService,
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService,
+  ) {
+    this.passPhrase = this.configService.get<string>('PASSPHRASE_EMIT');
+    this.serverUrl = this.configService.get<string>('TELEGRAM_SERVER_URL');
   }
 
   sendMessageToUser = (userId: string, message: string): void => {
-    this.bot.telegram
-      .sendMessage(userId, message)
+    axios
+      .post(this.serverUrl + '/send-msg-to-user', {
+        userId,
+        message,
+        passPhrase: this.passPhrase,
+      })
       .then()
-      .catch((ex) =>
-        console.log(
-          `Can't not send Msg Via telegram Bot:${ex.message} ,UserChatId:${userId} , MessagePayload:${message}`,
-        ),
-      );
+      .catch((err) => {
+        console.log('🚀 ~ TelegramService ~ err:', err);
+        this.logger.error(
+          `Can't not send Msg Via telegram Bot:${err.message} ,UserChatId:${userId} , MessagePayload:${message}`,
+          TelegramService.name,
+        );
+      });
   };
 }

@@ -10,7 +10,6 @@ import {
   WinstonModule,
   utilities as nestWinstonModuleUtilities,
 } from 'nest-winston';
-import { TelegrafModule } from 'nestjs-telegraf';
 import winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 import { AppController } from './app.controller';
@@ -28,7 +27,6 @@ import { UserModule } from './modules/user/user.module';
 dotenv.config();
 // import entities from './config/typeorm.entities';
 const ENV = process.env.NODE_ENV;
-const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const logTransportDaily = (
   name: string,
   level: 'info' | 'warn' | 'error',
@@ -53,10 +51,6 @@ const logTransportDaily = (
     ScheduleModule.forRoot(),
     AutomapperModule.forRoot({
       strategyInitializer: classes(),
-    }),
-    TelegrafModule.forRoot({
-      token: TELEGRAM_TOKEN,
-      include: [TelegramModule],
     }),
 
     WinstonModule.forRoot({
@@ -85,6 +79,7 @@ const logTransportDaily = (
     // }),
     // TaskModule,
 
+    TelegramModule,
     AuthModule,
     UserModule,
     ExchangeModule,
