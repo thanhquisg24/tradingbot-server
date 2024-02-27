@@ -177,10 +177,17 @@ export class BotManagerInstances implements IBotManagerInstances {
     );
     const strId = `${payload.payload.toBotId}`;
     if (this.botInstances.has(strId)) {
-      await this.botInstances.get(strId).processBotEventAction(payload);
       await this.protectionEventService.updateEventStatus(
         payload.eventId,
         EVENT_STATUS.RECEIVED,
+      );
+      const _result = await this.botInstances
+        .get(strId)
+        .processBotEventAction(payload);
+      const ev_status = _result ? EVENT_STATUS.SUCCESS : EVENT_STATUS.FAIL;
+      await this.protectionEventService.updateEventStatus(
+        payload.eventId,
+        ev_status,
       );
     }
   }

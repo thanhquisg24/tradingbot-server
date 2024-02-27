@@ -24,4 +24,6 @@ export enum USER_STATUS {
 export enum EVENT_STATUS {
   SEND = 'SEND',
   RECEIVED = 'RECEIVED',
+  SUCCESS = 'SUCCESS',
+  FAIL = 'FAIL',
 }

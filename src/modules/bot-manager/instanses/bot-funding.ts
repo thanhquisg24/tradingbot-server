@@ -38,8 +38,10 @@ export class FundingBot extends BaseBotTrading {
   processActivePosition(activeDeals: DealEntity[]) {
     return;
   }
-  processBotEventAction(payload: CombineReduceEventTypes) {
-    return;
+  async processBotEventAction(
+    payload: CombineReduceEventTypes,
+  ): Promise<boolean> {
+    return false;
   }
 
   async watchPosition() {

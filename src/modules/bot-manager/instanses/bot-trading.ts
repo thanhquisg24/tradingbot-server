@@ -1066,7 +1066,9 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
   }
 
   abstract processActivePosition(activeDeals: DealEntity[]);
-  abstract processBotEventAction(payload: CombineReduceEventTypes);
+  abstract processBotEventAction(
+    payload: CombineReduceEventTypes,
+  ): Promise<boolean>;
 
   abstract startFundingDeal(payload: ICommonFundingStartDeal);
 }
