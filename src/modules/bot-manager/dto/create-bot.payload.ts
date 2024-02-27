@@ -115,6 +115,44 @@ export class CommonBotPayload {
 
   @AutoMap()
   @ApiProperty({
+    type: 'int',
+    required: true,
+    example: 3,
+    default: 3,
+    description: 'maxDealSamePairCount',
+  })
+  @MinMax(
+    1, // number
+    100, // number
+  )
+  maxDealSamePairCount: number;
+
+  @AutoMap()
+  @ApiProperty({
+    type: 'boolean',
+    required: false,
+    example: false,
+    default: false,
+    description: 'useTrailingTP',
+  })
+  useTrailingTP: boolean;
+
+  @AutoMap()
+  @ApiProperty({
+    type: 'number',
+    required: true,
+    example: 0.2,
+    default: 0.3,
+    description: 'callBackRate',
+  })
+  @MinMaxPct(
+    0.1, // number
+    10, // number
+  )
+  callBackRate: number;
+
+  @AutoMap()
+  @ApiProperty({
     type: 'boolean',
     required: false,
     example: false,

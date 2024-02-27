@@ -45,6 +45,11 @@ export function mappingBot(bot: BotTradingEntity, payload: CommonBotPayload) {
   bot.leverage = payload.leverage;
   bot.maxReduceCount = payload.maxReduceCount;
   bot.refBotId = payload.refBotId;
+
+  bot.maxDealSamePairCount = payload.maxDealSamePairCount;
+  bot.useTrailingTP = payload.useTrailingTP;
+  bot.callBackRate = payload.callBackRate;
+
   return bot;
 }
 
