@@ -10,17 +10,23 @@ const fetchExchangeInfo = async () => {
     enableRateLimit: true,
   });
   binanceUSDM.setSandboxMode(true);
+
   const marketload = await binanceUSDM.loadMarkets();
+  console.log(
+    '🚀 ~ fetchExchangeInfo ~  binanceUSDM.rateLimit:',
+    binanceUSDM.rateLimit,
+  );
+  const marketload2 = await binanceUSDM.publicGetExchangeInfo();
   // // marketload.
-  // console.log(
-  //   '🚀 ~ file: 6.exchange-info.ts:12 ~ fetchExchangeInfo ~ marketload:',
-  //   marketload['rateLimits'],
-  // );
+  console.log(
+    '🚀 ~ file: 6.exchange-info.ts:12 ~ fetchExchangeInfo ~ marketload:',
+    marketload2['rateLimits'],
+  );
   // binanceUSDM.dapi
-  const symbolsUsdt = binanceUSDM.symbols.filter((e) => {
-    return e.endsWith('USDT');
-  });
-  fs.writeFileSync('./test/exchange_symbols.txt', JSON.stringify(symbolsUsdt));
+  // const symbolsUsdt = binanceUSDM.symbols.filter((e) => {
+  //   return e.endsWith('USDT');
+  // });
+  // fs.writeFileSync('./test/exchange_symbols.txt', JSON.stringify(symbolsUsdt));
   // console.log(
   //   '🚀 ~ file: 6.exchange-info.ts:18 ~ fetchExchangeInfo ~ exinfo:',
   //   exinfo.info,
@@ -37,4 +43,5 @@ const fetchExchangeInfo = async () => {
 
   // return ticker;
 };
+
 fetchExchangeInfo();
