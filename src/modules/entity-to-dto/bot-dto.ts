@@ -35,7 +35,13 @@ export class BotTradingBaseDTO {
   leverage: number;
 
   @AutoMap()
-  allowDealSamePair: boolean;
+  maxDealSamePairCount: number;
+
+  @AutoMap()
+  useTrailingTP: boolean;
+
+  @AutoMap()
+  callBackRate: number;
 
   // ASAP
   @AutoMap()

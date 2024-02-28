@@ -22,9 +22,10 @@ export class DCABot extends BaseBotTrading {
     super(config, dealRepo, orderRepo, telegramService);
   }
 
-  processBotEventAction(payload: CombineReduceEventTypes) {
-    return;
-    // throw new Error('Method not implemented.');
+  async processBotEventAction(
+    payload: CombineReduceEventTypes,
+  ): Promise<boolean> {
+    return false;
   }
 
   async handleLastSO(

@@ -104,15 +104,7 @@ export class BotTradingEntity {
   leverage: number;
 
   @AutoMap()
-  @Column({
-    name: 'allow_deals_same_pair',
-    type: 'boolean',
-    default: false,
-  })
-  allowDealSamePair: boolean;
-
-  @AutoMap()
-  @Column({ name: 'max_deal_same_pair', type: 'int', default: 3 })
+  @Column({ name: 'max_deal_same_pair', type: 'int', default: 1 })
   maxDealSamePairCount: number;
 
   // ASAP

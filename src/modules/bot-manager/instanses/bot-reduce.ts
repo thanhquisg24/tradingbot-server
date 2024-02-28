@@ -462,7 +462,9 @@ export class ReduceBot extends DCABot {
     } //end for
   } //end processExchangeDeal()
 
-  private async handlePrepareRound(payload: IReducePreparePayload) {
+  private async handlePrepareRound(
+    payload: IReducePreparePayload,
+  ): Promise<boolean> {
     const deal = new DealEntity();
     deal.userId = this.botConfig.userId;
     deal.botId = this.botConfig.id;
@@ -538,10 +540,14 @@ export class ReduceBot extends DCABot {
       this.sendMsgTelegram(
         `[${savedOrder.pair}] [${savedOrder.binanceOrderId}]: Place Deal cover preference from ${deal.refReduceDealId}. Price: ${savedOrder.price}, Amount: ${savedOrder.quantity}`,
       );
+      return true;
     }
+    return false;
   }
 
-  private async handleBeginRound(payload: IReduceBeginPayload) {
+  private async handleBeginRound(
+    payload: IReduceBeginPayload,
+  ): Promise<boolean> {
     const currentDeal = await this.getDeal(payload.toDealId);
     const existingSellOrder = currentDeal.orders.find(
       (o) =>
@@ -606,14 +612,17 @@ export class ReduceBot extends DCABot {
       this.sendMsgTelegram(
         `[${savedOrder.pair}] [${savedOrder.binanceOrderId}]: Place a ${CLIENT_ORDER_TYPE.REDUCE_END} order . Price: ${savedOrder.price}, Amount: ${savedOrder.quantity}`,
       );
+      await this.dealRepo.update(currentDeal.id, {
+        clientDealType: CLIENT_DEAL_TYPE.REDUCE,
+        curReduceCount: currentDeal.curReduceCount + 1,
+      });
+      return true;
     }
-    await this.dealRepo.update(currentDeal.id, {
-      clientDealType: CLIENT_DEAL_TYPE.REDUCE,
-      curReduceCount: currentDeal.curReduceCount + 1,
-    });
+    return false;
   }
 
-  private async handleEndRound(payload: IReduceEndPayload) {
+  private async handleEndRound(payload: IReduceEndPayload): Promise<boolean> {
+    let result = false;
     const { toBotId, toDealId, fromProfitQty, triger_price } = payload;
     const currentDeal = await this.dealRepo.findOneBy([
       {
@@ -744,6 +753,7 @@ export class ReduceBot extends DCABot {
         this.sendMsgTelegram(
           `[${savedTPOrder.pair}] [${savedTPOrder.binanceOrderId}]: Place new Take Profit Order. Price: ${savedTPOrder.price}, Amount: ${savedTPOrder.quantity}`,
         );
+        result = true;
       }
       if (currentDeal.curReduceCount + 1 < currentDeal.maxReduceCount) {
         await this.sendPrepareEvent(
@@ -759,8 +769,11 @@ export class ReduceBot extends DCABot {
         );
       }
     } //end if currentDeal
+    return result;
   }
-  private async handleCloseTPRound(payload: IReduceClosedTPPayload) {
+  private async handleCloseTPRound(
+    payload: IReduceClosedTPPayload,
+  ): Promise<boolean> {
     const { toBotId, toDealId } = payload;
     const currentDeal = await this.dealRepo.findOneBy([
       {
@@ -802,25 +815,28 @@ export class ReduceBot extends DCABot {
         status: DEAL_STATUS.CANCELED,
         endAt: new Date(),
       });
+      return true;
     } //end if currentDeal
+    return false;
   }
-  async processBotEventAction(data: CombineReduceEventTypes) {
+  async processBotEventAction(data: CombineReduceEventTypes): Promise<boolean> {
+    let result = false;
     switch (data.type) {
       case REDUCE_EV_TYPES.PREPARE_ROUND:
-        await this.handlePrepareRound(data.payload);
+        result = await this.handlePrepareRound(data.payload);
         break;
       case REDUCE_EV_TYPES.BEGIN_ROUND:
-        await this.handleBeginRound(data.payload);
+        result = await this.handleBeginRound(data.payload);
         break;
       case REDUCE_EV_TYPES.END_ROUND:
-        await this.handleEndRound(data.payload);
+        result = await this.handleEndRound(data.payload);
         break;
       case REDUCE_EV_TYPES.CLOSED_TP:
-        await this.handleCloseTPRound(data.payload);
+        result = await this.handleCloseTPRound(data.payload);
         break;
       default:
         break;
     }
-    return;
+    return result;
   }
 }

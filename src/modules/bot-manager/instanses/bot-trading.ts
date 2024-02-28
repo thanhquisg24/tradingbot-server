@@ -121,10 +121,7 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
         botId: this.botConfig.id,
         pair,
       });
-      if (this.botConfig.allowDealSamePair) {
-        return countActiveDealByPair < this.botConfig.maxDealSamePairCount;
-      }
-      return countActiveDealByPair === 0;
+      return countActiveDealByPair < this.botConfig.maxDealSamePairCount;
     }
     return false;
   }
@@ -1066,7 +1063,9 @@ export abstract class BaseBotTrading implements IBaseBotTrading {
   }
 
   abstract processActivePosition(activeDeals: DealEntity[]);
-  abstract processBotEventAction(payload: CombineReduceEventTypes);
+  abstract processBotEventAction(
+    payload: CombineReduceEventTypes,
+  ): Promise<boolean>;
 
   abstract startFundingDeal(payload: ICommonFundingStartDeal);
 }
