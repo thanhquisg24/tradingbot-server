@@ -32,7 +32,7 @@ import {
   FUNDING_EVENT_KEY,
   FundingEvent,
 } from 'src/common/event/funding_events';
-import { BOT_TRADING_TYPE } from '../entities/bot.entity';
+import { BOT_TRADING_TYPE } from '../entities/enum-type';
 
 export interface IBotManagerInstances {
   botInstances: Map<string, BaseBotTrading>;

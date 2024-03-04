@@ -1,7 +1,7 @@
 import { OrderSide, OrderStatus_LT } from 'binance-api-node';
 
 import { AutoMap } from '@automapper/classes';
-import { CLIENT_ORDER_TYPE } from '../entities/order.entity';
+import { CLIENT_ORDER_TYPE } from '../entities/enum-type';
 
 export class OrderBaseDTO {
   @AutoMap()

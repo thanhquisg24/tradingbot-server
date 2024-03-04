@@ -3,7 +3,7 @@ import { CreateDealDto } from './dto/create-deal.dto';
 import { UpdateDealDto } from './dto/update-deal.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DealEntity, DEAL_STATUS } from '../entities/deal.entity';
+import { DealEntity } from '../entities/deal.entity';
 import { Repository } from 'typeorm';
 import {
   IPaginationOptions,
@@ -11,8 +11,9 @@ import {
   paginate,
   paginateRaw,
 } from 'nestjs-typeorm-paginate';
-import { BotTradingEntity, STRATEGY_DIRECTION } from '../entities/bot.entity';
+import { BotTradingEntity } from '../entities/bot.entity';
 import { OrderEntity } from '../entities/order.entity';
+import { DEAL_STATUS, STRATEGY_DIRECTION } from '../entities/enum-type';
 
 @Injectable()
 export class DealService {

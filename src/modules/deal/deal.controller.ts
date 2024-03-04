@@ -1,36 +1,32 @@
+import { Mapper } from '@automapper/core';
+import { InjectMapper } from '@automapper/nestjs';
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
-  Delete,
-  UseGuards,
-  Request,
-  Query,
+  Controller,
   DefaultValuePipe,
+  Delete,
+  Get,
+  Param,
   ParseIntPipe,
+  Patch,
+  Post,
   Put,
+  Query,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { IPaginationMeta, Pagination } from 'nestjs-typeorm-paginate';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { RequestWithUser } from '../auth/type';
+import { DealEntity } from '../entities/deal.entity';
+import { STRATEGY_DIRECTION } from '../entities/enum-type';
+import { OrderEntity } from '../entities/order.entity';
+import { DealWithOrderDTO } from '../entity-to-dto/deal-dto';
+import { OrderBaseDTO } from '../entity-to-dto/order-dto';
 import { DealService } from './deal.service';
 import { CreateDealDto } from './dto/create-deal.dto';
 import { UpdateDealDto } from './dto/update-deal.dto';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
-import { RequestWithUser } from '../auth/type';
-import {
-  DealBaseDTO,
-  DealBaseWithBotName,
-  DealWithOrderDTO,
-} from '../entity-to-dto/deal-dto';
-import { DEAL_STATUS, DealEntity } from '../entities/deal.entity';
-import { InjectMapper } from '@automapper/nestjs';
-import { Mapper } from '@automapper/core';
-import { IPaginationMeta, Pagination } from 'nestjs-typeorm-paginate';
-import { OrderEntity } from '../entities/order.entity';
-import { OrderBaseDTO } from '../entity-to-dto/order-dto';
-import { STRATEGY_DIRECTION } from '../entities/bot.entity';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)

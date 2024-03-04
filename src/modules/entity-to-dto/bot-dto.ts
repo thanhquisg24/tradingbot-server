@@ -2,7 +2,7 @@ import {
   BOT_TRADING_TYPE,
   DEAL_START_TYPE,
   STRATEGY_DIRECTION,
-} from '../entities/bot.entity';
+} from '../entities/enum-type';
 
 import { AutoMap } from '@automapper/classes';
 import { COMMON_STATUS } from 'src/common/constants';

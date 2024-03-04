@@ -1,27 +1,20 @@
 import {
+  CLIENT_DEAL_TYPE,
+  DEAL_START_TYPE,
+  DEAL_STATUS,
+  STRATEGY_DIRECTION,
+} from './enum-type';
+import {
   Column,
   CreateDateColumn,
   Entity,
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { DEAL_START_TYPE, STRATEGY_DIRECTION } from './bot.entity';
 
 import { AutoMap } from '@automapper/classes';
 import { FuturesOrderType_LT } from 'binance-api-node';
 import { OrderEntity } from './order.entity';
-
-export enum DEAL_STATUS {
-  'CREATED' = 'CREATED',
-  'ACTIVE' = 'ACTIVE',
-  'CLOSED' = 'CLOSED',
-  'CANCELED' = 'CANCELED',
-}
-export enum CLIENT_DEAL_TYPE {
-  'DCA' = 'DCA',
-  'REDUCE' = 'REDUCE',
-  'FUD_RATE' = 'FUD_RATE',
-}
 
 @Entity()
 export class DealEntity {

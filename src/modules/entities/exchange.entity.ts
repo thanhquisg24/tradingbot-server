@@ -8,16 +8,13 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
-import { COMMON_STATUS } from 'src/common/constants';
-import { UserEntity } from './user.entity';
-import { BotTradingEntity } from './bot.entity';
 import { AutoMap } from '@automapper/classes';
+import { BotTradingEntity } from './bot.entity';
+import { COMMON_STATUS } from 'src/common/constants';
+import { ExchangeWatcherEntity } from './exchange-watcher.entity';
+import { ExchangesEnum } from './enum-type';
+import { UserEntity } from './user.entity';
 
-export enum ExchangesEnum {
-  BINANCEUSDM = 'binanceusdm',
-  BINANCE = 'binance',
-  PAPER = 'paper',
-}
 @Entity({ name: 'exchange' })
 export class ExchangeEntity {
   @AutoMap()
@@ -67,6 +64,9 @@ export class ExchangeEntity {
 
   @OneToMany(() => BotTradingEntity, (ex) => ex.exchange, { eager: false })
   bots: BotTradingEntity[];
+
+  @OneToMany(() => ExchangeWatcherEntity, (ex) => ex.exchange, { eager: false })
+  watchers: ExchangeWatcherEntity[];
 
   @AutoMap()
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })

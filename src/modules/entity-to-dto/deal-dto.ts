@@ -1,5 +1,8 @@
-import { CLIENT_DEAL_TYPE, DEAL_STATUS } from '../entities/deal.entity';
-import { DEAL_START_TYPE, STRATEGY_DIRECTION } from '../entities/bot.entity';
+import {
+  DEAL_START_TYPE,
+  DEAL_STATUS,
+  STRATEGY_DIRECTION,
+} from '../entities/enum-type';
 
 import { AutoMap } from '@automapper/classes';
 import { OrderBaseDTO } from './order-dto';

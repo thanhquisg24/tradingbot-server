@@ -7,16 +7,10 @@ import {
 } from 'typeorm';
 
 import { AutoMap } from '@automapper/classes';
+import { CLIENT_ORDER_SPOT_TYPE } from './enum-type';
 import { DealSpotEntity } from './deal.spot.entity';
 import { OrderSide } from 'ccxt/js/src/base/types';
 import { OrderType_LT } from 'binance-api-node';
-
-export enum CLIENT_ORDER_SPOT_TYPE {
-  BASE = 'BASE',
-  TAKE_PROFIT = 'TAKE_PROFIT',
-  STOP_LOSS = 'STOP_LOSS',
-  CLOSE_AT_MARKET = 'CLOSE_AT_MARKET',
-}
 
 @Entity({ name: 'order_spot' })
 export class OrderSpotEntity {

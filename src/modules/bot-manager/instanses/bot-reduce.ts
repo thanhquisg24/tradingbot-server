@@ -12,20 +12,13 @@ import {
   createReduceClosedTPEvent,
   createReduceEndEvent,
 } from 'src/common/event/reduce_events';
-import {
-  BotTradingEntity,
-  STRATEGY_DIRECTION,
-} from 'src/modules/entities/bot.entity';
-import {
-  BuyOrder,
-  CLIENT_ORDER_TYPE,
-  OrderEntity,
-} from 'src/modules/entities/order.entity';
+import { BuyOrder, OrderEntity } from 'src/modules/entities/order.entity';
 import {
   CLIENT_DEAL_TYPE,
+  CLIENT_ORDER_TYPE,
   DEAL_STATUS,
-  DealEntity,
-} from 'src/modules/entities/deal.entity';
+  STRATEGY_DIRECTION,
+} from 'src/modules/entities/enum-type';
 import {
   ORDER_ACTION_ENUM,
   calcDaviationBetween,
@@ -38,7 +31,9 @@ import {
 import { Raw, Repository } from 'typeorm';
 
 import BigNumber from 'bignumber.js';
+import { BotTradingEntity } from 'src/modules/entities/bot.entity';
 import { DCABot } from './bot-dca';
+import { DealEntity } from 'src/modules/entities/deal.entity';
 import { TelegramService } from 'src/modules/telegram/telegram.service';
 import { botLogger } from 'src/common/bot-logger';
 import { getNewUUid } from 'src/common/utils/hash-util';

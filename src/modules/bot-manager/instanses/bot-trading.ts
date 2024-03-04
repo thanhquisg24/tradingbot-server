@@ -10,21 +10,17 @@ import {
   OrderType,
 } from 'binance-api-node';
 import {
-  BotTradingEntity,
-  DEAL_START_TYPE,
-  STRATEGY_DIRECTION,
-} from 'src/modules/entities/bot.entity';
-import {
   BuyOrder,
-  CLIENT_ORDER_TYPE,
   OrderEntity,
   createOrderEntity,
 } from 'src/modules/entities/order.entity';
 import {
   CLIENT_DEAL_TYPE,
+  CLIENT_ORDER_TYPE,
+  DEAL_START_TYPE,
   DEAL_STATUS,
-  DealEntity,
-} from 'src/modules/entities/deal.entity';
+  STRATEGY_DIRECTION,
+} from 'src/modules/entities/enum-type';
 import {
   ORDER_ACTION_ENUM,
   calculateBuyDCAOrders,
@@ -38,8 +34,10 @@ import { Raw, Repository } from 'typeorm';
 import { findIndex, has } from 'lodash';
 
 import BigNumber from 'bignumber.js';
+import { BotTradingEntity } from 'src/modules/entities/bot.entity';
 import { Order as CCXTOrder } from 'ccxt';
 import { CombineReduceEventTypes } from 'src/common/event/reduce_events';
+import { DealEntity } from 'src/modules/entities/deal.entity';
 import { ICommonFundingStartDeal } from 'src/common/event/funding_events';
 import { PairEntity } from 'src/modules/entities/pair.entity';
 import { TelegramService } from 'src/modules/telegram/telegram.service';

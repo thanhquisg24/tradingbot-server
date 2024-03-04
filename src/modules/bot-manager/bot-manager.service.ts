@@ -1,11 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
-import {
-  BOT_TRADING_TYPE,
-  BotTradingEntity,
-  STRATEGY_DIRECTION,
-} from '../entities/bot.entity';
+import { BotTradingEntity } from '../entities/bot.entity';
 import { ExchangeService } from '../exchange/exchange.service';
 import { PairService } from '../pair/pair.service';
 import { mappingNewBot } from './bot-utils';
@@ -13,6 +9,7 @@ import { CreateBotPayload } from './dto/create-bot.payload';
 import { BotPairsPayload } from './dto/update-bot.dto';
 import { COMMON_STATUS } from 'src/common/constants';
 import { UpdateBotRefDto } from './dto/update-bot-ref';
+import { BOT_TRADING_TYPE, STRATEGY_DIRECTION } from '../entities/enum-type';
 
 @Injectable()
 export class BotManagerService {

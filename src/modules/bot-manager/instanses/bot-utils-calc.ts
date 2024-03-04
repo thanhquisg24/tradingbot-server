@@ -1,21 +1,15 @@
-import {
-  BotTradingEntity,
-  STRATEGY_DIRECTION,
-} from 'src/modules/entities/bot.entity';
-import {
-  BuyOrder,
-  CLIENT_ORDER_TYPE,
-  OrderEntity,
-} from 'src/modules/entities/order.entity';
+import { BuyOrder, OrderEntity } from 'src/modules/entities/order.entity';
 import {
   IReducePreparePayload,
   createReducePrepareEvent,
 } from 'src/common/event/reduce_events';
 
 import BigNumber from 'bignumber.js';
+import { BotTradingEntity } from 'src/modules/entities/bot.entity';
 import { DealEntity } from 'src/modules/entities/deal.entity';
 import { Exchange } from 'ccxt';
 import { OrderSide } from 'binance-api-node';
+import { STRATEGY_DIRECTION } from 'src/modules/entities/enum-type';
 import { getNewUUid } from 'src/common/utils/hash-util';
 import { last } from 'lodash';
 

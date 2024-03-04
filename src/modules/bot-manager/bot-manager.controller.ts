@@ -27,11 +27,12 @@ import { BotPairsPayload, UpdateBotDto } from './dto/update-bot.dto';
 import { IBotsAndCount } from './dto/bot-fetch/bot-and-count';
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
-import { BotTradingEntity, STRATEGY_DIRECTION } from '../entities/bot.entity';
+import { BotTradingEntity } from '../entities/bot.entity';
 import {
   BotTradingBaseDTO,
   BotTradingWithPairAndExchangeDTO,
 } from '../entity-to-dto/bot-dto';
+import { STRATEGY_DIRECTION } from '../entities/enum-type';
 
 @ApiTags('Bot Manager APIs')
 @ApiBearerAuth()

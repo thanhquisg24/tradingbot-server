@@ -5,9 +5,9 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
-import { COMMON_STATUS } from 'src/common/constants';
-import { ExchangesEnum } from './exchange.entity';
 import { AutoMap } from '@automapper/classes';
+import { COMMON_STATUS } from 'src/common/constants';
+import { ExchangesEnum } from './enum-type';
 
 @Entity({ name: 'pair' })
 export class PairEntity {

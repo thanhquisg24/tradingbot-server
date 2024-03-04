@@ -2,7 +2,7 @@ import {
   BOT_TRADING_TYPE,
   DEAL_START_TYPE,
   STRATEGY_DIRECTION,
-} from 'src/modules/entities/bot.entity';
+} from 'src/modules/entities/enum-type';
 import {
   IntMinMax,
   IsNotBlankString,

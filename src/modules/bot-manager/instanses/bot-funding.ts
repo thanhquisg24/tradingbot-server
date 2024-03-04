@@ -1,13 +1,12 @@
 import {
-  BotTradingEntity,
-  STRATEGY_DIRECTION,
-} from 'src/modules/entities/bot.entity';
-import {
   BuyOrder,
   OrderEntity,
   createOrderEntity,
 } from 'src/modules/entities/order.entity';
-import { DEAL_STATUS, DealEntity } from 'src/modules/entities/deal.entity';
+import {
+  DEAL_STATUS,
+  STRATEGY_DIRECTION,
+} from 'src/modules/entities/enum-type';
 import {
   ORDER_ACTION_ENUM,
   createMarketBaseOrder,
@@ -16,9 +15,10 @@ import {
 
 import { BaseBotTrading } from './bot-trading';
 import BigNumber from 'bignumber.js';
+import { BotTradingEntity } from 'src/modules/entities/bot.entity';
 import { CombineReduceEventTypes } from 'src/common/event/reduce_events';
+import { DealEntity } from 'src/modules/entities/deal.entity';
 import { ICommonFundingStartDeal } from 'src/common/event/funding_events';
-import { OrderSide } from 'binance-api-node';
 import { Repository } from 'typeorm';
 import { TelegramService } from 'src/modules/telegram/telegram.service';
 import { botLogger } from 'src/common/bot-logger';

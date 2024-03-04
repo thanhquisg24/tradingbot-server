@@ -1,10 +1,7 @@
-import {
-  BOT_TRADING_TYPE,
-  BotTradingEntity,
-} from 'src/modules/entities/bot.entity';
-
+import { BOT_TRADING_TYPE } from 'src/modules/entities/enum-type';
 import { BaseBotTrading } from './bot-trading';
 import { BotEventData } from 'src/common/event/reduce_events';
+import { BotTradingEntity } from 'src/modules/entities/bot.entity';
 import { DCABot } from './bot-dca';
 import { DealEntity } from 'src/modules/entities/deal.entity';
 import { FundingBot } from './bot-funding';

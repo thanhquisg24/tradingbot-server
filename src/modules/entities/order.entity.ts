@@ -8,6 +8,7 @@ import {
 import { OrderSide, OrderStatus_LT } from 'binance-api-node';
 
 import { AutoMap } from '@automapper/classes';
+import { CLIENT_ORDER_TYPE } from './enum-type';
 import { DealEntity } from './deal.entity';
 
 export interface BuyOrder {
@@ -45,19 +46,6 @@ export function createOrderEntity(buyOrder: BuyOrder, deal: DealEntity) {
   order.userId = deal.userId;
   order.placedCount = 0;
   return order;
-}
-
-export enum CLIENT_ORDER_TYPE {
-  BASE = 'BASE',
-  SAFETY = 'SAFETY',
-  REDUCE_BEGIN = 'REDUCE_BIGIN',
-  REDUCE_END = 'REDUCE_END',
-  COVER_CUT_QTY = 'COVER_CUT_QTY',
-  COVER_ADD_QTY = 'COVER_ADD_QTY',
-  TAKE_PROFIT = 'TAKE_PROFIT',
-  TRAILING_TP = 'TRAILING_TP',
-  STOP_LOSS = 'STOP_LOSS',
-  CLOSE_AT_MARKET = 'CLOSE_AT_MARKET',
 }
 
 @Entity()

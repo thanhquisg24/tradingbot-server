@@ -1,4 +1,10 @@
 import {
+  BOT_TRADING_TYPE,
+  DEAL_START_TYPE,
+  MARGIN_MODE,
+  STRATEGY_DIRECTION,
+} from './enum-type';
+import {
   Column,
   CreateDateColumn,
   Entity,
@@ -13,27 +19,6 @@ import { AutoMap } from '@automapper/classes';
 import { COMMON_STATUS } from 'src/common/constants';
 import { ExchangeEntity } from './exchange.entity';
 import { PairEntity } from './pair.entity';
-
-export enum BOT_TRADING_TYPE {
-  DCA = 'DCA',
-  REDUCE = 'REDUCE',
-  FUD_RATE = 'FUD_RATE',
-}
-export enum STRATEGY_DIRECTION {
-  LONG = 'LONG',
-  SHORT = 'SHORT',
-  BOTH = 'BOTH',
-}
-export enum DEAL_START_TYPE {
-  ASAP = 'ASAP',
-  TRADINGVIEW = 'tradingview',
-  MANUAL = 'MANUAL',
-}
-
-export enum MARGIN_MODE {
-  CROSS = 'cross',
-  ISOLATE = 'isolated',
-}
 
 @Entity({ name: 'bot_trading' })
 export class BotTradingEntity {

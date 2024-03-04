@@ -1,7 +1,7 @@
+import { BOT_SPOT_TYPE, DEAL_START_TYPE } from '../entities/enum-type';
+
 import { AutoMap } from '@automapper/classes';
-import { BOT_SPOT_TYPE } from '../entities/bot.spot.extity';
 import { COMMON_STATUS } from 'src/common/constants';
-import { DEAL_START_TYPE } from '../entities/bot.entity';
 import { ExchangeDTO } from './exchange-dto';
 
 export class BotSpotBaseDTO {

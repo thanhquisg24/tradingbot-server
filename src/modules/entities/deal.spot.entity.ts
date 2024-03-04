@@ -1,3 +1,4 @@
+import { BOT_SPOT_TYPE, DEAL_START_TYPE, DEAL_STATUS } from './enum-type';
 import {
   Column,
   CreateDateColumn,
@@ -8,9 +9,6 @@ import {
 import { OrderSide, OrderType } from 'ccxt/js/src/base/types';
 
 import { AutoMap } from '@automapper/classes';
-import { BOT_SPOT_TYPE } from './bot.spot.extity';
-import { DEAL_START_TYPE } from './bot.entity';
-import { DEAL_STATUS } from './deal.entity';
 import { OrderSpotEntity } from './order.spot.entity';
 
 @Entity({ name: 'deal_spot' })
@@ -168,5 +166,4 @@ export class DealSpotEntity {
     scale: 2,
   })
   targetStopLossPercentage: number;
-
 }

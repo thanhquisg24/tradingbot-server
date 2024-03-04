@@ -1,3 +1,4 @@
+import { BOT_SPOT_TYPE, DEAL_START_TYPE } from 'src/modules/entities/enum-type';
 import {
   IsNotBlankString,
   IsPositiveInt,
@@ -6,8 +7,6 @@ import {
 
 import { ApiProperty } from '@nestjs/swagger';
 import { AutoMap } from '@automapper/classes';
-import { BOT_SPOT_TYPE } from 'src/modules/entities/bot.spot.extity';
-import { DEAL_START_TYPE } from 'src/modules/entities/bot.entity';
 
 export class CommonBotSpotPayload {
   @AutoMap()

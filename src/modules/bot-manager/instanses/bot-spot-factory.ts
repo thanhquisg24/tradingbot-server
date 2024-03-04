@@ -1,9 +1,6 @@
-import {
-  BOT_SPOT_TYPE,
-  BotSpotEntity,
-} from 'src/modules/entities/bot.spot.extity';
-
+import { BOT_SPOT_TYPE } from 'src/modules/entities/enum-type';
 import { BotSpotBase } from './spot/bot-spot-base';
+import { BotSpotEntity } from 'src/modules/entities/bot.spot.extity';
 import { BotSpotInvest } from './spot/bot-spot-invest';
 import { DealSpotEntity } from 'src/modules/entities/deal.spot.entity';
 import { OrderSpotEntity } from 'src/modules/entities/order.spot.entity';
