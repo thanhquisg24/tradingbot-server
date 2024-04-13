@@ -22,6 +22,10 @@ const fetchExchangeInfo = async () => {
     '🚀 ~ file: 6.exchange-info.ts:12 ~ fetchExchangeInfo ~ marketload:',
     marketload2['rateLimits'],
   );
+  fs.writeFileSync(
+    './test/rateLimits.txt',
+    JSON.stringify(marketload2['rateLimits']),
+  );
   // binanceUSDM.dapi
   // const symbolsUsdt = binanceUSDM.symbols.filter((e) => {
   //   return e.endsWith('USDT');

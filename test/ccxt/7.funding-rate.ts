@@ -11,7 +11,7 @@ const fetchFundingRate = async () => {
   });
   binanceUSDM.setSandboxMode(false);
 
-  const symbols = ['ARKM/USDT:USDT', 'NMR/USDT:USDT', 'TRB/USDT:USDT'];
+  const symbols = ['BTC/USDT:USDT', 'NMR/USDT:USDT', 'TRB/USDT:USDT'];
   const rates = await binanceUSDM.fetchFundingRates(symbols);
   console.log(
     '🚀 ~ file: 6.exchange-info.ts:18 ~ fetchFundingRate ~ exinfo:',
