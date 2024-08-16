@@ -2,6 +2,7 @@
 // Based on /examples/js/fetch-from-many-exchanges-simultaneously.js
 
 import { DealsParams } from '3commas-typescript/dist/types/types';
+import fs from 'fs';
 import { threecommas_api } from './3commasAPI';
 
 const getActiveDeals = async () => {
@@ -19,4 +20,27 @@ const getActiveDeals = async () => {
   console.log('🚀 ~ pingaccount ~ activeDeals:', activeDeals);
   // return ticker;
 };
-getActiveDeals();
+
+const getALLActiveDeals = async () => {
+  // const rs = await threecommas_api.ping();
+  const longBotId = 12881444;
+  const shortBotId = 12881479;
+  // const account_id = 32682064;
+  const dealParams: DealsParams = {
+    scope: 'active',
+    //  bot_id: shortBotId,
+    // base: 'ARBUSDT',
+    // quote: 'USDT',
+    limit: 2,
+  };
+  const activeDeals = await threecommas_api.getDeals(dealParams);
+  // console.log('🚀 ~ pingaccount ~ activeDeals:', activeDeals);
+  console.log("🚀 ~ file: 1.get-active-deals.ts:44 ~ getALLActiveDeals ~ activeDeals:", activeDeals.length);
+  fs.writeFileSync(
+    './test/3commas/3commas-all-short-active-deal.txt',
+    JSON.stringify(activeDeals),
+  );
+  // return ticker;
+};
+
+getALLActiveDeals();

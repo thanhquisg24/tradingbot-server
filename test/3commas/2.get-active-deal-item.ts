@@ -16,7 +16,7 @@ const getActiveDealItem = async () => {
   //   base: 'ADA',
   //   quote: 'USDT',
   // };
-  const deal_id = 2256072971; //ada
+  const deal_id = 2254688586; //ada
   const dealItem = await threecommas_api.getDeal(deal_id);
   console.log('🚀 ~ pingaccount ~ dealItem:', dealItem);
   // return ticker;

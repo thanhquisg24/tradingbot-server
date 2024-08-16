@@ -119,3 +119,7 @@ export interface I3CommasOrder {
   rate: number;
   average_price: number;
 }
+
+export interface I3CommasDealWithOrders extends I3CommasDeal {
+  order_list: I3CommasOrder[];
+}

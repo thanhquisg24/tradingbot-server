@@ -2,6 +2,7 @@
 // Based on /examples/js/fetch-from-many-exchanges-simultaneously.js
 
 // import { DealsParams } from '3commas-typescript/dist/types/types';
+
 import { threecommas_api } from './3commasAPI';
 
 const getSafeTyorder = async () => {
@@ -13,7 +14,7 @@ const getSafeTyorder = async () => {
   //   bot_id: longBotId,
   //   account_id,
   // };
-  const deal_id = 2256072971; //SUI
+  const deal_id = 2281665177; //SUI
   const dealItem = await threecommas_api.getDealSafetyOrders(deal_id);
   console.log('🚀 ~ pingaccount ~ dealItem:', dealItem);
   // return ticker;

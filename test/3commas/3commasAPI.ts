@@ -1,9 +1,9 @@
 import { API } from '3commas-typescript';
 
 export const threecommas_api = new API({
-  key: '479b2749e91c47ae99ad26581e10d9bb71890b7cc93d4783a5249efc145c6168', // Optional if only query endpoints with no security requirement
+  key: '48f3b6ead6434d5a913f40a26940c37d90cd9381f3c14b8b9d149f2bd29221f8', // Optional if only query endpoints with no security requirement
   secrets:
-    '3197378df44d14956beca3334b4b9158f83a768e0ccbb2a09fbda53af34e6b8f71e909e23769f69d7d869b57e15c3554f50fb47749a767a829b776341782a33bcdf18c410fa1db1bff45f9a151d9fbd0faa834c605b79c90ec3c0657de444bceb5a79da3', // Optional
+    'ba9c81cb0a06eb0d3fa7ebef286980dec925171e9b2b649865c7b64a98e671286918ab2474563490ae3cd02d19164e4b7d2b35ace7fff712f99e371d6b5fc2f94c957f6f95cda56755cfa720789bb397ada6b1e591446e274e25d60660dd59d43e0c7a54', // Optional
   timeout: 60000, // Optional, in ms, default to 30000
   forcedMode: 'real',
   errorHandler: (response, reject) => {
