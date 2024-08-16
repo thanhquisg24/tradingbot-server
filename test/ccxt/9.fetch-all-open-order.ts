@@ -2,13 +2,14 @@
 // Based on /examples/js/fetch-from-many-exchanges-simultaneously.js
 
 import * as ccxt from 'ccxt';
+
 import fs from 'fs';
 
 const fetchAllOrder = async () => {
   const binanceUSDM = new ccxt.binanceusdm({
     enableRateLimit: true,
-    apiKey: '6daad7c6adaef564f0aefe6d444d03319d97f004a700e315df79442641dd9466',
-    secret: 'adb86ea2f7250a8fcd6059336544ee5a5efc047418a7966047da41713d91d705',
+    apiKey: 'CXtY79DtMNaPqUlLn1hjHyJRs6WKWtxAdpqNfiAeeAbQRrft40cq8CT7sfILSz53',
+    secret: 'ahNrCQzJerTcJGy8GPz1x0AHse1HtyKVs1Nb0x0iPLxkiq1SMmMvai5LFUC3UT3l',
   });
   binanceUSDM.setSandboxMode(true);
   // const acc = await binanceUSDM.fapiPrivateV2GetAccount();
@@ -16,7 +17,7 @@ const fetchAllOrder = async () => {
   console.log('🚀 ~ fetchAllOrder ~ allOrders:', allOrders.length);
   // console.log('🚀 ~ file: 0.hello.ts:16 ~ fetchTickers ~ symbols:', acc);
   fs.writeFileSync(
-    './test/test-allopen-order-info.txt',
+    './test/luat-allopen-order-info.txt',
     JSON.stringify(allOrders),
   );
   //   binanceUSDM.;
